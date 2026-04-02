@@ -1,0 +1,53 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gold" x1="310" y1="270" x2="712" y2="722" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#E8D48A"/>
+      <stop offset="0.52" stop-color="#D4AF52"/>
+      <stop offset="1" stop-color="#B8942E"/>
+    </linearGradient>
+    <linearGradient id="face" x1="392" y1="402" x2="633" y2="633" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFDF8"/>
+      <stop offset="1" stop-color="#E8DDC8"/>
+    </linearGradient>
+    <linearGradient id="header" x1="392" y1="402" x2="633" y2="402" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3A0A0A"/>
+      <stop offset="1" stop-color="#8C1B1B"/>
+    </linearGradient>
+    <linearGradient id="mark" x1="477" y1="507" x2="547" y2="577" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5C1414"/>
+      <stop offset="1" stop-color="#8C1B1B"/>
+    </linearGradient>
+  </defs>
+
+  <circle cx="512" cy="512" r="246" stroke="url(#gold)" stroke-width="18"/>
+  <circle cx="512" cy="512" r="216" stroke="#E8D48A" stroke-width="8"/>
+
+  <g opacity="0.92" stroke="url(#gold)" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M512 281L512 321"/>
+    <path d="M512 703L512 743"/>
+    <path d="M281 512L321 512"/>
+    <path d="M703 512L743 512"/>
+  </g>
+
+  <circle cx="512" cy="296" r="9" fill="#E8D48A"/>
+  <circle cx="728" cy="512" r="9" fill="#E8D48A"/>
+  <circle cx="512" cy="728" r="9" fill="#E8D48A"/>
+  <circle cx="296" cy="512" r="9" fill="#E8D48A"/>
+
+  <rect x="392" y="402" width="241" height="231" rx="50" fill="url(#face)"/>
+  <rect x="392" y="402" width="241" height="60" rx="50" fill="url(#header)"/>
+  <line x1="447" y1="402" x2="447" y2="351" stroke="#D4AF52" stroke-width="12" stroke-linecap="round"/>
+  <line x1="577" y1="402" x2="577" y2="351" stroke="#D4AF52" stroke-width="12" stroke-linecap="round"/>
+  <rect x="437" y="492" width="151" height="105" rx="30" fill="#FAF6EE"/>
+
+  <g stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M512 507L512 577" stroke="url(#mark)" stroke-width="16"/>
+    <path d="M477 542L547 542" stroke="url(#mark)" stroke-width="16"/>
+    <path d="M469 612L497 643L557 582" stroke="#B8942E" stroke-width="18"/>
+  </g>
+
+  <g opacity="0.96" stroke="#D4AF52" stroke-width="8" fill="none" stroke-linecap="round">
+    <path d="M422 444C437 427 452 422 469 427"/>
+    <path d="M552 427C570 422 585 427 600 444"/>
+  </g>
+</svg>
