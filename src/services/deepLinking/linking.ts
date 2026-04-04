@@ -5,6 +5,42 @@ import * as Notifications from 'expo-notifications';
 import type { RootStackParamList } from '../../navigation/types';
 
 const prefix = Linking.createURL('/');
+const APP_LINK_ORIGINS = ['https://orthodox-korea-calendar.pages.dev'];
+
+function normalizeIncomingUrl(url: string | null): string | null {
+  if (!url) return null;
+
+  if (url.startsWith('okncalendar://')) {
+    return url;
+  }
+
+  if (!APP_LINK_ORIGINS.some((origin) => url.startsWith(origin))) {
+    return url;
+  }
+
+  try {
+    const parsed = new URL(url);
+    const eventId = parsed.searchParams.get('event');
+    const dateISO = parsed.searchParams.get('date') || parsed.searchParams.get('dateISO');
+    const view = parsed.searchParams.get('view');
+
+    if (eventId) {
+      const encodedId = encodeURIComponent(eventId);
+      if (dateISO) {
+        return `okncalendar://event/${encodedId}?dateISO=${encodeURIComponent(dateISO)}`;
+      }
+      return `okncalendar://event/${encodedId}`;
+    }
+
+    if (view === 'today') {
+      return 'okncalendar://today';
+    }
+  } catch {
+    return url;
+  }
+
+  return url;
+}
 
 function extractData(
   response: Notifications.NotificationResponse,
@@ -31,27 +67,41 @@ function getNotificationUrl(data: Record<string, unknown> | null): string | null
   if (!data) return null;
   if (typeof data.url === 'string' && data.url) return data.url;
   const eventId = data.eventId ?? data.event_id;
-  if (typeof eventId === 'string' && eventId) return `orthodoxkorea://event/${eventId}`;
+  const eventDate = data.dateISO ?? data.date ?? data.eventDate ?? data.event_date;
+  if (typeof eventId === 'string' && eventId) {
+    const encodedId = encodeURIComponent(eventId);
+    if (typeof eventDate === 'string' && eventDate) {
+      const encodedDate = encodeURIComponent(eventDate);
+      return `okncalendar://event/${encodedId}?dateISO=${encodedDate}`;
+    }
+
+    return `okncalendar://event/${encodedId}`;
+  }
   return null;
 }
 
 export const linking: LinkingOptions<RootStackParamList> = {
-  prefixes: [prefix, 'orthodoxkorea://'],
+  prefixes: [prefix, 'okncalendar://', ...APP_LINK_ORIGINS],
   async getInitialURL() {
     const appURL = await Linking.getInitialURL();
     if (appURL) {
-      return appURL;
+      return normalizeIncomingUrl(appURL);
     }
 
     const response = await Notifications.getLastNotificationResponseAsync();
     if (!response) return null;
-    return getNotificationUrl(extractData(response));
+    return normalizeIncomingUrl(getNotificationUrl(extractData(response)));
   },
   subscribe(listener) {
-    const appSubscription = Linking.addEventListener('url', ({ url }) => listener(url));
+    const appSubscription = Linking.addEventListener('url', ({ url }) => {
+      const normalizedUrl = normalizeIncomingUrl(url);
+      if (normalizedUrl) {
+        listener(normalizedUrl);
+      }
+    });
 
     const notificationSubscription = Notifications.addNotificationResponseReceivedListener((response) => {
-      const notificationURL = getNotificationUrl(extractData(response));
+      const notificationURL = normalizeIncomingUrl(getNotificationUrl(extractData(response)));
       if (notificationURL) {
         listener(notificationURL);
       }
@@ -70,7 +120,13 @@ export const linking: LinkingOptions<RootStackParamList> = {
           Month: 'month',
         },
       },
-      EventDetail: 'event/:eventId',
+      EventDetail: {
+        path: 'event/:eventId',
+        parse: {
+          eventId: (value: string) => value,
+          dateISO: (value: string) => value,
+        },
+      },
       Settings: 'settings',
     },
   },

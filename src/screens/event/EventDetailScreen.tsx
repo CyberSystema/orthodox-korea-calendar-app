@@ -1,6 +1,7 @@
+import { useEffect, useState } from 'react';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import dayjs from 'dayjs';
-import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -10,6 +11,7 @@ import { OrnamentTitle } from '../../components/common/OrnamentTitle';
 import { getEventById } from '../../features/calendar/calendarService';
 import { localized } from '../../features/calendar/types';
 import type { RootStackParamList } from '../../navigation/types';
+import { fetchRemoteEventById } from '../../services/api/eventsRepository';
 import { useAppStore } from '../../store/useAppStore';
 import { colors, shadows } from '../../theme/colors';
 import { radii, spacing } from '../../theme/spacing';
@@ -23,7 +25,44 @@ export function EventDetailScreen({ route }: Props) {
   const insets = useSafeAreaInsets();
   const { language } = useAppStore();
   const { eventId, dateISO } = route.params;
-  const event = getEventById(eventId);
+  const cachedEvent = getEventById(eventId);
+  const [remoteEvent, setRemoteEvent] = useState(cachedEvent);
+  const [isResolvingEvent, setIsResolvingEvent] = useState(!cachedEvent);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (cachedEvent) {
+      setRemoteEvent(cachedEvent);
+      setIsResolvingEvent(false);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    setIsResolvingEvent(true);
+
+    void fetchRemoteEventById(eventId)
+      .then((fetchedEvent) => {
+        if (!cancelled) {
+          setRemoteEvent(fetchedEvent);
+        }
+      })
+      .catch((error) => {
+        console.warn('[EventDetail] failed to resolve event from notification:', error);
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsResolvingEvent(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [cachedEvent, eventId]);
+
+  const event = cachedEvent ?? remoteEvent;
 
   const eventDateISO = dateISO ?? event?.dateISO ?? '';
 
@@ -90,6 +129,17 @@ export function EventDetailScreen({ route }: Props) {
     const uri = `data:text/calendar;charset=utf-8,${encodeURIComponent(lines.join('\r\n'))}`;
     await Linking.openURL(uri);
   };
+
+  if (!event && isResolvingEvent) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.emptyCard}>
+          <ActivityIndicator size="small" color={colors.accentBright} />
+          <Text style={styles.emptyTitle}>Loading event...</Text>
+        </View>
+      </View>
+    );
+  }
 
   if (!event) {
     return (

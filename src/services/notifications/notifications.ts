@@ -108,7 +108,7 @@ export async function scheduleLanguageTargetedLocalNotification(
       body,
       data: {
         language,
-        url: 'orthodoxkorea://today',
+        url: 'okncalendar://today',
       },
     },
     trigger: {

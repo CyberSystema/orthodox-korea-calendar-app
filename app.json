@@ -3,7 +3,7 @@
     "name": "Orthodox Korea Calendar",
     "slug": "orthodox-korea-calendar-app",
     "version": "1.0.0",
-    "scheme": "orthodoxkorea",
+    "scheme": "okncalendar",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -16,6 +16,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.cybersystema.okncalendar",
       "googleServicesFile": "./GoogleService-Info.plist",
+      "associatedDomains": [
+        "applinks:orthodox-korea-calendar.pages.dev"
+      ],
       "infoPlist": {
         "NSUserNotificationUsageDescription": "Orthodox Korea Calendar sends liturgical reminders in your selected language."
       }
@@ -23,6 +26,23 @@
     "android": {
       "package": "com.cybersystema.okncalendar",
       "googleServicesFile": "./google-services.json",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "orthodox-korea-calendar.pages.dev",
+              "pathPrefix": "/"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ],
       "permissions": [
         "POST_NOTIFICATIONS"
       ],

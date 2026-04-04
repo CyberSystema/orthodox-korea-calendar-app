@@ -170,6 +170,16 @@ export async function fetchSyncBatch(cursor: number, limit = 100): Promise<SyncB
   }
 }
 
+export async function fetchRemoteEventById(eventId: string): Promise<LiturgicalEvent> {
+  ensureConfigured();
+
+  try {
+    return toLiturgicalEvent(await backendClient.getEvent(eventId));
+  } catch (error) {
+    throw new Error(`Failed to load event: ${getErrorMessage(error)}`);
+  }
+}
+
 export async function createRemoteEvent(draft: EventDraft): Promise<LiturgicalEvent> {
   ensureConfigured();
 
