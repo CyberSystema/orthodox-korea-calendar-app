@@ -1,4 +1,9 @@
 import * as Localization from 'expo-localization';
+// Register the Korean dayjs locale process-wide at startup. dayjs locale data is
+// a global singleton, so importing it here (a module loaded during app bootstrap)
+// guarantees `ko` date formatting works everywhere without relying on a
+// transitive side-effect import from some other module.
+import 'dayjs/locale/ko';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 

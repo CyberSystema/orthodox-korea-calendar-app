@@ -14,7 +14,7 @@ If doctor fails, resolve issues before continuing.
 For web admin sync (remote event CRUD), set this environment variable in your shell:
 
 ```bash
-export EXPO_PUBLIC_API_BASE_URL="https://<your-cloudflare-pages-domain>"
+export EXPO_PUBLIC_APP_API_BASE_URL="https://<your-cloudflare-worker-domain>"
 ```
 
 ## 2. Local validation before any build
@@ -114,8 +114,8 @@ Then regenerate credentials in managed mode.
 Run locally and test:
 
 ```bash
-npx uri-scheme open orthodoxkorea://event/pascha-2026 --ios
-npx uri-scheme open orthodoxkorea://event/pascha-2026 --android
+npx uri-scheme open okncalendar://event/pascha-2026 --ios
+npx uri-scheme open okncalendar://event/pascha-2026 --android
 ```
 
 ### E. Notifications not shown

@@ -1,0 +1,27 @@
+diff --git a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Runtime/JavaScriptRuntime.swift b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Runtime/JavaScriptRuntime.swift
+index a0e3e24..be3918a 100644
+--- a/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Runtime/JavaScriptRuntime.swift
++++ b/node_modules/expo-modules-jsi/apple/Sources/ExpoModulesJSI/Runtime/JavaScriptRuntime.swift
+@@ -215,8 +215,20 @@ open class JavaScriptRuntime: Equatable, @unchecked Sendable {
+       .toOpaque()
+     // Pass a null setter to C++ when the Swift setter is nil so that JS assignment
+     // raises a `jsi::JSError` directly, without crossing the Swift boundary.
+-    let callbacks = expo.HostObjectCallbacks(
+-      context, getter, set == nil ? nil : setter, propertyNamesGetter, deallocate)
++    // NOTE: select between `nil` and `setter` with two separate constructor calls
++    // rather than a `set == nil ? nil : setter` ternary. Newer Swift compilers
++    // refuse to form a C function pointer from a conditional expression (its
++    // branches unify to a Swift closure value); a C function pointer can only be
++    // formed from a direct `func` reference or a literal closure, which passing
++    // `setter` straight as an argument satisfies.
++    let callbacks: expo.HostObjectCallbacks
++    if set == nil {
++      callbacks = expo.HostObjectCallbacks(
++        context, getter, nil, propertyNamesGetter, deallocate)
++    } else {
++      callbacks = expo.HostObjectCallbacks(
++        context, getter, setter, propertyNamesGetter, deallocate)
++    }
+     let hostObject = expo.HostObject.makeObject(pointee, consume callbacks)
+ 
+     return JavaScriptObject(self, hostObject)

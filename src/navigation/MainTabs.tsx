@@ -1,6 +1,7 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
 import { MonthScreen } from '../screens/month/MonthScreen';
@@ -54,13 +55,20 @@ function CalendarIcon({ color, size }: { color: string; size: number }) {
 
 export function MainTabs() {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
 
   return (
     <Tab.Navigator
       initialRouteName="Today"
       screenOptions={{
         headerShown: false,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: [
+          styles.tabBar,
+          {
+            height: 58 + insets.bottom,
+            paddingBottom: insets.bottom + 2,
+          },
+        ],
         tabBarActiveTintColor: colors.tabActive,
         tabBarInactiveTintColor: colors.tabInactive,
         tabBarLabelStyle: styles.tabLabel,
@@ -91,8 +99,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderTopWidth: 2,
     borderTopColor: colors.accent,
-    paddingBottom: 2,
-    height: 58,
+    paddingTop: 4,
     shadowColor: '#1A1008',
     shadowOffset: { width: 0, height: -3 },
     shadowOpacity: 0.06,

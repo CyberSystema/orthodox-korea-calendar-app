@@ -118,9 +118,11 @@ export function RootApp() {
   }, []);
 
   useEffect(() => {
+    // Brief branded splash moment; the screen is dismissed as soon as hydration
+    // finishes (typically faster than this), so this only bounds the minimum.
     const timer = setTimeout(() => {
       setMinSplashElapsed(true);
-    }, 8000);
+    }, 1800);
     return () => clearTimeout(timer);
   }, []);
 

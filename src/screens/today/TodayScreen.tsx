@@ -13,6 +13,7 @@ import { ByzantineArrow } from '../../components/common/ByzantineArrow';
 import { ByzantineKnot } from '../../components/common/ByzantineKnot';
 import { KeyboardSafeView } from '../../components/common/KeyboardSafeView';
 import { LiturgicalDayPanel } from '../../components/common/LiturgicalDayPanel';
+import { PromptModal } from '../../components/common/PromptModal';
 import {
   ensureLiturgicalYear,
   getCalendarDataVersion,
@@ -73,6 +74,7 @@ export function TodayScreen({ navigation }: Props) {
   const [dataVersion, setDataVersion] = useState(0);
 
   // Secret menu: 7 rapid taps on brand text
+  const [adminPromptVisible, setAdminPromptVisible] = useState(false);
   const secretTapRef = useRef({ count: 0, lastTap: 0 });
   const handleBrandTap = useCallback(() => {
     const now = Date.now();
@@ -82,24 +84,24 @@ export function TodayScreen({ navigation }: Props) {
     ref.lastTap = now;
     if (ref.count >= 7) {
       ref.count = 0;
-      Alert.prompt(
-        'System Access',
-        'Enter backend administrator password:',
-        async (password) => {
-          if (!password) return;
-          const result = await loginAdminThroughCloudflare(password);
-          if (result.ok) {
-            setCloudflareAdminAuthenticated(true);
-            setSecretMenuUnlocked(true);
-            navigation.navigate('SecretMenu');
-          } else {
-            Alert.alert('Access Denied', result.message || 'Invalid passcode.');
-          }
-        },
-        'secure-text',
-      );
+      setAdminPromptVisible(true);
     }
-  }, [navigation, setCloudflareAdminAuthenticated, setSecretMenuUnlocked]);
+  }, []);
+  const submitAdminPassword = useCallback(
+    async (password: string) => {
+      setAdminPromptVisible(false);
+      if (!password) return;
+      const result = await loginAdminThroughCloudflare(password);
+      if (result.ok) {
+        setCloudflareAdminAuthenticated(true);
+        setSecretMenuUnlocked(true);
+        navigation.navigate('SecretMenu');
+      } else {
+        Alert.alert(t('secret.accessDeniedTitle'), result.message || t('secret.invalidPasscode'));
+      }
+    },
+    [navigation, setCloudflareAdminAuthenticated, setSecretMenuUnlocked, t],
+  );
   const activeYear = dayjs(activeDateISO).year();
   const events = useMemo(() => getEventsByDate(activeDateISO, adminMode), [activeDateISO, adminMode, customEvents]);
   const liturgicalDay = useMemo(() => getLiturgicalDayByDate(activeDateISO), [activeDateISO, dataVersion]);
@@ -243,6 +245,8 @@ export function TodayScreen({ navigation }: Props) {
             style={({ pressed }) => [styles.headerIconButton, pressed && styles.pressed]}
             onPress={() => navigation.navigate('Settings')}
             hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t('a11y.openSettings')}
           >
             <MenuIcon size={20} color={colors.brandText} />
           </Pressable>
@@ -250,7 +254,7 @@ export function TodayScreen({ navigation }: Props) {
           <View style={styles.headerCenter}>
             <View style={styles.headerLine} />
             <ByzantineKnot size={14} color={colors.accentBright} />
-            <Pressable onPress={handleBrandTap} hitSlop={4}>
+            <Pressable onPress={handleBrandTap} hitSlop={4} accessibilityRole="header" accessibilityLabel={t('a11y.brandTitle')}>
               <Text style={styles.headerBrand}>ORTHODOX KOREA</Text>
             </Pressable>
             <ByzantineKnot size={14} color={colors.accentBright} />
@@ -261,6 +265,8 @@ export function TodayScreen({ navigation }: Props) {
             style={({ pressed }) => [styles.headerIconButton, pressed && styles.pressed]}
             onPress={openSearch}
             hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t('a11y.search')}
           >
             <SearchSvgIcon size={20} color={colors.brandText} />
           </Pressable>
@@ -277,16 +283,16 @@ export function TodayScreen({ navigation }: Props) {
       >
       {/* ═══ ACTION PILLS ═══ */}
       <View style={styles.actionRow}>
-        <Pressable style={({ pressed }) => [styles.actionPill, pressed && styles.pressed]} onPress={openDatePicker}>
+        <Pressable style={({ pressed }) => [styles.actionPill, pressed && styles.pressed]} onPress={openDatePicker} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('today.openDatePicker')}>
           <Text style={styles.actionPillText}>{t('today.openDatePicker')}</Text>
         </Pressable>
-        <Pressable style={({ pressed }) => [styles.actionPill, pressed && styles.pressed]} onPress={toggleLanguage}>
+        <Pressable style={({ pressed }) => [styles.actionPill, pressed && styles.pressed]} onPress={toggleLanguage} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('today.toggleLanguage')}>
           <Text style={styles.actionPillText}>
             {language === 'en' ? '한국어' : 'English'}
           </Text>
         </Pressable>
         {!isOnToday ? (
-          <Pressable style={({ pressed }) => [styles.actionPillAccent, pressed && styles.pressed]} onPress={goToday}>
+          <Pressable style={({ pressed }) => [styles.actionPillAccent, pressed && styles.pressed]} onPress={goToday} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('today.goToday')}>
             <Text style={styles.actionPillAccentText}>{t('today.goToday')}</Text>
           </Pressable>
         ) : null}
@@ -294,13 +300,13 @@ export function TodayScreen({ navigation }: Props) {
 
       {/* ═══ DAY NAVIGATOR ═══ */}
       <View style={[styles.dayNavigator, isOnToday && styles.dayNavigatorToday]}>
-        <Pressable style={({ pressed }) => [styles.dayArrowButton, pressed && styles.pressed]} onPress={goPreviousDay}>
+        <Pressable style={({ pressed }) => [styles.dayArrowButton, pressed && styles.pressed]} onPress={goPreviousDay} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('a11y.previousDay')}>
           <ByzantineArrow direction="left" size={22} color={colors.accent} />
         </Pressable>
         <View style={styles.dayNavLine} />
         <Text style={styles.dayNavDate}>{formatDisplayDate(activeDateISO, language)}</Text>
         <View style={styles.dayNavLine} />
-        <Pressable style={({ pressed }) => [styles.dayArrowButton, pressed && styles.pressed]} onPress={goNextDay}>
+        <Pressable style={({ pressed }) => [styles.dayArrowButton, pressed && styles.pressed]} onPress={goNextDay} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('a11y.nextDay')}>
           <ByzantineArrow direction="right" size={22} color={colors.accent} />
         </Pressable>
       </View>
@@ -346,7 +352,7 @@ export function TodayScreen({ navigation }: Props) {
       </ScrollView>
 
       {/* ═══ SEARCH MODAL ═══ */}
-      <Modal visible={searchVisible} transparent animationType="fade" onRequestClose={() => setSearchVisible(false)}>
+      <Modal visible={searchVisible} transparent statusBarTranslucent animationType="fade" onRequestClose={() => setSearchVisible(false)}>
         <Pressable style={styles.modalBackdrop} onPress={() => setSearchVisible(false)}>
           <KeyboardSafeView keyboardVerticalOffset={insets.top}>
             <Pressable style={styles.modalCard} onPress={() => {}}>
@@ -382,6 +388,7 @@ export function TodayScreen({ navigation }: Props) {
                           key={`${result.kind}-${result.dateISO}-${result.label}`}
                           style={({ pressed }) => [styles.searchResultItem, pressed && styles.pressed]}
                           onPress={() => openSearchResult(result)}
+                          accessibilityRole="button"
                         >
                           <View style={styles.searchResultTopRow}>
                             <Text style={styles.searchResultKind}>{searchKindLabel(result.kind)}</Text>
@@ -393,7 +400,7 @@ export function TodayScreen({ navigation }: Props) {
                     : null}
                 </ScrollView>
 
-                <Pressable style={({ pressed }) => [styles.modalCloseButton, pressed && styles.pressed]} onPress={() => setSearchVisible(false)}>
+                <Pressable style={({ pressed }) => [styles.modalCloseButton, pressed && styles.pressed]} onPress={() => setSearchVisible(false)} accessibilityRole="button">
                   <Text style={styles.modalCloseButtonText}>{t('today.cancel')}</Text>
                 </Pressable>
             </Pressable>
@@ -402,7 +409,7 @@ export function TodayScreen({ navigation }: Props) {
       </Modal>
 
       {/* ═══ DATE PICKER MODAL ═══ */}
-      <Modal visible={datePickerVisible} transparent animationType="fade" onRequestClose={() => setDatePickerVisible(false)}>
+      <Modal visible={datePickerVisible} transparent statusBarTranslucent animationType="fade" onRequestClose={() => setDatePickerVisible(false)}>
         <Pressable style={styles.modalBackdrop} onPress={() => setDatePickerVisible(false)}>
           <Pressable style={styles.modalCard} onPress={() => Keyboard.dismiss()}>
             <View style={styles.modalHeader}>
@@ -412,11 +419,11 @@ export function TodayScreen({ navigation }: Props) {
             <View style={styles.pickerRow}>
               <Text style={styles.pickerLabel}>{t('today.yearLabel')}</Text>
               <View style={styles.pickerControl}>
-                <Pressable style={styles.pickerArrowButton} onPress={() => changeYear(-1)}>
+                <Pressable style={styles.pickerArrowButton} onPress={() => changeYear(-1)} hitSlop={8} accessibilityRole="button" accessibilityLabel={`${t('today.yearLabel')} ${t('a11y.decreaseValue')}`}>
                   <ByzantineArrow direction="left" size={18} color={colors.accent} />
                 </Pressable>
                 <Text style={styles.pickerValue}>{selectedYear}</Text>
-                <Pressable style={styles.pickerArrowButton} onPress={() => changeYear(1)}>
+                <Pressable style={styles.pickerArrowButton} onPress={() => changeYear(1)} hitSlop={8} accessibilityRole="button" accessibilityLabel={`${t('today.yearLabel')} ${t('a11y.increaseValue')}`}>
                   <ByzantineArrow direction="right" size={18} color={colors.accent} />
                 </Pressable>
               </View>
@@ -425,7 +432,7 @@ export function TodayScreen({ navigation }: Props) {
             <View style={styles.pickerRow}>
               <Text style={styles.pickerLabel}>{t('today.monthLabel')}</Text>
               <View style={styles.pickerControl}>
-                <Pressable style={styles.pickerArrowButton} onPress={() => changeMonth(-1)}>
+                <Pressable style={styles.pickerArrowButton} onPress={() => changeMonth(-1)} hitSlop={8} accessibilityRole="button" accessibilityLabel={`${t('today.monthLabel')} ${t('a11y.decreaseValue')}`}>
                   <ByzantineArrow direction="left" size={18} color={colors.accent} />
                 </Pressable>
                 <Text style={styles.pickerValue}>
@@ -433,7 +440,7 @@ export function TodayScreen({ navigation }: Props) {
                     month: 'long',
                   })}
                 </Text>
-                <Pressable style={styles.pickerArrowButton} onPress={() => changeMonth(1)}>
+                <Pressable style={styles.pickerArrowButton} onPress={() => changeMonth(1)} hitSlop={8} accessibilityRole="button" accessibilityLabel={`${t('today.monthLabel')} ${t('a11y.increaseValue')}`}>
                   <ByzantineArrow direction="right" size={18} color={colors.accent} />
                 </Pressable>
               </View>
@@ -442,27 +449,40 @@ export function TodayScreen({ navigation }: Props) {
             <View style={styles.pickerRow}>
               <Text style={styles.pickerLabel}>{t('today.dayLabel')}</Text>
               <View style={styles.pickerControl}>
-                <Pressable style={styles.pickerArrowButton} onPress={() => changeDay(-1)}>
+                <Pressable style={styles.pickerArrowButton} onPress={() => changeDay(-1)} hitSlop={8} accessibilityRole="button" accessibilityLabel={`${t('today.dayLabel')} ${t('a11y.decreaseValue')}`}>
                   <ByzantineArrow direction="left" size={18} color={colors.accent} />
                 </Pressable>
                 <Text style={styles.pickerValue}>{selectedDay}</Text>
-                <Pressable style={styles.pickerArrowButton} onPress={() => changeDay(1)}>
+                <Pressable style={styles.pickerArrowButton} onPress={() => changeDay(1)} hitSlop={8} accessibilityRole="button" accessibilityLabel={`${t('today.dayLabel')} ${t('a11y.increaseValue')}`}>
                   <ByzantineArrow direction="right" size={18} color={colors.accent} />
                 </Pressable>
               </View>
             </View>
 
             <View style={styles.modalActionsRow}>
-              <Pressable style={({ pressed }) => [styles.modalActionButtonMuted, pressed && styles.pressed]} onPress={() => setDatePickerVisible(false)}>
+              <Pressable style={({ pressed }) => [styles.modalActionButtonMuted, pressed && styles.pressed]} onPress={() => setDatePickerVisible(false)} accessibilityRole="button">
                 <Text style={styles.modalActionButtonMutedText}>{t('today.cancel')}</Text>
               </Pressable>
-              <Pressable style={({ pressed }) => [styles.modalActionButton, pressed && styles.pressed]} onPress={() => void goToSelectedDate()}>
+              <Pressable style={({ pressed }) => [styles.modalActionButton, pressed && styles.pressed]} onPress={() => void goToSelectedDate()} accessibilityRole="button">
                 <Text style={styles.modalActionButtonText}>{t('today.jumpButton')}</Text>
               </Pressable>
             </View>
           </Pressable>
         </Pressable>
       </Modal>
+
+      {/* ═══ ADMIN UNLOCK PROMPT ═══ */}
+      <PromptModal
+        visible={adminPromptVisible}
+        title={t('secret.accessTitle')}
+        message={t('secret.accessPrompt')}
+        placeholder={t('secret.accessPlaceholder')}
+        submitLabel={t('secret.accessSubmit')}
+        cancelLabel={t('today.cancel')}
+        secureTextEntry
+        onSubmit={(value) => void submitAdminPassword(value)}
+        onCancel={() => setAdminPromptVisible(false)}
+      />
     </View>
   );
 }

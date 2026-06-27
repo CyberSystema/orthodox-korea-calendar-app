@@ -14,10 +14,11 @@ import { ByzantineArrow } from '../../components/common/ByzantineArrow';
 import { ByzantineKnot } from '../../components/common/ByzantineKnot';
 import { KeyboardSafeView } from '../../components/common/KeyboardSafeView';
 import { LiturgicalDayPanel } from '../../components/common/LiturgicalDayPanel';
+import { PromptModal } from '../../components/common/PromptModal';
 import {
   ensureLiturgicalYear,
   getCalendarDataVersion,
-  getEventsByMonth,
+  getEventOccurrenceCountsForMonth,
   getEventsByDate,
   getLiturgicalDayByDate,
   searchLiturgicalContent,
@@ -102,6 +103,7 @@ export function MonthScreen({ navigation, route }: Props) {
   const searchRequestIdRef = useRef(0);
 
   // Secret menu: 7 rapid taps on brand text
+  const [adminPromptVisible, setAdminPromptVisible] = useState(false);
   const secretTapRef = useRef({ count: 0, lastTap: 0 });
   const handleBrandTap = useCallback(() => {
     const now = Date.now();
@@ -111,24 +113,24 @@ export function MonthScreen({ navigation, route }: Props) {
     ref.lastTap = now;
     if (ref.count >= 7) {
       ref.count = 0;
-      Alert.prompt(
-        'System Access',
-        'Enter backend administrator password:',
-        async (password) => {
-          if (!password) return;
-          const result = await loginAdminThroughCloudflare(password);
-          if (result.ok) {
-            setCloudflareAdminAuthenticated(true);
-            setSecretMenuUnlocked(true);
-            navigation.navigate('SecretMenu');
-          } else {
-            Alert.alert('Access Denied', result.message || 'Invalid passcode.');
-          }
-        },
-        'secure-text',
-      );
+      setAdminPromptVisible(true);
     }
-  }, [navigation, setCloudflareAdminAuthenticated, setSecretMenuUnlocked]);
+  }, []);
+  const submitAdminPassword = useCallback(
+    async (password: string) => {
+      setAdminPromptVisible(false);
+      if (!password) return;
+      const result = await loginAdminThroughCloudflare(password);
+      if (result.ok) {
+        setCloudflareAdminAuthenticated(true);
+        setSecretMenuUnlocked(true);
+        navigation.navigate('SecretMenu');
+      } else {
+        Alert.alert(t('secret.accessDeniedTitle'), result.message || t('secret.invalidPasscode'));
+      }
+    },
+    [navigation, setCloudflareAdminAuthenticated, setSecretMenuUnlocked, t],
+  );
 
   const [editorVisible, setEditorVisible] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -139,7 +141,6 @@ export function MonthScreen({ navigation, route }: Props) {
   const formDateYear = formDateParsed.isValid() ? formDateParsed.year() : dayjs().year();
   const formDateMonth = formDateParsed.isValid() ? formDateParsed.month() + 1 : dayjs().month() + 1;
   const formDateDay = formDateParsed.isValid() ? formDateParsed.date() : dayjs().date();
-  const formDateMaxDay = dayjs(`${formDateYear}-${String(formDateMonth).padStart(2, '0')}-01`).daysInMonth();
 
   const setFormDatePart = (part: 'year' | 'month' | 'day', delta: number) => {
     const d = dayjs(formDateISO);
@@ -166,14 +167,12 @@ export function MonthScreen({ navigation, route }: Props) {
   const activeDateISO = selectedDateISO?.startsWith(monthPrefix) ? selectedDateISO : defaultMonthDateISO;
 
   const cells = useMemo(() => createMonthCells(cursor), [cursor]);
-  const monthEventCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    const monthEvents = getEventsByMonth(cursor.year(), cursor.month() + 1, adminMode);
-    for (const event of monthEvents) {
-      counts.set(event.dateISO, (counts.get(event.dateISO) || 0) + 1);
-    }
-    return counts;
-  }, [cursor, adminMode, customEvents]);
+  const monthEventCounts = useMemo(
+    () => getEventOccurrenceCountsForMonth(cursor.year(), cursor.month() + 1, adminMode),
+    // customEvents drives rebuildEventIndexes; dataVersion is unrelated here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [cursor, adminMode, customEvents],
+  );
 
   type CellData = {
     day: number;
@@ -390,6 +389,8 @@ export function MonthScreen({ navigation, route }: Props) {
             style={({ pressed }) => [styles.headerIconButton, pressed && styles.pressed]}
             onPress={() => navigation.navigate('Settings')}
             hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t('a11y.openSettings')}
           >
             <MenuIcon size={20} color={colors.brandText} />
           </Pressable>
@@ -397,7 +398,7 @@ export function MonthScreen({ navigation, route }: Props) {
           <View style={styles.headerCenter}>
             <View style={styles.headerLine} />
             <ByzantineKnot size={14} color={colors.accentBright} />
-            <Pressable onPress={handleBrandTap} hitSlop={4}>
+            <Pressable onPress={handleBrandTap} hitSlop={4} accessibilityRole="header" accessibilityLabel={t('a11y.brandTitle')}>
               <Text style={styles.headerBrand}>ORTHODOX KOREA</Text>
             </Pressable>
             <ByzantineKnot size={14} color={colors.accentBright} />
@@ -408,6 +409,8 @@ export function MonthScreen({ navigation, route }: Props) {
             style={({ pressed }) => [styles.headerIconButton, pressed && styles.pressed]}
             onPress={openSearch}
             hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t('a11y.search')}
           >
             <SearchSvgIcon size={20} color={colors.brandText} />
           </Pressable>
@@ -424,11 +427,11 @@ export function MonthScreen({ navigation, route }: Props) {
       >
       {/* ═══ MONTH NAVIGATOR ═══ */}
       <View style={styles.monthNav}>
-        <Pressable style={({ pressed }) => [styles.monthArrowButton, pressed && styles.pressed]} onPress={goPrev}>
+        <Pressable style={({ pressed }) => [styles.monthArrowButton, pressed && styles.pressed]} onPress={goPrev} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('a11y.previousMonth')}>
           <ByzantineArrow direction="left" size={20} color={colors.accent} />
         </Pressable>
         <Text style={styles.monthLabel}>{cursor.locale(language).format('MMMM YYYY')}</Text>
-        <Pressable style={({ pressed }) => [styles.monthArrowButton, pressed && styles.pressed]} onPress={goNext}>
+        <Pressable style={({ pressed }) => [styles.monthArrowButton, pressed && styles.pressed]} onPress={goNext} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('a11y.nextMonth')}>
           <ByzantineArrow direction="right" size={20} color={colors.accent} />
         </Pressable>
       </View>
@@ -459,6 +462,9 @@ export function MonthScreen({ navigation, route }: Props) {
               <Pressable
                 key={cd.dateISO}
                 onPress={() => pickDate(day)}
+                accessibilityRole="button"
+                accessibilityLabel={formatDisplayDate(cd.dateISO, language)}
+                accessibilityState={{ selected: isSelected }}
                 style={[
                   styles.cell,
                   (cd.isSunday || cd.hasHighRank) && styles.cellHigh,
@@ -565,7 +571,7 @@ export function MonthScreen({ navigation, route }: Props) {
       </ScrollView>
 
       {/* ═══ EDITOR MODAL ═══ */}
-      <Modal visible={editorVisible} transparent animationType="fade" onRequestClose={() => setEditorVisible(false)}>
+      <Modal visible={editorVisible} transparent statusBarTranslucent animationType="fade" onRequestClose={() => setEditorVisible(false)}>
         <KeyboardSafeView
           style={styles.editorBackdrop}
           keyboardVerticalOffset={insets.top}
@@ -579,7 +585,7 @@ export function MonthScreen({ navigation, route }: Props) {
               <View style={styles.editorHeader}>
                 <Text style={styles.editorTitle}>{editingId ? t('month.editEvent') : t('month.addEvent')}</Text>
               </View>
-              <Text style={styles.editorDate}>{formatDisplayDate(activeDateISO, language)}</Text>
+              <Text style={styles.editorDate}>{formatDisplayDate(formDateISO, language)}</Text>
 
               <Pressable
                 style={({ pressed }) => [styles.input, styles.datePickerTrigger, pressed && { opacity: 0.7 }]}
@@ -595,32 +601,32 @@ export function MonthScreen({ navigation, route }: Props) {
                     <View style={styles.datePickerSegment}>
                       <Text style={styles.datePickerLabel}>{t('today.yearLabel')}</Text>
                       <View style={styles.datePickerStepper}>
-                        <Pressable onPress={() => setFormDatePart('year', -1)} style={styles.datePickerArrow}><Text style={styles.datePickerArrowText}>‹</Text></Pressable>
+                        <Pressable onPress={() => setFormDatePart('year', -1)} style={styles.datePickerArrow} hitSlop={8} accessibilityRole="button" accessibilityLabel={`${t('today.yearLabel')} ${t('a11y.decreaseValue')}`}><Text style={styles.datePickerArrowText}>‹</Text></Pressable>
                         <Text style={styles.datePickerValue}>{formDateYear}</Text>
-                        <Pressable onPress={() => setFormDatePart('year', 1)} style={styles.datePickerArrow}><Text style={styles.datePickerArrowText}>›</Text></Pressable>
+                        <Pressable onPress={() => setFormDatePart('year', 1)} style={styles.datePickerArrow} hitSlop={8} accessibilityRole="button" accessibilityLabel={`${t('today.yearLabel')} ${t('a11y.increaseValue')}`}><Text style={styles.datePickerArrowText}>›</Text></Pressable>
                       </View>
                     </View>
 
                     <View style={styles.datePickerSegment}>
                       <Text style={styles.datePickerLabel}>{t('today.monthLabel')}</Text>
                       <View style={styles.datePickerStepper}>
-                        <Pressable onPress={() => setFormDatePart('month', -1)} style={styles.datePickerArrow}><Text style={styles.datePickerArrowText}>‹</Text></Pressable>
+                        <Pressable onPress={() => setFormDatePart('month', -1)} style={styles.datePickerArrow} hitSlop={8} accessibilityRole="button" accessibilityLabel={`${t('today.monthLabel')} ${t('a11y.decreaseValue')}`}><Text style={styles.datePickerArrowText}>‹</Text></Pressable>
                         <Text style={styles.datePickerValue}>{String(formDateMonth).padStart(2, '0')}</Text>
-                        <Pressable onPress={() => setFormDatePart('month', 1)} style={styles.datePickerArrow}><Text style={styles.datePickerArrowText}>›</Text></Pressable>
+                        <Pressable onPress={() => setFormDatePart('month', 1)} style={styles.datePickerArrow} hitSlop={8} accessibilityRole="button" accessibilityLabel={`${t('today.monthLabel')} ${t('a11y.increaseValue')}`}><Text style={styles.datePickerArrowText}>›</Text></Pressable>
                       </View>
                     </View>
 
                     <View style={styles.datePickerSegment}>
                       <Text style={styles.datePickerLabel}>{t('today.dayLabel')}</Text>
                       <View style={styles.datePickerStepper}>
-                        <Pressable onPress={() => setFormDatePart('day', -1)} style={styles.datePickerArrow}><Text style={styles.datePickerArrowText}>‹</Text></Pressable>
+                        <Pressable onPress={() => setFormDatePart('day', -1)} style={styles.datePickerArrow} hitSlop={8} accessibilityRole="button" accessibilityLabel={`${t('today.dayLabel')} ${t('a11y.decreaseValue')}`}><Text style={styles.datePickerArrowText}>‹</Text></Pressable>
                         <Text style={styles.datePickerValue}>{String(formDateDay).padStart(2, '0')}</Text>
-                        <Pressable onPress={() => setFormDatePart('day', 1)} style={styles.datePickerArrow}><Text style={styles.datePickerArrowText}>›</Text></Pressable>
+                        <Pressable onPress={() => setFormDatePart('day', 1)} style={styles.datePickerArrow} hitSlop={8} accessibilityRole="button" accessibilityLabel={`${t('today.dayLabel')} ${t('a11y.increaseValue')}`}><Text style={styles.datePickerArrowText}>›</Text></Pressable>
                       </View>
                     </View>
                   </View>
                   <Pressable style={styles.datePickerDone} onPress={() => setFormDatePickerOpen(false)}>
-                    <Text style={styles.datePickerDoneText}>Done</Text>
+                    <Text style={styles.datePickerDoneText}>{t('common.done')}</Text>
                   </Pressable>
                 </View>
               )}
@@ -684,7 +690,7 @@ export function MonthScreen({ navigation, route }: Props) {
       </Modal>
 
       {/* ═══ SEARCH MODAL ═══ */}
-      <Modal visible={searchVisible} transparent animationType="fade" onRequestClose={() => setSearchVisible(false)}>
+      <Modal visible={searchVisible} transparent statusBarTranslucent animationType="fade" onRequestClose={() => setSearchVisible(false)}>
         <Pressable style={styles.searchBackdrop} onPress={() => setSearchVisible(false)}>
           <KeyboardSafeView keyboardVerticalOffset={insets.top}>
             <Pressable style={styles.searchCard} onPress={() => {}}>
@@ -738,6 +744,19 @@ export function MonthScreen({ navigation, route }: Props) {
           </KeyboardSafeView>
         </Pressable>
       </Modal>
+
+      {/* ═══ ADMIN UNLOCK PROMPT ═══ */}
+      <PromptModal
+        visible={adminPromptVisible}
+        title={t('secret.accessTitle')}
+        message={t('secret.accessPrompt')}
+        placeholder={t('secret.accessPlaceholder')}
+        submitLabel={t('secret.accessSubmit')}
+        cancelLabel={t('today.cancel')}
+        secureTextEntry
+        onSubmit={(value) => void submitAdminPassword(value)}
+        onCancel={() => setAdminPromptVisible(false)}
+      />
     </View>
   );
 }
@@ -1168,11 +1187,6 @@ const styles = StyleSheet.create({
     fontSize: typography.size.sm,
     color: colors.textBody,
     textAlign: 'center',
-    paddingHorizontal: 2,
-  },
-  datePickerSep: {
-    color: colors.textSecondary,
-    fontSize: typography.size.sm,
     paddingHorizontal: 2,
   },
   datePickerDone: {

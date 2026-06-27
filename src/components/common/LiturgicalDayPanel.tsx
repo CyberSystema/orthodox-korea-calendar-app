@@ -99,6 +99,14 @@ export function LiturgicalDayPanel({
     return Array.from(new Set(lines));
   }, [displayCelebrations, displaySaints, labels.tone, labels.matins]);
 
+  const isEmptyDay =
+    !hasFlags &&
+    displayReadings.length === 0 &&
+    displayCelebrations.length === 0 &&
+    displaySaints.length === 0 &&
+    uniqueInfoLines.length === 0 &&
+    events.length === 0;
+
   return (
     <View style={styles.card}>
       <View style={styles.header}>
@@ -204,6 +212,12 @@ export function LiturgicalDayPanel({
               <Text style={styles.eventDate}>{formatDisplayDate(event.dateISO, language)}</Text>
             </Pressable>
           ))}
+        </View>
+      ) : null}
+
+      {isEmptyDay ? (
+        <View style={styles.section}>
+          <Text style={styles.emptyText}>{labels.noEvents}</Text>
         </View>
       ) : null}
     </View>
@@ -345,5 +359,7 @@ const styles = StyleSheet.create({
     fontFamily: typography.family.body,
     fontSize: typography.size.sm,
     color: colors.textSecondary,
+    textAlign: 'center',
+    paddingVertical: spacing.sm,
   },
 });

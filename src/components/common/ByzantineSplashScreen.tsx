@@ -140,20 +140,20 @@ export function ByzantineSplashScreen() {
     const intro = Animated.parallel([
       Animated.timing(textReveal, {
         toValue: 1,
-        duration: 2400,
+        duration: 700,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
       Animated.timing(subtitleReveal, {
         toValue: 1,
-        duration: 2800,
-        delay: 500,
+        duration: 800,
+        delay: 250,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
       Animated.timing(progress, {
         toValue: 1,
-        duration: 7800,
+        duration: 1700,
         easing: Easing.inOut(Easing.cubic),
         useNativeDriver: true,
       }),
@@ -212,7 +212,7 @@ export function ByzantineSplashScreen() {
 
   return (
     <View style={styles.container}>
-      <Svg style={StyleSheet.absoluteFillObject} viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+      <Svg style={StyleSheet.absoluteFill} viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
         <Defs>
           <LinearGradient id="background" x1="0" y1="0" x2="1" y2="1">
             <Stop offset="0" stopColor={colors.primaryDeep} />

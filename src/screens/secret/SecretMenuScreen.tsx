@@ -92,8 +92,10 @@ export function SecretMenuScreen({ navigation }: Props) {
   const [rawBody, setRawBody] = useState('');
 
   // ── Terminal state ──
+  // Default OFF production so a stray `push test all` / `raw` cannot hit real
+  // users' devices without an explicit env switch.
   const [termVisible, setTermVisible] = useState(false);
-  const [termEnv, setTermEnv] = useState<TermEnv>('prod');
+  const [termEnv, setTermEnv] = useState<TermEnv>('staging');
   const [termInput, setTermInput] = useState('');
   const [termLines, setTermLines] = useState<TermLine[]>([
     { text: 'Orthodox Korea Backend Terminal v1.0', type: 'info' },
@@ -309,45 +311,65 @@ export function SecretMenuScreen({ navigation }: Props) {
   // ═══════════════════════════════════════════════════════════════
   //  4.  NOTIFICATIONS / SUBSCRIPTIONS
   // ═══════════════════════════════════════════════════════════════
+
+  // Real pushes go to real user devices. Require an explicit confirmation that
+  // names the live environment before any broadcast leaves the console.
+  const confirmBroadcast = (targetLabel: string, run: () => void) => {
+    Alert.alert(
+      'Send real push notification',
+      `This sends a push to ${targetLabel} live subscribers on:\n${configuredBaseUrl}\n\nThese are real devices. Continue?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Send', style: 'destructive', onPress: run },
+      ],
+    );
+  };
+
   const handleNotifyAll = () =>
-    runAction('Notify All', async () => {
-      const res = await backendClient.adminNotify({
-        target: 'all',
-        title_en: '[System Test] Push Check',
-        title_ko: '[시스템] 푸시 확인',
-        body_en: 'Test push from system console.',
-        body_ko: '시스템 콘솔 테스트 푸시.',
-      });
-      log(`  fcm=${res.fcmEnabled}/${res.fcmMode}, apns=${res.apnsEnabled}, total=${res.total}`, 'data');
-      if (res.message) log(`  message: ${res.message}`, 'data');
-      return `sent=${res.sent}, failed=${res.failed}, total=${res.total}`;
-    });
+    confirmBroadcast('ALL', () =>
+      void runAction('Notify All', async () => {
+        const res = await backendClient.adminNotify({
+          target: 'all',
+          title_en: '[System Test] Push Check',
+          title_ko: '[시스템] 푸시 확인',
+          body_en: 'Test push from system console.',
+          body_ko: '시스템 콘솔 테스트 푸시.',
+        });
+        log(`  fcm=${res.fcmEnabled}/${res.fcmMode}, apns=${res.apnsEnabled}, total=${res.total}`, 'data');
+        if (res.message) log(`  message: ${res.message}`, 'data');
+        return `sent=${res.sent}, failed=${res.failed}, total=${res.total}`;
+      }),
+    );
 
   const handleNotifyEnglish = () =>
-    runAction('Notify English', async () => {
-      const res = await backendClient.adminNotify({
-        target: 'en',
-        title_en: '[Test] English Push',
-        title_ko: '[테스트] 영어 푸시',
-        body_en: 'English-only test notification.',
-        body_ko: '',
-      });
-      log(`  fcm=${res.fcmEnabled}/${res.fcmMode}, apns=${res.apnsEnabled}, total=${res.total}`, 'data');
-      return `sent=${res.sent}, failed=${res.failed}, target=en`;
-    });
+    confirmBroadcast('English', () =>
+      void runAction('Notify English', async () => {
+        const res = await backendClient.adminNotify({
+          target: 'en',
+          title_en: '[Test] English Push',
+          title_ko: '[테스트] 영어 푸시',
+          body_en: 'English-only test notification.',
+          body_ko: '',
+        });
+        log(`  fcm=${res.fcmEnabled}/${res.fcmMode}, apns=${res.apnsEnabled}, total=${res.total}`, 'data');
+        return `sent=${res.sent}, failed=${res.failed}, target=en`;
+      }),
+    );
 
   const handleNotifyKorean = () =>
-    runAction('Notify Korean', async () => {
-      const res = await backendClient.adminNotify({
-        target: 'ko',
-        title_en: '[Test] Korean Push',
-        title_ko: '[테스트] 한국어 푸시',
-        body_en: '',
-        body_ko: '한국어 전용 테스트 알림.',
-      });
-      log(`  fcm=${res.fcmEnabled}/${res.fcmMode}, apns=${res.apnsEnabled}, total=${res.total}`, 'data');
-      return `sent=${res.sent}, failed=${res.failed}, target=ko`;
-    });
+    confirmBroadcast('Korean', () =>
+      void runAction('Notify Korean', async () => {
+        const res = await backendClient.adminNotify({
+          target: 'ko',
+          title_en: '[Test] Korean Push',
+          title_ko: '[테스트] 한국어 푸시',
+          body_en: '',
+          body_ko: '한국어 전용 테스트 알림.',
+        });
+        log(`  fcm=${res.fcmEnabled}/${res.fcmMode}, apns=${res.apnsEnabled}, total=${res.total}`, 'data');
+        return `sent=${res.sent}, failed=${res.failed}, target=ko`;
+      }),
+    );
 
   const handlePushDiagnostic = () =>
     runAction('Push Subscription Diagnostic', async () => {
@@ -428,8 +450,13 @@ export function SecretMenuScreen({ navigation }: Props) {
     runAction('Dump Admin Token', async () => {
       const token = await adminTokenStore.getToken();
       if (!token) return 'No token';
-      Clipboard.setString(token);
-      return `Token (${token.length} chars) copied to clipboard`;
+      // Copy only a non-usable fingerprint — never the full bearer credential —
+      // so the live admin token isn't left on the system clipboard (readable by
+      // other apps / clipboard history).
+      const fingerprint = `${token.slice(0, 12)}… (${token.length} chars)`;
+      Clipboard.setString(fingerprint);
+      log(`  fingerprint: ${fingerprint}`, 'data');
+      return 'Token fingerprint copied (full token withheld for safety)';
     });
 
   const handleClearAdminToken = () => {
@@ -511,6 +538,7 @@ export function SecretMenuScreen({ navigation }: Props) {
                 'app.language',
                 'app.pushSubscriptionToken',
                 'app.pushSubscriptionEnvironment',
+                'auth.staffModeEnabled',
               ];
               for (const k of keys) {
                 try {
@@ -702,6 +730,7 @@ export function SecretMenuScreen({ navigation }: Props) {
         'app.pushSubscriptionToken',
         'app.pushSubscriptionEnvironment',
         'app.pushSubscriptionLanguage',
+        'auth.staffModeEnabled',
       ];
       let found = 0;
       for (const key of knownKeys) {
@@ -973,6 +1002,26 @@ export function SecretMenuScreen({ navigation }: Props) {
       const [cmd, ...args] = input.split(/\s+/);
       const baseUrl = BACKEND_URLS[termEnv];
 
+      // Destructive terminal commands hit real user devices/data when run against
+      // production. Require an explicit confirmation naming the live URL before
+      // letting any such command through; non-prod envs run unprompted.
+      const confirmIfProd = (label: string): Promise<boolean> =>
+        new Promise((resolve) => {
+          if (termEnv !== 'prod') {
+            resolve(true);
+            return;
+          }
+          Alert.alert(
+            'Production target',
+            `Run "${label}" against PRODUCTION?\n${baseUrl}\n\nThis affects real users. Continue?`,
+            [
+              { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+              { text: 'Run', style: 'destructive', onPress: () => resolve(true) },
+            ],
+            { cancelable: true, onDismiss: () => resolve(false) },
+          );
+        });
+
       const termFetch = async (path: string, init?: RequestInit) => {
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
         const token = await adminTokenStore.getToken();
@@ -1136,6 +1185,10 @@ export function SecretMenuScreen({ navigation }: Props) {
                 termLog('Usage: push test [all|en|ko]', 'err');
                 break;
               }
+              if (!(await confirmIfProd(`push test ${target}`))) {
+                termLog('Cancelled.', 'info');
+                break;
+              }
               const res = await termFetch('/admin/notify', {
                 method: 'POST',
                 body: JSON.stringify({
@@ -1176,6 +1229,10 @@ export function SecretMenuScreen({ navigation }: Props) {
             const body = args.slice(2).join(' ') || undefined;
             const init: RequestInit = { method };
             if (body && !['GET', 'HEAD'].includes(method)) init.body = body;
+            if (!['GET', 'HEAD'].includes(method) && !(await confirmIfProd(`raw ${method} ${path}`))) {
+              termLog('Cancelled.', 'info');
+              break;
+            }
             const start = Date.now();
             const res = await termFetch(path, init);
             const latency = Date.now() - start;
@@ -1554,7 +1611,7 @@ export function SecretMenuScreen({ navigation }: Props) {
       </View>
 
       {/* ═══ RAW HTTP MODAL ═══ */}
-      <Modal visible={rawModalVisible} transparent animationType="slide">
+      <Modal visible={rawModalVisible} transparent statusBarTranslucent animationType="slide">
         <Pressable style={styles.modalBackdrop} onPress={() => setRawModalVisible(false)}>
           <KeyboardSafeView keyboardVerticalOffset={insets.top}>
             <Pressable style={styles.modalCard} onPress={() => {}}>

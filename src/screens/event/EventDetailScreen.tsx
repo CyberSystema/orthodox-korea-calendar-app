@@ -135,7 +135,7 @@ export function EventDetailScreen({ route }: Props) {
       <View style={styles.container}>
         <View style={styles.emptyCard}>
           <ActivityIndicator size="small" color={colors.accentBright} />
-          <Text style={styles.emptyTitle}>Loading event...</Text>
+          <Text style={styles.emptyTitle}>{t('common.loading')}</Text>
         </View>
       </View>
     );

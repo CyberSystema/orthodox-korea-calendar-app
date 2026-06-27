@@ -216,9 +216,9 @@ export const useEventsStore = create<EventsState>((set, get) => ({
       try {
         let cursor = await loadSyncCursor();
         let hasMore = true;
-        let merged = [...get().customEvents];
         let pagesFetched = 0;
         const seenCursors = new Set<number>();
+        const pages: { events: LiturgicalEvent[]; deletedIds: string[] }[] = [];
 
         while (hasMore) {
           if (seenCursors.has(cursor)) {
@@ -230,7 +230,7 @@ export const useEventsStore = create<EventsState>((set, get) => ({
 
           seenCursors.add(cursor);
           const batch = await fetchSyncBatch(cursor);
-          merged = applySyncBatch(merged, batch.events, batch.deletedIds);
+          pages.push({ events: batch.events, deletedIds: batch.deletedIds });
 
           if (batch.hasMore && batch.cursor === cursor) {
             throw new Error('Sync cursor did not advance while hasMore=true. Stopping sync to avoid infinite requests.');
@@ -241,13 +241,29 @@ export const useEventsStore = create<EventsState>((set, get) => ({
           pagesFetched += 1;
         }
 
+        // Fold pages IN ORDER, starting from the freshest store state rather than
+        // a snapshot taken before the network round-trips. Ordering matters: an
+        // event created on an early page and deleted on a later one must end up
+        // deleted, so we cannot flatten all events/deletes and apply once.
+        // Re-basing on the latest state also prevents clobbering events that were
+        // added or edited locally while this sync was in flight.
+        let merged = get().customEvents;
+        for (const page of pages) {
+          merged = applySyncBatch(merged, page.events, page.deletedIds);
+        }
+
         set({
           customEvents: merged,
           syncState: 'idle',
           lastSyncedYear: year,
           lastSyncedAt: Date.now(),
         });
-        await Promise.all([persist(merged), persistSyncCursor(cursor)]);
+        // Persist events FIRST, then advance the cursor. These must be sequential
+        // (not Promise.all): if the events write fails, the cursor must NOT move
+        // past data that was never saved, otherwise those events are lost on the
+        // next sync.
+        await persist(merged);
+        await persistSyncCursor(cursor);
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to sync events.';
         set({ syncState: 'error', syncError: message });

@@ -65,7 +65,19 @@ function extractData(
 
 function getNotificationUrl(data: Record<string, unknown> | null): string | null {
   if (!data) return null;
-  if (typeof data.url === 'string' && data.url) return data.url;
+  // Only honour an explicit `url` if it targets our own scheme or an allowlisted
+  // app-link origin. Push payloads come from our backend, but validating here
+  // keeps a forged/compromised push from steering the app to an arbitrary URL.
+  if (typeof data.url === 'string' && data.url) {
+    const candidateUrl = data.url;
+    if (
+      candidateUrl.startsWith('okncalendar://') ||
+      APP_LINK_ORIGINS.some((origin) => candidateUrl.startsWith(origin))
+    ) {
+      return candidateUrl;
+    }
+    return null;
+  }
   const eventId = data.eventId ?? data.event_id;
   const eventDate = data.dateISO ?? data.date ?? data.eventDate ?? data.event_date;
   if (typeof eventId === 'string' && eventId) {

@@ -19,20 +19,26 @@ import { colors } from '../../theme/colors';
 import { radii, spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 
-const STORED_STUFF_PASSCODE_KEY = 'auth.staffPasscode';
+// We persist only that staff mode is enabled — never the raw passcode. The
+// session token (stored by the SDK) is what authenticates requests.
+const STAFF_MODE_KEY = 'auth.staffModeEnabled';
 
 export function SettingsScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const {
     adminMode,
+    cloudflareAdminAuthenticated,
     setAdminMode,
     setCloudflareAdminAuthenticated,
   } = useAppStore();
   const [statusText, setStatusText] = useState('');
   const [passcodeDraft, setPasscodeDraft] = useState('');
   const [authBusy, setAuthBusy] = useState(false);
-  const [hasStoredStuffPasscode, setHasStoredStuffPasscode] = useState(adminMode);
+
+  // The passcode field is shown whenever the user is not actively authenticated:
+  // either staff mode is off, or it's on but the session has expired.
+  const needsAuthentication = !adminMode || !cloudflareAdminAuthenticated;
 
   const getLoginFailureMessage = (result: AdminLoginResult) => {
     if (result.ok) {
@@ -53,6 +59,8 @@ export function SettingsScreen() {
     return result.message || t('settings.passcodeFailed');
   };
 
+  // Authenticate with the entered passcode and enable staff mode. Only the
+  // resulting session token is persisted (by the SDK) — never the passcode.
   const onSavePasscode = async () => {
     if (authBusy) return;
 
@@ -70,8 +78,8 @@ export function SettingsScreen() {
 
       const result = await loginStaffThroughCloudflare(passcodeDraft.trim());
       if (result.ok) {
-        await secureStorage.setItem(STORED_STUFF_PASSCODE_KEY, passcodeDraft.trim());
-        setHasStoredStuffPasscode(true);
+        await secureStorage.setItem(STAFF_MODE_KEY, '1');
+        setPasscodeDraft('');
         setCloudflareAdminAuthenticated(true);
         setAdminMode(true);
         setStatusText(t('settings.passcodeSaved'));
@@ -91,8 +99,8 @@ export function SettingsScreen() {
     setAuthBusy(true);
     try {
       if (!value) {
-        await secureStorage.deleteItem(STORED_STUFF_PASSCODE_KEY);
-        setHasStoredStuffPasscode(false);
+        // Disable staff mode: clear the flag and sign the session out.
+        await secureStorage.deleteItem(STAFF_MODE_KEY);
         setPasscodeDraft('');
         setAdminMode(false);
         await logoutAdminThroughCloudflare();
@@ -101,42 +109,32 @@ export function SettingsScreen() {
         return;
       }
 
-      const storedPasscode = (await secureStorage.getItem(STORED_STUFF_PASSCODE_KEY)) || '';
-      const passcode = (storedPasscode || passcodeDraft).trim();
-      if (!passcode) {
-        setStatusText(t('settings.passcodeRequired'));
-        return;
-      }
-
       if (!canUseEventsApi()) {
         setStatusText(t('settings.apiUnavailable'));
         return;
       }
 
+      // Turning staff mode on: reuse a still-valid session if one exists,
+      // otherwise authenticate with the entered passcode. We never read a stored
+      // passcode because we no longer keep one.
       const existingSessionOk = await verifyAdminCloudflareSession();
-      let ok = existingSessionOk;
-
-      if (!ok) {
+      if (!existingSessionOk) {
+        const passcode = passcodeDraft.trim();
+        if (!passcode) {
+          setStatusText(t('settings.passcodeRequired'));
+          return;
+        }
         const loginResult = await loginStaffThroughCloudflare(passcode);
         if (!loginResult.ok) {
           setCloudflareAdminAuthenticated(false);
           setStatusText(getLoginFailureMessage(loginResult));
           return;
         }
-        ok = true;
+        setPasscodeDraft('');
       }
 
-      if (!ok) {
-        setCloudflareAdminAuthenticated(false);
-        setStatusText(t('settings.passcodeFailed'));
-        return;
-      }
-
+      await secureStorage.setItem(STAFF_MODE_KEY, '1');
       setCloudflareAdminAuthenticated(true);
-      if (!storedPasscode) {
-        await secureStorage.setItem(STORED_STUFF_PASSCODE_KEY, passcode);
-      }
-      setHasStoredStuffPasscode(true);
       setAdminMode(true);
       setStatusText(t('settings.adminEnabled'));
     } finally {
@@ -162,6 +160,7 @@ export function SettingsScreen() {
           <Switch
             value={adminMode}
             disabled={authBusy}
+            accessibilityLabel={t('settings.adminMode')}
             onValueChange={(value) => void onToggleAdminMode(value)}
             trackColor={{ false: colors.backgroundWarm, true: colors.accentDim }}
             thumbColor={adminMode ? colors.accent : colors.textFaint}
@@ -178,8 +177,11 @@ export function SettingsScreen() {
               ? t('settings.apiConfigured')
               : t('settings.apiUnavailable')}
           </Text>
-          {!adminMode || !hasStoredStuffPasscode ? (
+          {needsAuthentication ? (
             <>
+              {adminMode && !cloudflareAdminAuthenticated ? (
+                <Text style={styles.statusText}>{t('settings.sessionExpired')}</Text>
+              ) : null}
               <TextInput
                 secureTextEntry
                 value={passcodeDraft}
@@ -187,8 +189,10 @@ export function SettingsScreen() {
                 placeholder={t('settings.adminPasscodePlaceholder')}
                 placeholderTextColor={colors.textSecondary}
                 style={styles.input}
+                autoCapitalize="none"
+                autoCorrect={false}
               />
-              <Pressable style={({ pressed }) => [styles.buttonOutline, authBusy && styles.buttonDisabled, pressed && styles.pressed]} disabled={authBusy} onPress={onSavePasscode}>
+              <Pressable style={({ pressed }) => [styles.buttonOutline, authBusy && styles.buttonDisabled, pressed && styles.pressed]} disabled={authBusy} onPress={onSavePasscode} accessibilityRole="button">
                 <Text style={styles.buttonOutlineText}>{t('settings.saveAdminPasscode')}</Text>
               </Pressable>
             </>

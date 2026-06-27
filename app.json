@@ -7,11 +7,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#3A0A0A"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.cybersystema.okncalendar",
@@ -20,7 +15,7 @@
         "applinks:orthodox-korea-calendar.pages.dev"
       ],
       "infoPlist": {
-        "NSUserNotificationUsageDescription": "Orthodox Korea Calendar sends liturgical reminders in your selected language."
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -51,15 +46,22 @@
         "foregroundImage": "./assets/android-icon-foreground.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": true
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-localization",
-      "expo-font",
       "expo-secure-store",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#3A0A0A"
+        }
+      ],
       [
         "expo-notifications",
         {
