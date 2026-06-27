@@ -1,8 +1,8 @@
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as Notifications from 'expo-notifications';
 import { NavigationContainer } from '@react-navigation/native';
-import { Alert, Linking, View } from 'react-native';
+import { Alert, Animated, Linking, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import i18n from '../i18n';
@@ -17,6 +17,7 @@ import {
 } from '../services/notifications/notifications';
 import { useAppStore } from '../store/useAppStore';
 import { ByzantineSplashScreen } from '../components/common/ByzantineSplashScreen';
+import { colors } from '../theme/colors';
 import { navigationTheme } from '../theme/navigationTheme';
 
 export function RootApp() {
@@ -126,23 +127,58 @@ export function RootApp() {
     return () => clearTimeout(timer);
   }, []);
 
-  if (!isHydrated || !eventsHydrated || !minSplashElapsed) {
-    return (
-      <SafeAreaProvider>
-        <View style={{ flex: 1 }}>
-          <StatusBar style="light" />
-          <ByzantineSplashScreen />
-        </View>
-      </SafeAreaProvider>
-    );
-  }
+  const appReady = isHydrated && eventsHydrated && minSplashElapsed;
+  const [splashMounted, setSplashMounted] = useState(true);
+  const splashOpacity = useRef(new Animated.Value(1)).current;
+
+  // Crossfade the splash out once the app is ready, revealing the (already
+  // mounted) main app underneath. Rendering both inside one persistent
+  // brand-colored container — instead of a hard if/else swap — removes the white
+  // flash between the splash and the main screen.
+  useEffect(() => {
+    if (!appReady) {
+      return;
+    }
+    const animation = Animated.timing(splashOpacity, {
+      toValue: 0,
+      duration: 450,
+      useNativeDriver: true,
+    });
+    animation.start(({ finished }) => {
+      if (finished) {
+        setSplashMounted(false);
+      }
+    });
+    return () => animation.stop();
+  }, [appReady, splashOpacity]);
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer linking={linking} theme={navigationTheme}>
+      <View style={styles.root}>
         <StatusBar style="light" />
-        <RootNavigator />
-      </NavigationContainer>
+        {appReady ? (
+          <NavigationContainer linking={linking} theme={navigationTheme}>
+            <RootNavigator />
+          </NavigationContainer>
+        ) : null}
+        {splashMounted ? (
+          <Animated.View
+            pointerEvents="none"
+            style={[StyleSheet.absoluteFill, { opacity: splashOpacity }]}
+          >
+            <ByzantineSplashScreen />
+          </Animated.View>
+        ) : null}
+      </View>
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    // Brand background behind everything, so any frame where neither the splash
+    // nor a screen has painted shows the brand color instead of white.
+    backgroundColor: colors.primaryDeep,
+  },
+});

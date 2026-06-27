@@ -10,6 +10,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.cybersystema.okncalendar",
+      "appleTeamId": "4S3VW22A8G",
       "googleServicesFile": "./GoogleService-Info.plist",
       "associatedDomains": [
         "applinks:orthodox-korea-calendar.pages.dev"
@@ -52,13 +53,15 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      "./plugins/withSolidLaunchScreen",
+      "./plugins/withIosSceneLifecycle",
+      "./plugins/withMinIosDeploymentTarget",
       "expo-localization",
       "expo-secure-store",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/splash-icon.png",
-          "resizeMode": "contain",
+          "//": "No image. We only need this to generate the SplashScreenBackground color asset (#3A0A0A). The launch screen itself is set by ./plugins/withSolidLaunchScreen (last) to a solid-color UILaunchScreen referencing that asset, instead of expo-splash-screen's storyboard (which renders white on the New Architecture).",
           "backgroundColor": "#3A0A0A"
         }
       ],
@@ -68,6 +71,15 @@
           "defaultChannel": "calendar-reminders",
           "mode": "production",
           "enableBackgroundRemoteNotifications": true
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "//": "Force every CocoaPods target to the app's minimum iOS version. Some sub-pods (e.g. RNSVG-RNSVGFilters) hardcode 12.4, which the current Xcode rejects (min supported is 15.0); this post_install bumps them all to match.",
+          "ios": {
+            "deploymentTarget": "16.4"
+          }
         }
       ]
     ]
