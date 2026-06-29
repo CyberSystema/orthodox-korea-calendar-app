@@ -130,6 +130,7 @@ const en = {
     passcodeRateLimitedWithRetry: 'Too many login attempts. Try again in {{seconds}} seconds.',
     passcodeRequired: 'Set and verify Staff Passcode before enabling Staff Mode.',
     adminEnabled: 'Staff Mode enabled and synchronized.',
+    version: 'Version {{version}}',
   },
   a11y: {
     openSettings: 'Open settings',

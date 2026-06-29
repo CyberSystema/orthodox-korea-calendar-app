@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import * as Application from 'expo-application';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -39,6 +40,12 @@ export function SettingsScreen() {
   // The passcode field is shown whenever the user is not actively authenticated:
   // either staff mode is off, or it's on but the session has expired.
   const needsAuthentication = !adminMode || !cloudflareAdminAuthenticated;
+
+  // App version for the footer — read from the native binary so it reflects the
+  // EAS-incremented build number, not the app.json value.
+  const appVersion = Application.nativeApplicationVersion ?? '';
+  const appBuild = Application.nativeBuildVersion ?? '';
+  const versionLabel = appBuild ? `${appVersion} (${appBuild})` : appVersion;
 
   const getLoginFailureMessage = (result: AdminLoginResult) => {
     if (result.ok) {
@@ -208,6 +215,11 @@ export function SettingsScreen() {
           </View>
           <Text style={styles.statusText}>{t('settings.notificationsAutoPrompt')}</Text>
         </View>
+
+        {/* ═══ APP VERSION ═══ */}
+        {versionLabel ? (
+          <Text style={styles.versionText}>{t('settings.version', { version: versionLabel })}</Text>
+        ) : null}
       </ScrollView>
     </KeyboardSafeView>
   );
@@ -293,5 +305,14 @@ const styles = StyleSheet.create({
     fontSize: typography.size.sm,
     color: colors.textSecondary,
     lineHeight: 20,
+  },
+
+  // ─── Version footer ────────────────────────────────────────────────────────
+  versionText: {
+    fontFamily: typography.family.body,
+    fontSize: typography.size.sm,
+    color: colors.textFaint,
+    textAlign: 'center',
+    marginTop: spacing.sm,
   },
 });

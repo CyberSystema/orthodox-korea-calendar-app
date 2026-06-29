@@ -130,6 +130,7 @@ const ko = {
     passcodeRateLimitedWithRetry: '로그인 시도가 너무 많습니다. {{seconds}}초 후 다시 시도하세요.',
     passcodeRequired: '스태프 모드를 활성화하려면 스태프 비밀번호를 설정하고 검증하세요.',
     adminEnabled: '스태프 모드가 활성화되고 동기화되었습니다.',
+    version: '버전 {{version}}',
   },
   a11y: {
     openSettings: '설정 열기',
