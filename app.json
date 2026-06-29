@@ -61,8 +61,13 @@
       [
         "expo-splash-screen",
         {
-          "//": "No image. We only need this to generate the SplashScreenBackground color asset (#3A0A0A). The launch screen itself is set by ./plugins/withSolidLaunchScreen (last) to a solid-color UILaunchScreen referencing that asset, instead of expo-splash-screen's storyboard (which renders white on the New Architecture).",
-          "backgroundColor": "#3A0A0A"
+          "//": "iOS: NO top-level image — ./plugins/withSolidLaunchScreen (listed first, runs last via withMod LIFO) replaces expo-splash-screen's storyboard with a solid-color UILaunchScreen that references the SplashScreenBackground asset generated from the top-level backgroundColor (#3A0A0A), keeping the launch flash-free. Android: an image IS required — withAndroidSplashStyles ALWAYS writes windowSplashScreenAnimatedIcon=@drawable/splashscreen_logo into the Android 12 splash theme, so with no image the drawable is never generated and the release build fails at processReleaseResources (resource splashscreen_logo not found). The android block supplies the brand mark (the masking-padded adaptive foreground) so the drawable exists; Android 12 always renders a splash icon anyway. This android block does not affect the iOS config.",
+          "backgroundColor": "#3A0A0A",
+          "android": {
+            "backgroundColor": "#3A0A0A",
+            "image": "./assets/android-icon-foreground.png",
+            "imageWidth": 200
+          }
         }
       ],
       [
