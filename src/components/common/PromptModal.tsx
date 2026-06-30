@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { useTranslation } from 'react-i18next';
 
 import { colors } from '../../theme/colors';
 import { radii, spacing } from '../../theme/spacing';
@@ -23,15 +22,12 @@ type PromptModalProps = {
  * Renders a styled modal with a single text field so password / value
  * prompts work identically on iOS and Android.
  *
- * The secret-console passcode prompt had TWO independent hard-freeze causes on the
- * New Architecture, both fixed here:
- *   1. `autoFocus` on a TextInput inside a fade-animated Modal races the open
- *      transition -> deadlock. Fixed by focusing in `onShow` (after the animation).
- *   2. iOS Password AutoFill on a native `secureTextEntry` field freezes the app
- *      (recovers only after backgrounding) — the Fabric recycled-TextInput bug,
- *      facebook/react-native#53050. No prop disables autofill while secureTextEntry
- *      is set (#37236), so we DON'T use secureTextEntry: a plain TextInput never
- *      triggers autofill. We mask the value ourselves (bullets + Show/Hide toggle).
+ * The iOS Password AutoFill freeze on this field was a native New-Architecture bug:
+ * a `secureTextEntry` TextInput that Fabric RECYCLES after autofill comes back frozen
+ * (facebook/react-native#53050). It is fixed natively in
+ * `patches/react-native+0.85.3.patch` (TextInput opts out of view recycling), so this
+ * component stays a plain native secureTextEntry field. We only defer focus to `onShow`
+ * because `autoFocus` inside a fade Modal races the open transition on Fabric.
  */
 export function PromptModal({
   visible,
@@ -44,9 +40,7 @@ export function PromptModal({
   onSubmit,
   onCancel,
 }: PromptModalProps) {
-  const { t } = useTranslation();
   const [value, setValue] = useState('');
-  const [revealed, setRevealed] = useState(false);
   const inputRef = useRef<TextInput>(null);
 
   // Reset the field each time the modal opens so stale input never leaks
@@ -54,25 +48,8 @@ export function PromptModal({
   useEffect(() => {
     if (visible) {
       setValue('');
-      setRevealed(false);
     }
   }, [visible]);
-
-  const masked = !!secureTextEntry && !revealed;
-  const displayValue = masked ? '•'.repeat(value.length) : value;
-
-  const handleChangeText = (text: string) => {
-    if (!masked) {
-      setValue(text);
-      return;
-    }
-    // Reconstruct the real value from append/backspace edits on the bullet string.
-    if (text.length > value.length) {
-      setValue(value + text.slice(value.length));
-    } else if (text.length < value.length) {
-      setValue(value.slice(0, text.length));
-    }
-  };
 
   const handleSubmit = () => {
     onSubmit(value);
@@ -98,36 +75,19 @@ export function PromptModal({
               <Text style={styles.title}>{title}</Text>
             </View>
             {message ? <Text style={styles.message}>{message}</Text> : null}
-            <View style={styles.inputRow}>
-              <TextInput
-                ref={inputRef}
-                style={styles.input}
-                value={displayValue}
-                onChangeText={handleChangeText}
-                placeholder={placeholder}
-                placeholderTextColor={colors.textSecondary}
-                autoCapitalize="none"
-                autoCorrect={false}
-                spellCheck={false}
-                returnKeyType="done"
-                onSubmitEditing={handleSubmit}
-                // No native secureTextEntry (see the masking note above) — that is what
-                // keeps iOS Password AutoFill and its New-Arch freeze from ever engaging.
-                textContentType="none"
-                autoComplete="off"
-                importantForAutofill="no"
-              />
-              {secureTextEntry ? (
-                <Pressable
-                  onPress={() => setRevealed((prev) => !prev)}
-                  style={({ pressed }) => [styles.revealButton, pressed && styles.pressed]}
-                  accessibilityRole="button"
-                  accessibilityLabel={revealed ? t('common.hide') : t('common.show')}
-                >
-                  <Text style={styles.revealText}>{revealed ? t('common.hide') : t('common.show')}</Text>
-                </Pressable>
-              ) : null}
-            </View>
+            <TextInput
+              ref={inputRef}
+              style={styles.input}
+              value={value}
+              onChangeText={setValue}
+              placeholder={placeholder}
+              placeholderTextColor={colors.textSecondary}
+              secureTextEntry={secureTextEntry}
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="done"
+              onSubmitEditing={handleSubmit}
+            />
             <View style={styles.actions}>
               <Pressable
                 style={({ pressed }) => [styles.buttonMuted, pressed && styles.pressed]}
@@ -185,14 +145,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingTop: spacing.md,
   },
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    margin: spacing.md,
-  },
   input: {
-    flex: 1,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radii.md,
@@ -202,15 +155,7 @@ const styles = StyleSheet.create({
     fontSize: typography.size.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-  },
-  revealButton: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.sm,
-  },
-  revealText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: colors.primary,
+    margin: spacing.md,
   },
   actions: {
     flexDirection: 'row',

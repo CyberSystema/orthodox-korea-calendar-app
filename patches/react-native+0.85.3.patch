@@ -1,0 +1,23 @@
+diff --git a/node_modules/react-native/React/Fabric/Mounting/ComponentViews/TextInput/RCTTextInputComponentView.mm b/node_modules/react-native/React/Fabric/Mounting/ComponentViews/TextInput/RCTTextInputComponentView.mm
+index cbbc402..85fc33f 100644
+--- a/node_modules/react-native/React/Fabric/Mounting/ComponentViews/TextInput/RCTTextInputComponentView.mm
++++ b/node_modules/react-native/React/Fabric/Mounting/ComponentViews/TextInput/RCTTextInputComponentView.mm
+@@ -82,6 +82,18 @@ static NSSet<NSNumber *> *returnKeyTypesSet;
+   CGSize _previousContentSize;
+ }
+ 
++#pragma mark - Fabric view recycling
++
++// Opt TextInput out of New Architecture view recycling. iOS Password AutoFill corrupts a
++// UITextField/UITextView that Fabric then RECYCLES into its pool; the recycled input comes
++// back frozen / non-editable until an app background+foreground cycle
++// (facebook/react-native#53050). Recreating the view instead of pooling it avoids the
++// corruption. Applied via patch-package.
+++ (BOOL)shouldBeRecycled
++{
++  return NO;
++}
++
+ #pragma mark - UIView overrides
+ 
+ - (instancetype)initWithFrame:(CGRect)frame
