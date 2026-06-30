@@ -1,9 +1,13 @@
 const en = {
   nav: {
+    home: 'Home',
     today: 'Today',
     month: 'Month',
     eventDetail: 'Event Detail',
     settings: 'Settings',
+  },
+  offline: {
+    banner: "You're offline — showing your saved calendar. Event updates and Staff Mode are paused until you reconnect.",
   },
   common: {
     events: 'events',
@@ -131,6 +135,7 @@ const en = {
     passcodeRequired: 'Set and verify Staff Passcode before enabling Staff Mode.',
     adminEnabled: 'Staff Mode enabled and synchronized.',
     version: 'Version {{version}}',
+    offlineStaffDisabled: "Staff Mode needs an internet connection. It will resume automatically when you're back online.",
   },
   a11y: {
     openSettings: 'Open settings',

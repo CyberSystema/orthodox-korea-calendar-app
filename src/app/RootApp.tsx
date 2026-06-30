@@ -16,6 +16,9 @@ import {
   runLaunchNotificationPermissionFlow,
 } from '../services/notifications/notifications';
 import { useAppStore } from '../store/useAppStore';
+import { initNetworkMonitor, useNetworkStore } from '../store/useNetworkStore';
+import { verifyAdminCloudflareSession } from '../services/api/adminAuth';
+import { OfflineBanner } from '../components/common/OfflineBanner';
 import { ByzantineSplashScreen } from '../components/common/ByzantineSplashScreen';
 import { colors } from '../theme/colors';
 import { navigationTheme } from '../theme/navigationTheme';
@@ -25,6 +28,10 @@ export function RootApp() {
   const hydratePreferences = useAppStore((state) => state.hydratePreferences);
   const eventsHydrated = useEventsStore((state) => state.isHydrated);
   const hydrateEvents = useEventsStore((state) => state.hydrateEvents);
+  const adminMode = useAppStore((state) => state.adminMode);
+  const setCloudflareAdminAuthenticated = useAppStore((state) => state.setCloudflareAdminAuthenticated);
+  const isOnline = useNetworkStore((state) => state.isOnline);
+  const wasOnlineRef = useRef(true);
   const [minSplashElapsed, setMinSplashElapsed] = useState(false);
 
   useEffect(() => {
@@ -119,6 +126,36 @@ export function RootApp() {
   }, []);
 
   useEffect(() => {
+    // Monitor connectivity so the app can show the offline banner and gate
+    // online-only features (event sync, Staff Mode).
+    let cleanup: (() => void) | undefined;
+    void initNetworkMonitor().then((unsubscribe) => {
+      cleanup = unsubscribe;
+    });
+    return () => cleanup?.();
+  }, []);
+
+  useEffect(() => {
+    const wasOnline = wasOnlineRef.current;
+    wasOnlineRef.current = isOnline;
+    // Act only on a genuine offline -> online transition, after hydration.
+    if (!isHydrated || !isOnline || wasOnline) {
+      return;
+    }
+    // Reconnected: recall the staff session token (NEVER re-prompt for the passcode)
+    // and resume the things that need the network.
+    if (adminMode) {
+      void verifyAdminCloudflareSession()
+        .then(setCloudflareAdminAuthenticated)
+        .catch((err) => console.warn('[App] staff session re-verify on reconnect failed:', err));
+    }
+    void registerCurrentPushSubscription({ force: true }).catch((err) =>
+      console.warn('[Push] reconnect re-registration failed:', err),
+    );
+    void syncCalendarDataFromGithub();
+  }, [isOnline, isHydrated, adminMode, setCloudflareAdminAuthenticated]);
+
+  useEffect(() => {
     // Brief branded splash moment; the screen is dismissed as soon as hydration
     // finishes (typically faster than this), so this only bounds the minimum.
     const timer = setTimeout(() => {
@@ -157,9 +194,14 @@ export function RootApp() {
       <View style={styles.root}>
         <StatusBar style="light" />
         {appReady ? (
-          <NavigationContainer linking={linking} theme={navigationTheme}>
-            <RootNavigator />
-          </NavigationContainer>
+          <View style={styles.appHost}>
+            <View style={styles.navHost}>
+              <NavigationContainer linking={linking} theme={navigationTheme}>
+                <RootNavigator />
+              </NavigationContainer>
+            </View>
+            <OfflineBanner />
+          </View>
         ) : null}
         {splashMounted ? (
           <Animated.View
@@ -180,5 +222,13 @@ const styles = StyleSheet.create({
     // Brand background behind everything, so any frame where neither the splash
     // nor a screen has painted shows the brand color instead of white.
     backgroundColor: colors.primaryDeep,
+  },
+  // Column: the navigator fills, and the offline banner (when visible) takes its
+  // height at the bottom, lifting the content above it.
+  appHost: {
+    flex: 1,
+  },
+  navHost: {
+    flex: 1,
   },
 });

@@ -1,9 +1,13 @@
 const ko = {
   nav: {
+    home: '홈',
     today: '오늘',
     month: '월간',
     eventDetail: '행사 상세',
     settings: '설정',
+  },
+  offline: {
+    banner: '오프라인 상태입니다 — 저장된 달력을 표시합니다. 행사 업데이트와 스태프 모드는 다시 연결될 때까지 일시 중지됩니다.',
   },
   common: {
     events: '행사',
@@ -131,6 +135,7 @@ const ko = {
     passcodeRequired: '스태프 모드를 활성화하려면 스태프 비밀번호를 설정하고 검증하세요.',
     adminEnabled: '스태프 모드가 활성화되고 동기화되었습니다.',
     version: '버전 {{version}}',
+    offlineStaffDisabled: '스태프 모드는 인터넷 연결이 필요합니다. 다시 온라인 상태가 되면 자동으로 재개됩니다.',
   },
   a11y: {
     openSettings: '설정 열기',

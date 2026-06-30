@@ -16,6 +16,7 @@ import {
 import { canUseEventsApi } from '../../services/api/eventsRepository';
 import { secureStorage } from '../../services/storage/secureStorage';
 import { useAppStore } from '../../store/useAppStore';
+import { useNetworkStore } from '../../store/useNetworkStore';
 import { colors } from '../../theme/colors';
 import { radii, spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
@@ -33,6 +34,7 @@ export function SettingsScreen() {
     setAdminMode,
     setCloudflareAdminAuthenticated,
   } = useAppStore();
+  const isOnline = useNetworkStore((state) => state.isOnline);
   const [statusText, setStatusText] = useState('');
   const [passcodeDraft, setPasscodeDraft] = useState('');
   const [authBusy, setAuthBusy] = useState(false);
@@ -166,13 +168,17 @@ export function SettingsScreen() {
           <Text style={styles.rowTitle}>{t('settings.adminMode')}</Text>
           <Switch
             value={adminMode}
-            disabled={authBusy}
+            disabled={authBusy || !isOnline}
             accessibilityLabel={t('settings.adminMode')}
             onValueChange={(value) => void onToggleAdminMode(value)}
             trackColor={{ false: colors.backgroundWarm, true: colors.accentDim }}
             thumbColor={adminMode ? colors.accent : colors.textFaint}
           />
         </View>
+
+        {!isOnline ? (
+          <Text style={styles.statusText}>{t('settings.offlineStaffDisabled')}</Text>
+        ) : null}
 
         {/* ═══ WEB ADMIN SYNC ═══ */}
         <View style={styles.card}>
@@ -198,8 +204,9 @@ export function SettingsScreen() {
                 style={styles.input}
                 autoCapitalize="none"
                 autoCorrect={false}
+                editable={isOnline}
               />
-              <Pressable style={({ pressed }) => [styles.buttonOutline, authBusy && styles.buttonDisabled, pressed && styles.pressed]} disabled={authBusy} onPress={onSavePasscode} accessibilityRole="button">
+              <Pressable style={({ pressed }) => [styles.buttonOutline, (authBusy || !isOnline) && styles.buttonDisabled, pressed && styles.pressed]} disabled={authBusy || !isOnline} onPress={onSavePasscode} accessibilityRole="button">
                 <Text style={styles.buttonOutlineText}>{t('settings.saveAdminPasscode')}</Text>
               </Pressable>
             </>

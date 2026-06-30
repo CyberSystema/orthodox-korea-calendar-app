@@ -32,7 +32,10 @@ export function RootNavigator() {
       <Stack.Screen
         name="MainTabs"
         component={MainTabs}
-        options={{ headerShown: false }}
+        // `title` is unused while headerShown is false, but native-stack uses it as the
+        // back-button label on pushed screens (Settings, EventDetail) — without it the
+        // back button shows the raw route name "MainTabs".
+        options={{ headerShown: false, title: t('nav.home') }}
       />
       <Stack.Screen
         name="EventDetail"

@@ -29,6 +29,7 @@ import { useEventsStore } from '../../features/events/useEventsStore';
 import type { MainTabsParamList, RootStackParamList } from '../../navigation/types';
 import { loginAdminThroughCloudflare } from '../../services/api/adminAuth';
 import { useAppStore } from '../../store/useAppStore';
+import { useNetworkStore } from '../../store/useNetworkStore';
 import { colors } from '../../theme/colors';
 import { radii, spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
@@ -82,6 +83,7 @@ export function MonthScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { language, adminMode, selectedDateISO, setSelectedDateISO, setSecretMenuUnlocked, setCloudflareAdminAuthenticated } = useAppStore();
+  const isOnline = useNetworkStore((state) => state.isOnline);
   const addEvent = useEventsStore((state) => state.addEvent);
   const updateEvent = useEventsStore((state) => state.updateEvent);
   const deleteEvent = useEventsStore((state) => state.deleteEvent);
@@ -539,8 +541,8 @@ export function MonthScreen({ navigation, route }: Props) {
         />
       </View>
 
-      {/* ═══ ADMIN SECTION ═══ */}
-      {adminMode ? (
+      {/* ═══ ADMIN SECTION ═══ (hidden offline — staff editing needs the backend) */}
+      {adminMode && isOnline ? (
         <View style={styles.adminCard}>
           <Text style={styles.adminTitle}>{t('month.adminWorkflow')}</Text>
           <Text style={styles.adminSyncText}>
