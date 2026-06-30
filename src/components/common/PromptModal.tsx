@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { colors } from '../../theme/colors';
 import { radii, spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
-import { KeyboardSafeView } from './KeyboardSafeView';
 
 type PromptModalProps = {
   visible: boolean;
@@ -51,7 +50,7 @@ export function PromptModal({
   return (
     <Modal visible={visible} transparent statusBarTranslucent animationType="fade" onRequestClose={onCancel}>
       <Pressable style={styles.backdrop} onPress={onCancel}>
-        <KeyboardSafeView>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <Pressable style={styles.card} onPress={() => {}}>
             <View style={styles.header}>
               <Text style={styles.title}>{title}</Text>
@@ -69,17 +68,16 @@ export function PromptModal({
               autoFocus
               returnKeyType="done"
               onSubmitEditing={handleSubmit}
-              // Declare the field to each platform's autofill engine. Without
-              // these, iOS Password Autofill treats a bare `secureTextEntry`
-              // input as unknown and drives a blur/refocus + single bulk
-              // onChangeText handoff that, inside this Modal (wrapped in a
-              // backdrop Pressable + KeyboardSafeView's TouchableWithoutFeedback
-              // → Keyboard.dismiss), re-enters the focus/keyboard cycle and
-              // wedges the JS thread. Tagging it as a password routes autofill
-              // through the native secure-text path instead of synthetic input.
-              textContentType={secureTextEntry ? 'password' : 'none'}
-              autoComplete={secureTextEntry ? 'password' : 'off'}
-              importantForAutofill={secureTextEntry ? 'yes' : 'no'}
+              // iOS Password AutoFill is broken for a secureTextEntry TextInput under the
+              // New Architecture inside a Modal (facebook/react-native#53050 / #37236):
+              // tapping the QuickType password suggestion neither fills the field nor
+              // recovers, and hangs the app. We cannot make autofill work reliably here, so
+              // we suppress the offer (textContentType="none" + autoComplete="off") AND
+              // remove the structural deadlock — the modal no longer wraps the field in a
+              // Keyboard.dismiss TouchableWithoutFeedback. The passcode is entered manually.
+              textContentType="none"
+              autoComplete="off"
+              importantForAutofill="no"
             />
             <View style={styles.actions}>
               <Pressable
@@ -98,7 +96,7 @@ export function PromptModal({
               </Pressable>
             </View>
           </Pressable>
-        </KeyboardSafeView>
+        </KeyboardAvoidingView>
       </Pressable>
     </Modal>
   );
