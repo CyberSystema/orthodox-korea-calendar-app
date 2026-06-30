@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import * as Notifications from 'expo-notifications';
 import { NavigationContainer } from '@react-navigation/native';
 import { Alert, Animated, Linking, StyleSheet, View } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 
 import i18n from '../i18n';
 import { syncCalendarDataFromGithub } from '../features/calendar/webCalendarSource';
@@ -153,7 +153,7 @@ export function RootApp() {
   }, [appReady, splashOpacity]);
 
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
       <View style={styles.root}>
         <StatusBar style="light" />
         {appReady ? (

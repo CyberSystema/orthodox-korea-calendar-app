@@ -66,7 +66,7 @@ export function MainTabs() {
           styles.tabBar,
           {
             height: 58 + insets.bottom,
-            paddingBottom: insets.bottom + 2,
+            paddingBottom: insets.bottom,
           },
         ],
         tabBarActiveTintColor: colors.tabActive,

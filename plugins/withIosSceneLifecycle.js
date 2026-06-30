@@ -42,24 +42,32 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
   // hardcodes a white layer, and the splash loading view / surface only attach via
   // didMoveToWindow, which runs AFTER window.makeKeyAndVisible() (inside startReactNative).
   // So for >=1 composited frame the white host layer is on screen with nothing over it,
-  // and coloring the window/root view does nothing because that white layer sits on top.
-  // The fix: a replica of the launch storyboard (brand background + the same centered
-  // emblem) added to the window BEFORE makeKeyAndVisible so it is painted on frame 0 and
-  // z-ordered above the host view — then lifted with a crossfade only after React Native's
-  // first real frame has composited.
-  private var launchCover: UIView?
+  // and coloring the app window/root view does nothing because that white layer sits on top.
+  // Compounding this, expo-updates defers the real RN root view and, after its async update
+  // check, REASSIGNS the app window's rootViewController — landing a fresh (white-until-
+  // painted) host view above any subview we add to the app window.
+  // The fix: a solid brand-color cover hosted in its OWN window at a higher windowLevel,
+  // brought up BEFORE makeKeyAndVisible so it paints on frame 0 and stays above both the
+  // host view and any later rootViewController swap — then lifted with a single crossfade
+  // only after React Native's first real frame has composited.
+  private var coverWindow: UIWindow?
   private var coverContentObserver: NSObjectProtocol?
 
-  private func makeLaunchCover(_ frame: CGRect) -> UIView {
-    // A plain solid brand-color cover (NO emblem). The JS ByzantineSplashScreen
-    // starts as a flat #3A0A0A and fades its emblem/rings/gradient up from there,
-    // so a solid cover is pixel-identical to the splash's first frame — the cover
-    // lifts invisibly and the splash simply materializes.
-    let cover = UIView(frame: frame)
-    cover.backgroundColor = SceneDelegate.brandBackground
-    cover.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-    cover.isUserInteractionEnabled = false
-    return cover
+  private func makeCoverWindow(_ windowScene: UIWindowScene) -> UIWindow {
+    // A SEPARATE window at a higher windowLevel hosting a plain solid brand-color view
+    // (NO emblem). The JS ByzantineSplashScreen starts as a flat #3A0A0A and fades its
+    // emblem/rings/gradient up from there, so a solid cover is pixel-identical to the
+    // splash's first frame — the cover lifts invisibly and the splash simply materializes.
+    // Using its own window (not a subview of the app window) keeps it above ANY
+    // rootViewController the app window swaps in.
+    let coverWindow = UIWindow(windowScene: windowScene)
+    coverWindow.windowLevel = .normal + 1
+    coverWindow.backgroundColor = SceneDelegate.brandBackground
+    coverWindow.isUserInteractionEnabled = false
+    let coverController = UIViewController()
+    coverController.view.backgroundColor = SceneDelegate.brandBackground
+    coverWindow.rootViewController = coverController
+    return coverWindow
   }
 
   private func scheduleLaunchCoverDismissal() {
@@ -83,10 +91,10 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
       NotificationCenter.default.removeObserver(observer)
       coverContentObserver = nil
     }
-    guard let cover = launchCover else { return }
-    launchCover = nil
+    guard let coverWindow = self.coverWindow else { return }
+    self.coverWindow = nil
     // Two runloop hops span "content mounted" -> "pixels committed", so the splash
-    // is fully painted before we crossfade the solid cover away. This is the ONLY
+    // is fully painted before we crossfade the cover window away. This is the ONLY
     // transition animation — the React Native splash renders at full opacity
     // underneath, so there is no second fade to desync with.
     DispatchQueue.main.async {
@@ -95,8 +103,11 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
           withDuration: 0.35,
           delay: 0,
           options: [.curveEaseInOut],
-          animations: { cover.alpha = 0 },
-          completion: { _ in cover.removeFromSuperview() }
+          animations: { coverWindow.alpha = 0 },
+          completion: { _ in
+            coverWindow.isHidden = true
+            coverWindow.windowScene = nil
+          }
         )
       }
     }
@@ -118,16 +129,19 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     self.window = window
     appDelegate.window = window
 
-    // Add the cover BEFORE startReactNative (which calls makeKeyAndVisible), so it is
-    // present on the very first composited frame, above React Native's white host view.
-    let cover = makeLaunchCover(windowScene.coordinateSpace.bounds)
-    window.addSubview(cover)
-    launchCover = cover
+    // Bring up the cover window BEFORE startReactNative (which calls makeKeyAndVisible on
+    // the app window), so brand color is painted on frame 0. Its higher windowLevel keeps
+    // it above React Native's white host view AND above any rootViewController the app
+    // window later swaps in (expo-updates replaces it asynchronously after its update check).
+    let coverWindow = makeCoverWindow(windowScene)
+    self.coverWindow = coverWindow
+    coverWindow.makeKeyAndVisible()
 
     factory.startReactNative(withModuleName: "main", in: window, launchOptions: nil)
     window.rootViewController?.view.backgroundColor = SceneDelegate.brandBackground
-    // Re-add to guarantee the cover sits above the RN root view controller's view.
-    window.addSubview(cover)
+    // startReactNative makes the app window key; the cover window stays visible above it
+    // via its higher windowLevel. Re-assert visibility defensively.
+    coverWindow.isHidden = false
     scheduleLaunchCoverDismissal()
 
     // Replay a deep link / universal link that cold-launched the app.

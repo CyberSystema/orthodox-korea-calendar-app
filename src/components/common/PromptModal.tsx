@@ -69,6 +69,17 @@ export function PromptModal({
               autoFocus
               returnKeyType="done"
               onSubmitEditing={handleSubmit}
+              // Declare the field to each platform's autofill engine. Without
+              // these, iOS Password Autofill treats a bare `secureTextEntry`
+              // input as unknown and drives a blur/refocus + single bulk
+              // onChangeText handoff that, inside this Modal (wrapped in a
+              // backdrop Pressable + KeyboardSafeView's TouchableWithoutFeedback
+              // → Keyboard.dismiss), re-enters the focus/keyboard cycle and
+              // wedges the JS thread. Tagging it as a password routes autofill
+              // through the native secure-text path instead of synthetic input.
+              textContentType={secureTextEntry ? 'password' : 'none'}
+              autoComplete={secureTextEntry ? 'password' : 'off'}
+              importantForAutofill={secureTextEntry ? 'yes' : 'no'}
             />
             <View style={styles.actions}>
               <Pressable
