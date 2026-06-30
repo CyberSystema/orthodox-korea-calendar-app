@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import { EventDetailScreen } from '../screens/event/EventDetailScreen';
 import { SecretMenuScreen } from '../screens/secret/SecretMenuScreen';
+import { SECRET_MENU_ENABLED } from '../config/features';
 import { SettingsScreen } from '../screens/settings/SettingsScreen';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
@@ -47,11 +48,15 @@ export function RootNavigator() {
         component={SettingsScreen}
         options={{ title: t('nav.settings') }}
       />
-      <Stack.Screen
-        name="SecretMenu"
-        component={SecretMenuScreen}
-        options={{ title: 'System', headerShown: false }}
-      />
+      {/* Owner-only secret console: registered ONLY in local sideloads, never in
+          EAS/store builds (Apple 2.3.1: no hidden features in the shipped app). */}
+      {SECRET_MENU_ENABLED ? (
+        <Stack.Screen
+          name="SecretMenu"
+          component={SecretMenuScreen}
+          options={{ title: 'System', headerShown: false }}
+        />
+      ) : null}
     </Stack.Navigator>
   );
 }

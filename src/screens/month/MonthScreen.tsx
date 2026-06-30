@@ -8,6 +8,7 @@ import { Alert, Dimensions, Keyboard, Modal, Platform, Pressable, ScrollView, St
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useKeyboardHeight } from '../../hooks/useKeyboardHeight';
+import { SECRET_MENU_ENABLED } from '../../config/features';
 import { useTranslation } from 'react-i18next';
 import Svg, { Circle, Path } from 'react-native-svg';
 
@@ -114,6 +115,8 @@ export function MonthScreen({ navigation, route }: Props) {
   const [adminPromptVisible, setAdminPromptVisible] = useState(false);
   const secretTapRef = useRef({ count: 0, lastTap: 0 });
   const handleBrandTap = useCallback(() => {
+    // Owner-only: disabled (no-op) in all EAS/store builds; on only in local sideloads.
+    if (!SECRET_MENU_ENABLED) return;
     const now = Date.now();
     const ref = secretTapRef.current;
     if (now - ref.lastTap > 1200) ref.count = 0;
