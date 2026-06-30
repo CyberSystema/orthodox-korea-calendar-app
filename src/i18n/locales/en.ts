@@ -10,8 +10,6 @@ const en = {
     banner: "You're offline — showing your saved calendar. Event updates and Staff Mode are paused until you reconnect.",
   },
   common: {
-    show: 'Show',
-    hide: 'Hide',
     events: 'events',
     noEvents: 'No events for this date.',
     loading: 'Loading...',

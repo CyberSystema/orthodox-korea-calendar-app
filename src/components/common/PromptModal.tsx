@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { useTranslation } from 'react-i18next';
 
 import { colors } from '../../theme/colors';
 import { radii, spacing } from '../../theme/spacing';
@@ -34,46 +33,38 @@ export function PromptModal({
   onSubmit,
   onCancel,
 }: PromptModalProps) {
-  const { t } = useTranslation();
   const [value, setValue] = useState('');
-  const [revealed, setRevealed] = useState(false);
+  const inputRef = useRef<TextInput>(null);
 
   // Reset the field each time the modal opens so stale input never leaks
   // between invocations.
   useEffect(() => {
     if (visible) {
       setValue('');
-      setRevealed(false);
     }
   }, [visible]);
-
-  // We mask secure fields OURSELVES instead of using the native `secureTextEntry`
-  // prop. On iOS, secureTextEntry unconditionally invites Password AutoFill, which
-  // hangs the app inside a Modal under the New Architecture (facebook/react-native
-  // #53050, #37236) — and no prop reliably disables it. A plain TextInput never
-  // triggers autofill, so we render bullet characters and reconstruct the real value
-  // from append/backspace edits, with a Show/Hide toggle to reveal it.
-  const masked = !!secureTextEntry && !revealed;
-  const displayValue = masked ? '•'.repeat(value.length) : value;
-
-  const handleChangeText = (text: string) => {
-    if (!masked) {
-      setValue(text);
-      return;
-    }
-    if (text.length > value.length) {
-      setValue(value + text.slice(value.length));
-    } else if (text.length < value.length) {
-      setValue(value.slice(0, text.length));
-    }
-  };
 
   const handleSubmit = () => {
     onSubmit(value);
   };
 
   return (
-    <Modal visible={visible} transparent statusBarTranslucent animationType="fade" onRequestClose={onCancel}>
+    <Modal
+      visible={visible}
+      transparent
+      statusBarTranslucent
+      animationType="fade"
+      onRequestClose={onCancel}
+      // Focus the field only AFTER the open animation finishes. `autoFocus` on a
+      // TextInput inside a fade-animated Modal races the transition on the New
+      // Architecture and HARD-FREEZES the app — this (not iOS autofill) was the
+      // long-standing secret-console freeze: the old native Alert.prompt had no JS
+      // TextInput to autofocus, so it never happened before the hardening. onShow
+      // fires post-animation, so the focus/keyboard never races the transition.
+      onShow={() => {
+        requestAnimationFrame(() => inputRef.current?.focus());
+      }}
+    >
       <Pressable style={styles.backdrop} onPress={onCancel}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <Pressable style={styles.card} onPress={() => {}}>
@@ -81,36 +72,24 @@ export function PromptModal({
               <Text style={styles.title}>{title}</Text>
             </View>
             {message ? <Text style={styles.message}>{message}</Text> : null}
-            <View style={styles.inputRow}>
-              <TextInput
-                style={styles.input}
-                value={displayValue}
-                onChangeText={handleChangeText}
-                placeholder={placeholder}
-                placeholderTextColor={colors.textSecondary}
-                autoCapitalize="none"
-                autoCorrect={false}
-                spellCheck={false}
-                autoFocus
-                returnKeyType="done"
-                onSubmitEditing={handleSubmit}
-                // No native secureTextEntry (see the masking note above) — that is what
-                // keeps iOS Password AutoFill, and its Modal freeze, from ever engaging.
-                textContentType="none"
-                autoComplete="off"
-                importantForAutofill="no"
-              />
-              {secureTextEntry ? (
-                <Pressable
-                  onPress={() => setRevealed((prev) => !prev)}
-                  style={({ pressed }) => [styles.revealButton, pressed && styles.pressed]}
-                  accessibilityRole="button"
-                  accessibilityLabel={revealed ? t('common.hide') : t('common.show')}
-                >
-                  <Text style={styles.revealText}>{revealed ? t('common.hide') : t('common.show')}</Text>
-                </Pressable>
-              ) : null}
-            </View>
+            <TextInput
+              ref={inputRef}
+              style={styles.input}
+              value={value}
+              onChangeText={setValue}
+              placeholder={placeholder}
+              placeholderTextColor={colors.textSecondary}
+              secureTextEntry={secureTextEntry}
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="done"
+              onSubmitEditing={handleSubmit}
+              // Discourage iOS autofill (it never worked here and isn't the freeze
+              // cause). Native secureTextEntry handles masking with no JS value-fight.
+              textContentType="none"
+              autoComplete="off"
+              importantForAutofill="no"
+            />
             <View style={styles.actions}>
               <Pressable
                 style={({ pressed }) => [styles.buttonMuted, pressed && styles.pressed]}
@@ -168,14 +147,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingTop: spacing.md,
   },
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    margin: spacing.md,
-  },
   input: {
-    flex: 1,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radii.md,
@@ -185,15 +157,7 @@ const styles = StyleSheet.create({
     fontSize: typography.size.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-  },
-  revealButton: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.sm,
-  },
-  revealText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: colors.primary,
+    margin: spacing.md,
   },
   actions: {
     flexDirection: 'row',
