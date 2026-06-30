@@ -87,6 +87,12 @@ export function PromptModal({
               autoCorrect={false}
               returnKeyType="done"
               onSubmitEditing={handleSubmit}
+              // Hide the long-press edit menu on the passcode field. Its "AutoFill"
+              // action is a SEPARATE iOS path from the keyboard's QuickType autofill
+              // (the key icon, which works fine) and still hard-freezes the app even
+              // with view-recycling disabled. This blocks only the broken context-menu
+              // route — keyboard autofill and typing are unaffected.
+              contextMenuHidden={!!secureTextEntry}
             />
             <View style={styles.actions}>
               <Pressable
