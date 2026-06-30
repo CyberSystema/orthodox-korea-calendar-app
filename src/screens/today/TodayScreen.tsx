@@ -3,15 +3,15 @@ import type { CompositeScreenProps } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import dayjs from 'dayjs';
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { Alert, Keyboard, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Dimensions, Keyboard, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useKeyboardHeight } from '../../hooks/useKeyboardHeight';
 import { useTranslation } from 'react-i18next';
 import Svg, { Circle, Path } from 'react-native-svg';
 
 import { ByzantineArrow } from '../../components/common/ByzantineArrow';
 import { ByzantineKnot } from '../../components/common/ByzantineKnot';
-import { KeyboardSafeView } from '../../components/common/KeyboardSafeView';
 import { LiturgicalDayPanel } from '../../components/common/LiturgicalDayPanel';
 import { PromptModal } from '../../components/common/PromptModal';
 import {
@@ -56,6 +56,11 @@ function SearchSvgIcon({ size = 20, color = colors.brandText }: { size?: number;
 export function TodayScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const keyboardHeight = useKeyboardHeight();
+  // The search modal is top-anchored at (insets.top + 28) — a comfortable gap below the
+  // notch — and capped to the band above the keyboard, so the WHOLE card is always on
+  // screen (28 below the notch, 16 above the keyboard) no matter how long the list is.
+  const searchCardMaxHeight = WINDOW_HEIGHT - insets.top - 28 - Math.max(keyboardHeight, insets.bottom) - 16;
   const { language, setLanguage, adminMode, setSecretMenuUnlocked, setCloudflareAdminAuthenticated } = useAppStore();
   const [activeDateISO, setActiveDateISO] = useState(dayjs().format('YYYY-MM-DD'));
   const todayISO = dayjs().format('YYYY-MM-DD');
@@ -353,9 +358,11 @@ export function TodayScreen({ navigation }: Props) {
 
       {/* ═══ SEARCH MODAL ═══ */}
       <Modal visible={searchVisible} transparent statusBarTranslucent animationType="fade" onRequestClose={() => setSearchVisible(false)}>
-        <Pressable style={styles.modalBackdrop} onPress={() => setSearchVisible(false)}>
-          <KeyboardSafeView keyboardVerticalOffset={insets.top}>
-            <Pressable style={styles.modalCard} onPress={() => {}}>
+        <Pressable
+          style={[styles.modalBackdrop, { justifyContent: 'flex-start', paddingTop: insets.top + 28 }]}
+          onPress={() => setSearchVisible(false)}
+        >
+            <Pressable style={[styles.modalCard, { maxHeight: searchCardMaxHeight }]} onPress={() => {}}>
                 <View style={styles.modalHeader}>
                   <Text style={styles.modalTitle}>{t('today.searchTitle')}</Text>
                 </View>
@@ -404,7 +411,6 @@ export function TodayScreen({ navigation }: Props) {
                   <Text style={styles.modalCloseButtonText}>{t('today.cancel')}</Text>
                 </Pressable>
             </Pressable>
-          </KeyboardSafeView>
         </Pressable>
       </Modal>
 
@@ -486,6 +492,11 @@ export function TodayScreen({ navigation }: Props) {
     </View>
   );
 }
+
+// App is portrait-locked, so a window-based max height resolves reliably — unlike a
+// percentage of the modal's auto-height KeyboardAvoidingView parent (which mis-sized
+// the card and clipped the close button).
+const WINDOW_HEIGHT = Dimensions.get('window').height;
 
 const styles = StyleSheet.create({
   // ─── Scaffold ──────────────────────────────────────────────────────────────
@@ -657,7 +668,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.lg,
     backgroundColor: colors.surface,
     overflow: 'hidden',
-    maxHeight: '70%',
+    maxHeight: WINDOW_HEIGHT * 0.7,
   },
   modalHeader: {
     backgroundColor: colors.primaryDeep,
@@ -695,7 +706,9 @@ const styles = StyleSheet.create({
 
   // ─── Search results ────────────────────────────────────────────────────────
   searchList: {
-    maxHeight: 260,
+    // Shrink the results list so the header, input, and close button stay visible
+    // (close button was being clipped). Scrolls within whatever space remains.
+    flexShrink: 1,
     paddingHorizontal: spacing.md,
   },
   searchListContent: {

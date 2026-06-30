@@ -4,9 +4,10 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ko';
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { Alert, Keyboard, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Dimensions, Keyboard, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useKeyboardHeight } from '../../hooks/useKeyboardHeight';
 import { useTranslation } from 'react-i18next';
 import Svg, { Circle, Path } from 'react-native-svg';
 
@@ -82,6 +83,11 @@ function createMonthCells(cursor: dayjs.Dayjs): Array<number | null> {
 export function MonthScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const keyboardHeight = useKeyboardHeight();
+  // The search modal is top-anchored at (insets.top + 28) — a comfortable gap below the
+  // notch — and capped to the band above the keyboard, so the WHOLE card is always on
+  // screen (28 below the notch, 16 above the keyboard) no matter how long the list is.
+  const searchCardMaxHeight = WINDOW_HEIGHT - insets.top - 28 - Math.max(keyboardHeight, insets.bottom) - 16;
   const { language, adminMode, selectedDateISO, setSelectedDateISO, setSecretMenuUnlocked, setCloudflareAdminAuthenticated } = useAppStore();
   const isOnline = useNetworkStore((state) => state.isOnline);
   const addEvent = useEventsStore((state) => state.addEvent);
@@ -693,9 +699,11 @@ export function MonthScreen({ navigation, route }: Props) {
 
       {/* ═══ SEARCH MODAL ═══ */}
       <Modal visible={searchVisible} transparent statusBarTranslucent animationType="fade" onRequestClose={() => setSearchVisible(false)}>
-        <Pressable style={styles.searchBackdrop} onPress={() => setSearchVisible(false)}>
-          <KeyboardSafeView keyboardVerticalOffset={insets.top}>
-            <Pressable style={styles.searchCard} onPress={() => {}}>
+        <Pressable
+          style={[styles.searchBackdrop, { justifyContent: 'flex-start', paddingTop: insets.top + 28 }]}
+          onPress={() => setSearchVisible(false)}
+        >
+            <Pressable style={[styles.searchCard, { maxHeight: searchCardMaxHeight }]} onPress={() => {}}>
                 <View style={styles.searchModalHeader}>
                   <Text style={styles.searchModalTitle}>{t('today.searchTitle')}</Text>
                 </View>
@@ -743,7 +751,6 @@ export function MonthScreen({ navigation, route }: Props) {
                   <Text style={styles.searchCloseButtonText}>{t('today.cancel')}</Text>
                 </Pressable>
             </Pressable>
-          </KeyboardSafeView>
         </Pressable>
       </Modal>
 
@@ -762,6 +769,11 @@ export function MonthScreen({ navigation, route }: Props) {
     </View>
   );
 }
+
+// App is portrait-locked, so a window-based max height resolves reliably — unlike a
+// percentage of the modal's auto-height KeyboardAvoidingView parent (which mis-sized
+// the card and clipped the close button).
+const WINDOW_HEIGHT = Dimensions.get('window').height;
 
 const styles = StyleSheet.create({
   container: {
@@ -1312,7 +1324,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.border,
-    maxHeight: '80%',
+    maxHeight: WINDOW_HEIGHT * 0.7,
     overflow: 'hidden',
   },
   searchModalHeader: {
@@ -1336,7 +1348,9 @@ const styles = StyleSheet.create({
     color: colors.textBody,
   },
   searchList: {
-    maxHeight: 320,
+    // Shrink the results list so the header, input, and close button stay visible
+    // (close button was being clipped). Scrolls within whatever space remains.
+    flexShrink: 1,
   },
   searchListContent: {
     padding: spacing.md,
