@@ -678,14 +678,17 @@ export function MonthScreen({ navigation, route }: Props) {
                 ))}
               </View>
 
-              {!editingId ? (
-                <Pressable style={({ pressed }) => [styles.checkboxRow, pressed && styles.pressed]} onPress={() => setFormNotify((prev) => !prev)}>
-                  <View style={[styles.checkboxBox, formNotify && styles.checkboxBoxActive]}>
-                    {formNotify ? <Text style={styles.checkboxTick}>✓</Text> : null}
-                  </View>
-                  <Text style={styles.checkboxText}>{t('month.sendNotification')}</Text>
-                </Pressable>
-              ) : null}
+              {/* Notify choice shown for BOTH create and edit. On edit it defaults
+                  off (see openEditEditor), so re-notifying is an explicit opt-in:
+                  a typo fix stays silent, a time/venue change can be announced. */}
+              <Pressable style={({ pressed }) => [styles.checkboxRow, pressed && styles.pressed]} onPress={() => setFormNotify((prev) => !prev)}>
+                <View style={[styles.checkboxBox, formNotify && styles.checkboxBoxActive]}>
+                  {formNotify ? <Text style={styles.checkboxTick}>✓</Text> : null}
+                </View>
+                <Text style={styles.checkboxText}>
+                  {t(editingId ? 'month.sendNotificationOnEdit' : 'month.sendNotification')}
+                </Text>
+              </Pressable>
 
               <View style={styles.editorActions}>
                 <Pressable style={({ pressed }) => [styles.editorCancel, pressed && styles.pressed]} onPress={() => setEditorVisible(false)}>

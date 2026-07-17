@@ -89,6 +89,7 @@ const en = {
     eventTitleRequiredOneLanguage: 'Please fill English or Korean title.',
     eventSaveError: 'Failed to save event',
     sendNotification: 'Send notification',
+    sendNotificationOnEdit: 'Send a notification about this change',
     recurrence: {
       title: 'Recurrence',
       none: 'None',

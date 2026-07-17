@@ -95,6 +95,7 @@ const ko: Translations = {
     eventTitleRequiredOneLanguage: '영어 또는 한국어 제목을 입력해 주세요.',
     eventSaveError: '이벤트 저장 실패',
     sendNotification: '알림 보내기',
+    sendNotificationOnEdit: '이 변경 사항에 대한 알림 보내기',
     recurrence: {
       title: '반복',
       none: '없음',
