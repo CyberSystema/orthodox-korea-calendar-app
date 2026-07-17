@@ -1,4 +1,11 @@
-const ko = {
+// Typed as the exact shape of en.ts so `tsc` fails on ANY key that is missing
+// from — or extra in — this file. A key present in en but missing here would
+// render the raw key string ("settings.title") to users: a release blocker.
+// This closes that gap with zero new dependencies, inside the existing typecheck.
+// scripts/check-i18n-parity.ts gives the same guarantee with a readable diff.
+type Translations = typeof import('./en').default;
+
+const ko: Translations = {
   nav: {
     home: '홈',
     today: '오늘',

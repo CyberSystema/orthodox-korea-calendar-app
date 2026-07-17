@@ -1,0 +1,29 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":dependencyDashboard", ":semanticCommits"],
+  "labels": ["dependencies"],
+  "schedule": ["before 6am on monday"],
+  "packageRules": [
+    {
+      "description": "Expo SDK-pinned packages must be bumped via `npx expo install --fix`, never by Renovate — their versions are locked to the SDK. Renovate would break the native lockstep.",
+      "matchPackageNames": [
+        "expo",
+        "react",
+        "react-dom",
+        "react-native",
+        "/^expo-/",
+        "/^@expo/",
+        "/^react-native-/",
+        "/^@react-native//",
+        "/^@react-navigation//"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Auto-merge low-risk dev tooling (patch/minor).",
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["patch", "minor"],
+      "automerge": true
+    }
+  ]
+}
