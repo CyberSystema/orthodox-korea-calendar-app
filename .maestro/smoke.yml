@@ -1,0 +1,9 @@
+# Minimal smoke flow: app launches, the Today tab renders, and tab navigation to
+# Month works. Assertions use the bottom-tab labels (stable text). For sturdier
+# tests, add testID props to key views and assert on `id:` instead of text.
+appId: com.cybersystema.okncalendar
+---
+- launchApp
+- assertVisible: 'Today'
+- tapOn: 'Month'
+- assertVisible: 'Month'

@@ -1,0 +1,39 @@
+# PR preview: publishes an EAS Update for the PR and posts a QR-code comment on
+# the pull request so you can open the change on a device (needs a development or
+# preview build of the app installed — Expo Go won't load this app's custom native).
+#
+# This is the ONE small GitHub Action in the setup — Expo's officially documented
+# QR-preview mechanism (docs.expo.dev/eas-update/github-actions). All heavier
+# orchestration (gate, build, submit, OTA) lives in .eas/workflows/ on EAS infra.
+#
+# Prerequisite: add an EXPO_TOKEN repo secret (Settings > Secrets > Actions),
+# generated at expo.dev > Account > Access Tokens. Delete this file if you'd
+# rather not run any GitHub Actions.
+name: EAS Update preview
+
+on:
+  pull_request:
+    branches: ['main']
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Publish preview + comment QR
+        uses: expo/expo-github-action/preview@v8
+        with:
+          command: eas update --branch pr-${{ github.event.number }} --message "${{ github.event.pull_request.title }}"

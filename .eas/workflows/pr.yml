@@ -1,0 +1,26 @@
+# Quality gate on every pull request to main — runs on Expo's own infra
+# (no GitHub Actions minutes). Requires the Expo GitHub App installed and this
+# repo linked in the EAS project's GitHub settings (see docs/cicd-setup.md).
+name: PR checks
+
+on:
+  pull_request:
+    branches: ['main']
+
+concurrency:
+  group: pr-${{ github.ref }}
+  cancel_in_progress: true
+
+jobs:
+  quality:
+    name: Quality gate
+    runs_on: linux-medium
+    steps:
+      - uses: eas/checkout
+      - uses: eas/install_node_modules
+      - name: TypeScript
+        run: npm run typecheck
+      - name: i18n en/ko parity
+        run: npm run i18n:check
+      - name: Expo Doctor
+        run: npx expo-doctor

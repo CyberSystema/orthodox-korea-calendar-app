@@ -1,0 +1,97 @@
+# Production release — MANUAL trigger (store submissions go through App Review,
+# so releasing is a deliberate act, not every-push). Run it from the EAS
+# dashboard, or:  eas workflow:run .eas/workflows/deploy-production.yml
+#
+# Fingerprint decides per platform:
+#   native changed  -> new build + submit to App Store / Google Play
+#   JS-only change  -> over-the-air EAS Update on the `production` branch (~1 min)
+#
+# REQUIRES app.json runtimeVersion.policy = "fingerprint" (already set) so an OTA
+# update can only land on a binary with a matching native fingerprint.
+name: Deploy to production
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  quality:
+    name: Quality gate
+    runs_on: linux-medium
+    steps:
+      - uses: eas/checkout
+      - uses: eas/install_node_modules
+      - name: TypeScript
+        run: npm run typecheck
+      - name: i18n en/ko parity
+        run: npm run i18n:check
+
+  fingerprint:
+    name: Fingerprint native layer
+    needs: [quality]
+    type: fingerprint
+    environment: production
+
+  get_ios_build:
+    name: Find matching iOS build
+    needs: [fingerprint]
+    type: get-build
+    params:
+      fingerprint_hash: ${{ needs.fingerprint.outputs.ios_fingerprint_hash }}
+      profile: production
+  get_android_build:
+    name: Find matching Android build
+    needs: [fingerprint]
+    type: get-build
+    params:
+      fingerprint_hash: ${{ needs.fingerprint.outputs.android_fingerprint_hash }}
+      profile: production
+
+  # NATIVE CHANGED -> build + submit to the stores
+  build_ios:
+    name: Build iOS (production)
+    needs: [get_ios_build]
+    if: ${{ !needs.get_ios_build.outputs.build_id }}
+    type: build
+    params:
+      platform: ios
+      profile: production
+  build_android:
+    name: Build Android (production)
+    needs: [get_android_build]
+    if: ${{ !needs.get_android_build.outputs.build_id }}
+    type: build
+    params:
+      platform: android
+      profile: production
+  submit_ios:
+    name: Submit to App Store
+    needs: [build_ios]
+    type: submit
+    params:
+      build_id: ${{ needs.build_ios.outputs.build_id }}
+      profile: production
+  submit_android:
+    name: Submit to Google Play
+    needs: [build_android]
+    type: submit
+    params:
+      build_id: ${{ needs.build_android.outputs.build_id }}
+      profile: production
+
+  # JS-ONLY -> OTA update to the production channel
+  update_ios:
+    name: OTA update (iOS, production)
+    needs: [get_ios_build]
+    if: ${{ needs.get_ios_build.outputs.build_id }}
+    type: update
+    params:
+      branch: production
+      platform: ios
+  update_android:
+    name: OTA update (Android, production)
+    needs: [get_android_build]
+    if: ${{ needs.get_android_build.outputs.build_id }}
+    type: update
+    params:
+      branch: production
+      platform: android
