@@ -30,6 +30,7 @@ export function RootApp() {
   const hydrateEvents = useEventsStore((state) => state.hydrateEvents);
   const adminMode = useAppStore((state) => state.adminMode);
   const setCloudflareAdminAuthenticated = useAppStore((state) => state.setCloudflareAdminAuthenticated);
+  const language = useAppStore((state) => state.language);
   const isOnline = useNetworkStore((state) => state.isOnline);
   const wasOnlineRef = useRef(true);
   const [minSplashElapsed, setMinSplashElapsed] = useState(false);
@@ -108,12 +109,13 @@ export function RootApp() {
       return;
     }
 
-    // force=true: always hit the backend on every launch so the subscription
-    // is guaranteed active even if the backend lost it between launches.
+    // force=true: always hit the backend on every launch so the subscription is
+    // guaranteed active even if the backend lost it between launches. Also re-runs
+    // when the user changes language, so push content is localized to their choice.
     void registerCurrentPushSubscription({ force: true }).catch((err) =>
       console.warn('[Push] subscription registration failed:', err),
     );
-  }, [isHydrated]);
+  }, [isHydrated, language]);
 
   useEffect(() => {
     // Re-register whenever the OS rotates the push token

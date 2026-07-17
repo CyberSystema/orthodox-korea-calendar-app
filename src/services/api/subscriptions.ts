@@ -3,12 +3,20 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
 import { secureStorage } from '../storage/secureStorage';
+import { useAppStore } from '../../store/useAppStore';
 
 import { backendClient } from './backendClient';
 
 const PUSH_TOKEN_KEY = 'app.pushSubscriptionToken';
-const LEGACY_PUSH_LANGUAGE_KEY = 'app.pushSubscriptionLanguage';
+const PUSH_LANGUAGE_KEY = 'app.pushSubscriptionLanguage';
 const PUSH_ENV_KEY = 'app.pushSubscriptionEnvironment';
+
+// Register with the user's actual language so the backend can localize push
+// content — it only sends Korean text to subscribers stored as 'ko'. Registering
+// as 'all' (the previous behavior) meant Korean users always received English.
+function getSubscriptionLanguage(): 'en' | 'ko' {
+  return useAppStore.getState().language === 'ko' ? 'ko' : 'en';
+}
 
 // Match the APNS environment to the actual build type.
 // Development builds receive sandbox tokens from iOS; sending a sandbox
@@ -47,19 +55,22 @@ export async function registerCurrentPushSubscription(options?: { force?: boolea
     return false;
   }
 
-  const [storedToken, legacyLanguage, storedEnv] = await Promise.all([
+  const language = getSubscriptionLanguage();
+  const environment = getPushEnvironment();
+
+  const [storedToken, storedLanguage, storedEnv] = await Promise.all([
     secureStorage.getItem(PUSH_TOKEN_KEY),
-    secureStorage.getItem(LEGACY_PUSH_LANGUAGE_KEY),
+    secureStorage.getItem(PUSH_LANGUAGE_KEY),
     secureStorage.getItem(PUSH_ENV_KEY),
   ]);
 
-  // Skip the API call only when nothing has changed AND we're not forcing a
-  // fresh check (e.g. token-rotation listener). On every app launch we pass
-  // force=true so the backend always receives the current subscription.
+  // Skip the API call only when nothing has changed AND we're not forcing a fresh
+  // check (e.g. token-rotation listener). Registration re-runs when the token, the
+  // user's language, or the APNs environment changes.
   const alreadyRegistered =
     storedToken === token &&
-    !legacyLanguage &&
-    storedEnv === getPushEnvironment();
+    storedLanguage === language &&
+    storedEnv === environment;
 
   if (alreadyRegistered && !options?.force) {
     return true;
@@ -68,13 +79,13 @@ export async function registerCurrentPushSubscription(options?: { force?: boolea
   await backendClient.registerSubscription({
     token,
     platform: getPlatform(),
-    language: 'all',
-    environment: getPushEnvironment(),
+    language,
+    environment,
   });
   await Promise.all([
     secureStorage.setItem(PUSH_TOKEN_KEY, token),
-    secureStorage.setItem(PUSH_ENV_KEY, getPushEnvironment()),
-    secureStorage.deleteItem(LEGACY_PUSH_LANGUAGE_KEY),
+    secureStorage.setItem(PUSH_LANGUAGE_KEY, language),
+    secureStorage.setItem(PUSH_ENV_KEY, environment),
   ]);
   return true;
 }
@@ -90,7 +101,8 @@ export async function unregisterCurrentPushSubscription(): Promise<void> {
   } finally {
     await Promise.all([
       secureStorage.deleteItem(PUSH_TOKEN_KEY),
-      secureStorage.deleteItem(LEGACY_PUSH_LANGUAGE_KEY),
+      secureStorage.deleteItem(PUSH_LANGUAGE_KEY),
+      secureStorage.deleteItem(PUSH_ENV_KEY),
     ]);
   }
 }
