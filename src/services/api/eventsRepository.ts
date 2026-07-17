@@ -87,9 +87,11 @@ function toLiturgicalEvent(remote: ApiEvent): LiturgicalEvent {
       en: descriptionEn || titleEn,
       ko: descriptionKo || titleKo,
     },
-    recurrence: remote.recurrence?.frequency || 'none',
-    recurrenceInterval: remote.recurrence?.interval,
-    recurrenceUntil: remote.recurrence?.until ?? undefined,
+    // An occurrence returned by a ranged read is already a single concrete date;
+    // never treat it as recurring, or the client would re-expand it into duplicates.
+    recurrence: remote.isOccurrence ? 'none' : remote.recurrence?.frequency || 'none',
+    recurrenceInterval: remote.isOccurrence ? undefined : remote.recurrence?.interval,
+    recurrenceUntil: remote.isOccurrence ? undefined : remote.recurrence?.until ?? undefined,
     createdAt: fromUnixSeconds(remote.createdAt),
     updatedAt: fromUnixSeconds(remote.updatedAt),
     isAdminDraft: false,
