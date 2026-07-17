@@ -1189,7 +1189,7 @@ export function SecretMenuScreen({ navigation }: Props) {
                 termLog('Cancelled.', 'info');
                 break;
               }
-              const res = await termFetch('/admin/notify', {
+              const res = await termFetch('/subscriptions/notify', {
                 method: 'POST',
                 body: JSON.stringify({
                   target,
@@ -1199,8 +1199,17 @@ export function SecretMenuScreen({ navigation }: Props) {
                   body_ko: '터미널 테스트 푸시.',
                 }),
               });
-              const data = await res.json() as { sent: number; failed: number; total: number };
-              termLog(`sent=${data.sent}, failed=${data.failed}, total=${data.total}`, data.failed === 0 ? 'ok' : 'err');
+              const json = (await res.json()) as {
+                ok: boolean;
+                data?: { sent: number; failed: number; total: number };
+                error?: { message?: string };
+              };
+              if (!res.ok || !json.ok || !json.data) {
+                termLog(`push test failed: ${json.error?.message ?? `HTTP ${res.status}`}`, 'err');
+                break;
+              }
+              const d = json.data;
+              termLog(`sent=${d.sent}, failed=${d.failed}, total=${d.total}`, d.failed === 0 ? 'ok' : 'err');
             } else {
               termLog(`Unknown: push ${sub}. Use: status, test`, 'err');
             }
