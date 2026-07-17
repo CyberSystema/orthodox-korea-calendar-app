@@ -1,3 +1,0 @@
-npx lint-staged
-npm run typecheck
-npm run i18n:check

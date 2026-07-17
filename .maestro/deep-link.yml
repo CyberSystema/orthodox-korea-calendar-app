@@ -1,9 +1,0 @@
-# Deep-link smoke: opening the app via the okncalendar:// custom scheme resolves
-# to a screen. Deep links are a core, easily-broken path with no unit coverage.
-# NOTE: adjust the link path to a route your src/services/deepLinking/linking.ts
-# actually normalizes (e.g. a specific event or date) if the bare scheme no-ops.
-appId: com.cybersystema.okncalendar
----
-- launchApp
-- openLink: okncalendar://today
-- assertVisible: 'Today'

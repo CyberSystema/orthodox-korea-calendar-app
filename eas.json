@@ -6,23 +6,11 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal",
-      "environment": "development"
-    },
-    "e2e-test": {
-      "withoutCredentials": true,
-      "environment": "preview",
-      "ios": {
-        "simulator": true
-      },
-      "android": {
-        "buildType": "apk"
-      }
+      "distribution": "internal"
     },
     "preview": {
       "distribution": "internal",
       "channel": "preview",
-      "environment": "preview",
       "env": {
         "EXPO_PUBLIC_APP_API_BASE_URL": "https://orthodox-korea-calendar-backend-staging.leontg.workers.dev",
         "EXPO_PUBLIC_ENABLE_SECRET_MENU": "false"
@@ -31,7 +19,6 @@
     "production": {
       "autoIncrement": true,
       "channel": "production",
-      "environment": "production",
       "env": {
         "EXPO_PUBLIC_APP_API_BASE_URL": "https://orthodox-korea-calendar-backend-production.leontg.workers.dev",
         "EXPO_PUBLIC_ENABLE_SECRET_MENU": "false"

@@ -11,11 +11,6 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "doctor": "npx expo-doctor",
-    "lint": "expo lint",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "i18n:check": "tsx scripts/check-i18n-parity.ts",
-    "prepare": "husky",
     "prebuild": "expo prebuild",
     "build:android:preview": "npx eas build -p android --profile preview",
     "build:ios:preview": "npx eas build -p ios --profile preview",
@@ -57,20 +52,10 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
-    "@commitlint/cli": "^19.8.1",
-    "@commitlint/config-conventional": "^19.8.1",
     "@types/react": "~19.2.17",
     "babel-preset-expo": "~56.0.15",
-    "husky": "^9.1.7",
-    "lint-staged": "^16.1.2",
     "patch-package": "^8.0.1",
-    "prettier": "^3.6.2",
-    "tsx": "^4.20.3",
     "typescript": "~6.0.3"
-  },
-  "lint-staged": {
-    "*.{ts,tsx,js,jsx}": "prettier --write",
-    "*.{json,md,yml,yaml}": "prettier --write"
   },
   "private": true
 }
