@@ -119,6 +119,13 @@ export interface SyncResponse {
   hasMore: boolean;
   events: ApiEvent[];
   deletedIds: string[];
+  /**
+   * True when `events` is a full snapshot of all live events (not an incremental
+   * delta) — returned on an initial sync or when the client's cursor predates the
+   * server's change_log prune horizon. Clients must REPLACE their set from a
+   * snapshot rather than merge. Absent/false on ordinary incremental responses.
+   */
+  snapshot?: boolean;
 }
 
 export interface RegisterSubscriptionInput {

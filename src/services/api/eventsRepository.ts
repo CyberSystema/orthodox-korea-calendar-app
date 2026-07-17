@@ -28,6 +28,7 @@ type SyncBatch = {
   hasMore: boolean;
   events: LiturgicalEvent[];
   deletedIds: string[];
+  snapshot: boolean;
 };
 
 function ensureConfigured() {
@@ -164,6 +165,7 @@ export async function fetchSyncBatch(cursor: number, limit = 100): Promise<SyncB
       hasMore: payload.hasMore ?? false,
       events: (payload.events || []).map((event) => toLiturgicalEvent(event)),
       deletedIds: payload.deletedIds || [],
+      snapshot: payload.snapshot ?? false,
     };
   } catch (error) {
     throw new Error(`Failed to sync events: ${getErrorMessage(error)}`);

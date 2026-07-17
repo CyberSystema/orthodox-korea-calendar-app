@@ -181,6 +181,18 @@ function applySyncBatch(
     .sort((a, b) => a.dateISO.localeCompare(b.dateISO) || a.title.en.localeCompare(b.title.en));
 }
 
+// A snapshot response is the authoritative, complete set of live events (returned
+// on an initial sync or when the cursor predates the server's prune horizon).
+// REPLACE the local set from it rather than merge, so an event deleted while this
+// client was away is dropped instead of lingering as a ghost. Locally-authored
+// events are pushed to the backend before this runs, so they are already in the
+// snapshot and are not lost.
+function applySnapshotBatch(incomingEvents: LiturgicalEvent[]): LiturgicalEvent[] {
+  return incomingEvents
+    .filter((event) => !LEGACY_SEEDED_EVENT_IDS.has(event.id))
+    .sort((a, b) => a.dateISO.localeCompare(b.dateISO) || a.title.en.localeCompare(b.title.en));
+}
+
 export const useEventsStore = create<EventsState>((set, get) => ({
   isHydrated: false,
   customEvents: [],
@@ -218,7 +230,7 @@ export const useEventsStore = create<EventsState>((set, get) => ({
         let hasMore = true;
         let pagesFetched = 0;
         const seenCursors = new Set<number>();
-        const pages: { events: LiturgicalEvent[]; deletedIds: string[] }[] = [];
+        const pages: { events: LiturgicalEvent[]; deletedIds: string[]; snapshot: boolean }[] = [];
 
         while (hasMore) {
           if (seenCursors.has(cursor)) {
@@ -230,7 +242,7 @@ export const useEventsStore = create<EventsState>((set, get) => ({
 
           seenCursors.add(cursor);
           const batch = await fetchSyncBatch(cursor);
-          pages.push({ events: batch.events, deletedIds: batch.deletedIds });
+          pages.push({ events: batch.events, deletedIds: batch.deletedIds, snapshot: batch.snapshot });
 
           if (batch.hasMore && batch.cursor === cursor) {
             throw new Error('Sync cursor did not advance while hasMore=true. Stopping sync to avoid infinite requests.');
@@ -249,7 +261,9 @@ export const useEventsStore = create<EventsState>((set, get) => ({
         // added or edited locally while this sync was in flight.
         let merged = get().customEvents;
         for (const page of pages) {
-          merged = applySyncBatch(merged, page.events, page.deletedIds);
+          merged = page.snapshot
+            ? applySnapshotBatch(page.events)
+            : applySyncBatch(merged, page.events, page.deletedIds);
         }
 
         set({
