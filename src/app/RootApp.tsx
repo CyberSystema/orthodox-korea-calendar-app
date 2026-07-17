@@ -128,6 +128,19 @@ export function RootApp() {
   }, []);
 
   useEffect(() => {
+    // When a push arrives while the app is foregrounded (e.g. an admin just created
+    // an event), force a resync so the new event appears in the list/grid promptly
+    // instead of waiting for the next periodic sync.
+    const received = Notifications.addNotificationReceivedListener(() => {
+      void useEventsStore
+        .getState()
+        .syncYearEvents(new Date().getFullYear(), { force: true })
+        .catch((err) => console.warn('[Push] foreground refresh failed:', err));
+    });
+    return () => received.remove();
+  }, []);
+
+  useEffect(() => {
     // Monitor connectivity so the app can show the offline banner and gate
     // online-only features (event sync, Staff Mode).
     let cleanup: (() => void) | undefined;

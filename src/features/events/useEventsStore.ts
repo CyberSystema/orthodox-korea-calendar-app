@@ -54,7 +54,7 @@ type EventsState = {
   lastSyncedYear: number | null;
   lastSyncedAt: number | null;
   hydrateEvents: () => Promise<void>;
-  syncYearEvents: (year: number) => Promise<void>;
+  syncYearEvents: (year: number, options?: { force?: boolean }) => Promise<void>;
   addEvent: (draft: EventDraft) => Promise<void>;
   updateEvent: (draft: EventDraft) => Promise<void>;
   deleteEvent: (eventId: string) => Promise<void>;
@@ -210,7 +210,7 @@ export const useEventsStore = create<EventsState>((set, get) => ({
     set({ customEvents: cached, isHydrated: true });
     await get().syncYearEvents(dayjs().year());
   },
-  syncYearEvents: async (year) => {
+  syncYearEvents: async (year, options) => {
     void year;
     if (!canUseEventsApi()) {
       return;
@@ -223,7 +223,12 @@ export const useEventsStore = create<EventsState>((set, get) => ({
 
     const state = get();
     const nowMs = Date.now();
-    if (state.lastSyncedYear === year && state.lastSyncedAt && nowMs - state.lastSyncedAt < SYNC_COOLDOWN_MS) {
+    if (
+      !options?.force &&
+      state.lastSyncedYear === year &&
+      state.lastSyncedAt &&
+      nowMs - state.lastSyncedAt < SYNC_COOLDOWN_MS
+    ) {
       return;
     }
 
