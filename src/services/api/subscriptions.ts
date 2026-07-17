@@ -18,10 +18,18 @@ function getSubscriptionLanguage(): 'en' | 'ko' {
   return useAppStore.getState().language === 'ko' ? 'ko' : 'en';
 }
 
-// Match the APNS environment to the actual build type.
-// Development builds receive sandbox tokens from iOS; sending a sandbox
-// token through the production APNS gateway silently fails.
+// Match the APNs environment to the build's aps-environment entitlement. A device
+// token minted under the 'development' entitlement only works on the APNs sandbox
+// gateway (and vice-versa); a mismatch returns BadDeviceToken and the backend prunes
+// the token. `__DEV__` alone is wrong for a Release build that still uses development
+// provisioning (a local sideload): it would report 'production'. So prefer an explicit
+// per-build value — eas.json sets 'production' for preview/production builds; a local
+// sideload sets 'sandbox' in .env.local — and fall back to the __DEV__ heuristic.
 function getPushEnvironment(): 'sandbox' | 'production' {
+  const explicit = process.env.EXPO_PUBLIC_APNS_ENV;
+  if (explicit === 'sandbox' || explicit === 'production') {
+    return explicit;
+  }
   return __DEV__ ? 'sandbox' : 'production';
 }
 
