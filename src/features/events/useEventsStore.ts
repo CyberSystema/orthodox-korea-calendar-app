@@ -113,6 +113,11 @@ function normalizeStoredEvent(raw: unknown): LiturgicalEvent | null {
       value.recurrence === 'none'
         ? value.recurrence
         : 'none',
+    recurrenceInterval:
+      typeof value.recurrenceInterval === 'number' && Number.isFinite(value.recurrenceInterval)
+        ? value.recurrenceInterval
+        : undefined,
+    recurrenceUntil: typeof value.recurrenceUntil === 'string' ? value.recurrenceUntil : undefined,
     createdAt: typeof value.createdAt === 'string' ? value.createdAt : undefined,
     updatedAt: typeof value.updatedAt === 'string' ? value.updatedAt : undefined,
     isAdminDraft: typeof value.isAdminDraft === 'boolean' ? value.isAdminDraft : false,

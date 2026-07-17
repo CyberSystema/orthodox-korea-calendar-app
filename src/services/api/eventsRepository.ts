@@ -88,6 +88,8 @@ function toLiturgicalEvent(remote: ApiEvent): LiturgicalEvent {
       ko: descriptionKo || titleKo,
     },
     recurrence: remote.recurrence?.frequency || 'none',
+    recurrenceInterval: remote.recurrence?.interval,
+    recurrenceUntil: remote.recurrence?.until ?? undefined,
     createdAt: fromUnixSeconds(remote.createdAt),
     updatedAt: fromUnixSeconds(remote.updatedAt),
     isAdminDraft: false,

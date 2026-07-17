@@ -60,6 +60,10 @@ export type LiturgicalEvent = {
   notify?: boolean;
   notificationTarget?: EventNotificationTarget;
   recurrence?: EventRecurrence;
+  /** Every N periods (e.g. 2 = every other week). Defaults to 1 when absent. */
+  recurrenceInterval?: number;
+  /** Series end date (YYYY-MM-DD); occurrences stop after it. Absent = open-ended. */
+  recurrenceUntil?: string;
   createdAt?: string;
   updatedAt?: string;
   isAdminDraft?: boolean;

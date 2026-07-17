@@ -29,6 +29,7 @@ const seededDayIndex = new Map<string, LiturgicalDay>(
 
 type EventIndexes = {
   sourceRef: LiturgicalEvent[] | null;
+  focusYear: number | null;
   byId: Map<string, LiturgicalEvent>;
   byDateAll: Map<string, LiturgicalEvent[]>;
   byDatePublic: Map<string, LiturgicalEvent[]>;
@@ -38,6 +39,7 @@ type EventIndexes = {
 
 const eventIndexes: EventIndexes = {
   sourceRef: null,
+  focusYear: null,
   byId: new Map(),
   byDateAll: new Map(),
   byDatePublic: new Map(),
@@ -67,59 +69,75 @@ function pushToMap(map: Map<string, LiturgicalEvent[]>, key: string, event: Litu
 const MAX_OCCURRENCES_PER_EVENT = 1200;
 
 /**
- * Returns the calendar dates a recurring event should appear on, bounded to a
- * window around the current year so daily series stay finite. Non-recurring
- * events resolve to a single date.
+ * Returns the calendar dates a recurring event should appear on within the given
+ * window. Honors the recurrence INTERVAL (every N days/weeks/months) and the series
+ * end date (`recurrenceUntil`). Each occurrence is computed as start + i*interval
+ * units from the ORIGINAL start (never by re-stepping a moving cursor) so month-end
+ * dates don't drift: Jan 31 stays Jan 31 → Feb 28 → Mar 31 rather than collapsing to
+ * the 28th. Non-recurring events resolve to a single date.
  */
-function occurrenceDatesForEvent(event: LiturgicalEvent): string[] {
-  const startISO = normalizeISODate(event.seriesStartDate || event.dateISO);
+function occurrenceDatesForEvent(
+  event: LiturgicalEvent,
+  windowStart: dayjs.Dayjs,
+  windowEnd: dayjs.Dayjs,
+): string[] {
   const recurrence = event.recurrence;
-
   if (!recurrence || recurrence === 'none') {
     return [normalizeISODate(event.dateISO)];
   }
 
-  const unit = recurrence === 'daily' ? 'day' : recurrence === 'weekly' ? 'week' : 'month';
+  const startISO = normalizeISODate(event.seriesStartDate || event.dateISO);
   const start = dayjs(startISO);
   if (!start.isValid()) {
     return [normalizeISODate(event.dateISO)];
   }
 
-  const currentYear = dayjs().year();
-  const windowStart = dayjs(`${currentYear - 1}-01-01`);
-  const windowEnd = dayjs(`${currentYear + 1}-12-31`);
+  const unit = recurrence === 'daily' ? 'day' : recurrence === 'weekly' ? 'week' : 'month';
+  const interval = Math.max(1, Math.floor(event.recurrenceInterval ?? 1));
 
-  // Compute each occurrence as start + k*unit from the ORIGINAL start (not by
-  // re-stepping a moving cursor) so month-end dates don't drift: Jan 31 stays
-  // Jan 31 → Feb 28 → Mar 31 rather than collapsing to the 28th forever.
-  let k = 0;
+  // Stop at the earlier of the series end date (recurrenceUntil) and the window end,
+  // so a bounded series does not keep generating occurrences past its end.
+  const untilISO = event.recurrenceUntil ? normalizeISODate(event.recurrenceUntil) : null;
+  const until = untilISO ? dayjs(untilISO) : null;
+  const seriesEnd = until && until.isValid() && until.isBefore(windowEnd) ? until : windowEnd;
+
+  // Jump close to the window start. Occurrences before it are skipped precisely by
+  // the guard below; the small negative margin absorbs month-clamping slack in the
+  // diff estimate so no boundary occurrence is missed.
+  let i = 0;
   if (start.isBefore(windowStart)) {
-    k = windowStart.diff(start, unit);
-    if (k < 0) k = 0;
+    const rawUnits = windowStart.diff(start, unit);
+    i = Math.max(0, Math.floor(rawUnits / interval) - 2);
   }
 
   const dates: string[] = [];
   while (dates.length < MAX_OCCURRENCES_PER_EVENT) {
-    const occurrence = start.add(k, unit);
-    if (occurrence.isAfter(windowEnd)) {
+    const occurrence = start.add(i * interval, unit);
+    if (occurrence.isAfter(seriesEnd)) {
       break;
     }
     if (!occurrence.isBefore(windowStart)) {
       dates.push(occurrence.format('YYYY-MM-DD'));
     }
-    k += 1;
+    i += 1;
   }
 
-  // Guarantee the canonical start date is represented even if it sits outside
-  // the window, so the event is never wholly absent.
+  // Guarantee the canonical start date is represented even if it sits outside the
+  // window, so the event is never wholly absent.
   return dates.length ? dates : [normalizeISODate(event.dateISO)];
 }
 
-function rebuildEventIndexes() {
+function rebuildEventIndexes(focusYear: number) {
   const customEvents = useEventsStore.getState().customEvents;
-  if (eventIndexes.sourceRef === customEvents) {
+  if (eventIndexes.sourceRef === customEvents && eventIndexes.focusYear === focusYear) {
     return;
   }
+
+  // Expand recurring events within a 3-year window centered on the year being
+  // viewed, so navigating to any year shows its occurrences (rather than only
+  // currentYear±1, which made recurring events vanish when browsing far ahead/back).
+  const windowStart = dayjs(`${focusYear - 1}-01-01`);
+  const windowEnd = dayjs(`${focusYear + 1}-12-31`);
 
   const allEvents = customEvents;
   const byId = new Map<string, LiturgicalEvent>();
@@ -131,7 +149,7 @@ function rebuildEventIndexes() {
   for (const event of allEvents) {
     byId.set(event.id, event);
     const isPublic = !event.isAdminDraft;
-    const occurrenceDates = occurrenceDatesForEvent(event);
+    const occurrenceDates = occurrenceDatesForEvent(event, windowStart, windowEnd);
 
     for (const occurrenceDate of occurrenceDates) {
       const monthKey = occurrenceDate.slice(0, 7);
@@ -159,6 +177,7 @@ function rebuildEventIndexes() {
   }
 
   eventIndexes.sourceRef = customEvents;
+  eventIndexes.focusYear = focusYear;
   eventIndexes.byId = byId;
   eventIndexes.byDateAll = byDateAll;
   eventIndexes.byDatePublic = byDatePublic;
@@ -168,7 +187,7 @@ function rebuildEventIndexes() {
 
 export function getEventsByDate(dateISO: string, includeDrafts = false): LiturgicalEvent[] {
   const normalized = normalizeISODate(dateISO);
-  rebuildEventIndexes();
+  rebuildEventIndexes(Number.parseInt(normalized.slice(0, 4), 10) || dayjs().year());
   const source = includeDrafts ? eventIndexes.byDateAll : eventIndexes.byDatePublic;
   const events = source.get(normalized)?.slice() || [];
   return events.sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
@@ -176,7 +195,7 @@ export function getEventsByDate(dateISO: string, includeDrafts = false): Liturgi
 
 export function getEventsByMonth(year: number, month1to12: number, includeDrafts = false): LiturgicalEvent[] {
   const prefix = `${year}-${String(month1to12).padStart(2, '0')}`;
-  rebuildEventIndexes();
+  rebuildEventIndexes(year);
   const source = includeDrafts ? eventIndexes.byMonthAll : eventIndexes.byMonthPublic;
   const bucket = source.get(prefix) || [];
   // A recurring event appears once per occurrence date in the month bucket;
@@ -202,7 +221,7 @@ export function getEventOccurrenceCountsForMonth(
   month1to12: number,
   includeDrafts = false,
 ): Map<string, number> {
-  rebuildEventIndexes();
+  rebuildEventIndexes(year);
   const prefix = `${year}-${String(month1to12).padStart(2, '0')}`;
   const source = includeDrafts ? eventIndexes.byDateAll : eventIndexes.byDatePublic;
   const counts = new Map<string, number>();
@@ -215,7 +234,9 @@ export function getEventOccurrenceCountsForMonth(
 }
 
 export function getEventById(eventId: string): LiturgicalEvent | undefined {
-  rebuildEventIndexes();
+  // byId does not depend on the occurrence window, so reuse the current focus year
+  // (or the current year) rather than forcing a rebuild to a different window.
+  rebuildEventIndexes(eventIndexes.focusYear ?? dayjs().year());
   return eventIndexes.byId.get(eventId);
 }
 
