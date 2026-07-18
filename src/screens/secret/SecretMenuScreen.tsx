@@ -20,6 +20,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { KeyboardSafeView } from '../../components/common/KeyboardSafeView';
 import { AnnouncementLogViewer } from './AnnouncementLogViewer';
+import { getAppVersionLabel } from '../../utils/appVersion';
 import type { RootStackParamList } from '../../navigation/types';
 import {
   backendClient,
@@ -735,6 +736,7 @@ export function SecretMenuScreen({ navigation }: Props) {
 
   const handleAppInfo = () => {
     log('📋 App Information', 'info');
+    log(`  App Version: ${getAppVersionLabel()}`, 'data');
     log(`  Backend URL: ${configuredBaseUrl}`, 'data');
     log(`  __DEV__: ${__DEV__}`, 'data');
     log(`  Push Environment: ${__DEV__ ? 'sandbox' : 'production'}`, 'data');

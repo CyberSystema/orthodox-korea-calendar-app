@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
-import * as Application from 'expo-application';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +14,7 @@ import {
 } from '../../services/api/adminAuth';
 import { canUseEventsApi } from '../../services/api/eventsRepository';
 import { secureStorage } from '../../services/storage/secureStorage';
+import { getAppVersionLabel } from '../../utils/appVersion';
 import { useAppStore } from '../../store/useAppStore';
 import { useNetworkStore } from '../../store/useNetworkStore';
 import { colors } from '../../theme/colors';
@@ -43,11 +43,10 @@ export function SettingsScreen() {
   // either staff mode is off, or it's on but the session has expired.
   const needsAuthentication = !adminMode || !cloudflareAdminAuthenticated;
 
-  // App version for the footer — read from the native binary so it reflects the
-  // EAS-incremented build number, not the app.json value.
-  const appVersion = Application.nativeApplicationVersion ?? '';
-  const appBuild = Application.nativeBuildVersion ?? '';
-  const versionLabel = appBuild ? `${appVersion} (${appBuild})` : appVersion;
+  // App version for the footer — read from the app config (app.json is the source of
+  // truth under local versioning) so it tracks the release version even in sideloads,
+  // where a stale generated native project can report an old version. See appVersion.ts.
+  const versionLabel = getAppVersionLabel();
 
   const getLoginFailureMessage = (result: AdminLoginResult) => {
     if (result.ok) {
