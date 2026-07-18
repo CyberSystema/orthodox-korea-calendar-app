@@ -8,6 +8,8 @@ import type {
   DeleteEventResponse,
   DeleteSubscriptionResponse,
   HealthResponse,
+  ListAnnouncementsParams,
+  ListAnnouncementsResponse,
   ListEventsParams,
   ListEventsResponse,
   LoginRequest,
@@ -341,5 +343,15 @@ export class OrthodoxCalendarApiClient {
   // Backward-compatible alias for admin-centric naming.
   async adminNotify(input: AdminNotifyInput): Promise<AdminNotifyResponse> {
     return this.notify(input);
+  }
+
+  // ─── Announcements (public feed) ───────────────────────────────────────────
+
+  async listAnnouncements(params: ListAnnouncementsParams = {}): Promise<ListAnnouncementsResponse> {
+    const query = OrthodoxCalendarApiClient.toQuery({
+      limit: params.limit,
+      offset: params.offset,
+    });
+    return this.request<ListAnnouncementsResponse>("GET", `/announcements${query}`);
   }
 }

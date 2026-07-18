@@ -4,8 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
+import { AnnouncementsScreen } from '../screens/announcements/AnnouncementsScreen';
 import { MonthScreen } from '../screens/month/MonthScreen';
 import { TodayScreen } from '../screens/today/TodayScreen';
+import { countUnread, useAnnouncementsStore } from '../features/announcements/useAnnouncementsStore';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import type { MainTabsParamList } from './types';
@@ -36,6 +38,20 @@ function TodayIcon({ color, size }: { color: string; size: number }) {
   );
 }
 
+function BellIcon({ color, size }: { color: string; size: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M12 3c-3.31 0-6 2.69-6 6v3.5l-1.5 3h15l-1.5-3V9c0-3.31-2.69-6-6-6z"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinejoin="round"
+      />
+      <Path d="M9.5 18a2.5 2.5 0 0 0 5 0" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
 function CalendarIcon({ color, size }: { color: string; size: number }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
@@ -56,6 +72,7 @@ function CalendarIcon({ color, size }: { color: string; size: number }) {
 export function MainTabs() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const unreadCount = useAnnouncementsStore((state) => countUnread(state.announcements, state.lastSeenId));
 
   return (
     <Tab.Navigator
@@ -90,6 +107,17 @@ export function MainTabs() {
           tabBarIcon: ({ color, size }) => <CalendarIcon color={color} size={size} />,
         }}
       />
+      <Tab.Screen
+        name="Announcements"
+        component={AnnouncementsScreen}
+        options={{
+          tabBarLabel: t('nav.announcements'),
+          tabBarIcon: ({ color, size }) => <BellIcon color={color} size={size} />,
+          // Cap the badge display so a large backlog stays legible.
+          tabBarBadge: unreadCount > 0 ? (unreadCount > 99 ? '99+' : unreadCount) : undefined,
+          tabBarBadgeStyle: styles.tabBadge,
+        }}
+      />
     </Tab.Navigator>
   );
 }
@@ -110,5 +138,11 @@ const styles = StyleSheet.create({
     fontFamily: typography.family.body,
     fontSize: typography.size.xxs,
     fontWeight: '600',
+  },
+  tabBadge: {
+    backgroundColor: colors.crimson,
+    color: colors.surfaceWhite,
+    fontFamily: typography.family.body,
+    fontSize: typography.size.xxs,
   },
 });

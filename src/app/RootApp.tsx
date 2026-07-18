@@ -9,6 +9,7 @@ import i18n from '../i18n';
 import { syncCalendarDataFromGithub } from '../features/calendar/webCalendarSource';
 import { RootNavigator } from '../navigation/RootNavigator';
 import { useEventsStore } from '../features/events/useEventsStore';
+import { useAnnouncementsStore } from '../features/announcements/useAnnouncementsStore';
 import { registerCurrentPushSubscription } from '../services/api/subscriptions';
 import { linking } from '../services/deepLinking/linking';
 import {
@@ -49,6 +50,12 @@ export function RootApp() {
       await hydrateEvents().catch((err) =>
         console.warn('[App] event hydration failed:', err),
       );
+      // Load the announcements feed (cached first, then a background refresh) so the
+      // tab badge and list are ready — this also serves users who receive no push.
+      await useAnnouncementsStore
+        .getState()
+        .hydrate()
+        .catch((err) => console.warn('[App] announcements hydration failed:', err));
 
       try {
         const flowResult = await runLaunchNotificationPermissionFlow();
@@ -136,6 +143,12 @@ export function RootApp() {
         .getState()
         .syncYearEvents(new Date().getFullYear(), { force: true })
         .catch((err) => console.warn('[Push] foreground refresh failed:', err));
+      // A push usually corresponds to a fresh announcement — pull it into the feed
+      // immediately so the list and unread badge reflect it without waiting.
+      void useAnnouncementsStore
+        .getState()
+        .refresh({ force: true })
+        .catch((err) => console.warn('[Push] announcements refresh failed:', err));
     });
     return () => received.remove();
   }, []);
@@ -167,6 +180,10 @@ export function RootApp() {
     void registerCurrentPushSubscription({ force: true }).catch((err) =>
       console.warn('[Push] reconnect re-registration failed:', err),
     );
+    void useAnnouncementsStore
+      .getState()
+      .refresh({ force: true })
+      .catch((err) => console.warn('[Announcements] reconnect refresh failed:', err));
     void syncCalendarDataFromGithub();
   }, [isOnline, isHydrated, adminMode, setCloudflareAdminAuthenticated]);
 

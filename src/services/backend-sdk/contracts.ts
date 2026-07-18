@@ -128,6 +128,30 @@ export interface SyncResponse {
   snapshot?: boolean;
 }
 
+export interface ApiAnnouncement {
+  id: number;
+  target: "all" | "en" | "ko";
+  title: { en: string; ko: string };
+  body: { en: string; ko: string };
+  eventId: string | null;
+  sentCount: number;
+  /** Unix epoch seconds when the broadcast was sent. */
+  sentAt: number;
+}
+
+export interface ListAnnouncementsParams {
+  limit?: number;
+  offset?: number;
+}
+
+export interface ListAnnouncementsResponse {
+  announcements: ApiAnnouncement[];
+  limit: number;
+  offset: number;
+  count: number;
+  hasMore: boolean;
+}
+
 export interface RegisterSubscriptionInput {
   token: string;
   platform: "ios" | "android" | "web";

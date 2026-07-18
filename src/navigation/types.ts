@@ -1,6 +1,7 @@
 export type MainTabsParamList = {
   Today: undefined;
   Month: { year?: number; month?: number } | undefined;
+  Announcements: undefined;
 };
 
 export type RootStackParamList = {
