@@ -19,6 +19,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { KeyboardSafeView } from '../../components/common/KeyboardSafeView';
+import { AnnouncementLogViewer } from './AnnouncementLogViewer';
 import type { RootStackParamList } from '../../navigation/types';
 import {
   backendClient,
@@ -84,6 +85,9 @@ export function SecretMenuScreen({ navigation }: Props) {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [busy, setBusy] = useState(false);
   const logScrollRef = useRef<ScrollView>(null);
+
+  // ── Announcement log viewer ──
+  const [logViewerVisible, setLogViewerVisible] = useState(false);
 
   // ── Raw HTTP modal state ──
   const [rawModalVisible, setRawModalVisible] = useState(false);
@@ -1525,6 +1529,15 @@ export function SecretMenuScreen({ navigation }: Props) {
           <ActionButton label="Send Custom Notification" onPress={handleNotifyCustom} disabled={busy} />
         </Section>
 
+        {/* ═══ ANNOUNCEMENT LOG ═══ */}
+        <Section title="📜 Announcement Log">
+          <ActionButton
+            label="Open Full Log (every broadcast, incl. hidden)"
+            onPress={() => setLogViewerVisible(true)}
+            disabled={busy}
+          />
+        </Section>
+
         {/* ═══ LOCAL STORAGE ═══ */}
         <Section title="💾 Local Storage & Cache">
           <ActionButton label="Dump Local Event Cache → Clipboard" onPress={handleDumpLocalEvents} disabled={busy} />
@@ -1826,6 +1839,8 @@ export function SecretMenuScreen({ navigation }: Props) {
           </View>
         </KeyboardSafeView>
       </Modal>
+
+      <AnnouncementLogViewer visible={logViewerVisible} onClose={() => setLogViewerVisible(false)} />
     </View>
   );
 }

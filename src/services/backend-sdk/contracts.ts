@@ -167,6 +167,64 @@ export interface PurgeResult {
   tombstonesWritten: number;
 }
 
+export type AnnouncementEventStatus = "none" | "live" | "deleted" | "missing";
+export type AnnouncementLogFilter =
+  | "all"
+  | "visible"
+  | "hidden"
+  | "deleted"
+  | "orphaned"
+  | "standalone";
+
+export interface AdminAnnouncementLogItem {
+  id: number;
+  target: "all" | "en" | "ko";
+  title: { en: string; ko: string };
+  body: { en: string; ko: string };
+  eventId: string | null;
+  sentCount: number;
+  sentAt: number;
+  deletedAt: number | null;
+  visible: boolean;
+  eventStatus: AnnouncementEventStatus;
+  eventTitle: { en: string; ko: string } | null;
+  eventDate: string | null;
+}
+
+export interface AdminAnnouncementLogCounts {
+  total: number;
+  visible: number;
+  hidden: number;
+  deleted: number;
+  orphaned: number;
+  standalone: number;
+}
+
+export interface AdminAnnouncementLogResponse {
+  items: AdminAnnouncementLogItem[];
+  limit: number;
+  offset: number;
+  count: number;
+  hasMore: boolean;
+  counts: AdminAnnouncementLogCounts;
+}
+
+export interface ListAnnouncementLogParams {
+  limit?: number;
+  offset?: number;
+  filter?: AnnouncementLogFilter;
+}
+
+export interface RestoreAnnouncementResponse {
+  id: number;
+  restored: true;
+}
+
+export interface HardDeleteAnnouncementResponse {
+  id: number;
+  purged: true;
+}
+
 export interface RegisterSubscriptionInput {
   token: string;
   platform: "ios" | "android" | "web";
