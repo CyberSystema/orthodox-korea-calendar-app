@@ -21,7 +21,7 @@
       }
     },
     "android": {
-      "versionCode": 2,
+      "versionCode": 1,
       "package": "com.cybersystema.okncalendar",
       "backgroundColor": "#3A0A0A",
       "googleServicesFile": "./google-services.json",
