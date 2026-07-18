@@ -1,6 +1,7 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
+import { AnnouncementDetailScreen } from '../screens/announcements/AnnouncementDetailScreen';
 import { EventDetailScreen } from '../screens/event/EventDetailScreen';
 import { SecretMenuScreen } from '../screens/secret/SecretMenuScreen';
 import { SECRET_MENU_ENABLED } from '../config/features';
@@ -42,6 +43,11 @@ export function RootNavigator() {
         name="EventDetail"
         component={EventDetailScreen}
         options={{ title: t('nav.eventDetail') }}
+      />
+      <Stack.Screen
+        name="AnnouncementDetail"
+        component={AnnouncementDetailScreen}
+        options={{ title: t('nav.announcementDetail') }}
       />
       <Stack.Screen
         name="Settings"

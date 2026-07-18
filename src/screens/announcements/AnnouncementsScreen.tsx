@@ -4,6 +4,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useState } from 'react';
 import {
+  Alert,
   FlatList,
   Pressable,
   RefreshControl,
@@ -11,6 +12,9 @@ import {
   Text,
   View,
 } from 'react-native';
+import ReanimatedSwipeable, {
+  type SwipeableMethods,
+} from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { StatusBar } from 'expo-status-bar';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -58,12 +62,14 @@ export function AnnouncementsScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const language = useAppStore((state) => state.language);
+  const isStaff = useAppStore((state) => state.adminMode && state.cloudflareAdminAuthenticated);
 
   const announcements = useAnnouncementsStore((state) => state.announcements);
   const loadState = useAnnouncementsStore((state) => state.loadState);
   const loadError = useAnnouncementsStore((state) => state.loadError);
   const refresh = useAnnouncementsStore((state) => state.refresh);
   const markAllSeen = useAnnouncementsStore((state) => state.markAllSeen);
+  const deleteAnnouncement = useAnnouncementsStore((state) => state.deleteAnnouncement);
 
   const [refreshing, setRefreshing] = useState(false);
   // Snapshot of what counted as "seen" when this screen was focused, so items that
@@ -97,6 +103,25 @@ export function AnnouncementsScreen({ navigation }: Props) {
     return null;
   };
 
+  const confirmDelete = useCallback(
+    (item: Announcement, swipeable?: SwipeableMethods) => {
+      Alert.alert(t('announcements.deleteTitle'), t('announcements.deleteConfirm'), [
+        { text: t('today.cancel'), style: 'cancel', onPress: () => swipeable?.close() },
+        {
+          text: t('announcements.deleteAction'),
+          style: 'destructive',
+          onPress: () => {
+            void deleteAnnouncement(item.id).catch((error) => {
+              swipeable?.close();
+              Alert.alert(t('announcements.deleteFailedTitle'), String(error?.message ?? error));
+            });
+          },
+        },
+      ]);
+    },
+    [deleteAnnouncement, t],
+  );
+
   const renderItem = useCallback(
     ({ item }: { item: Announcement }) => {
       const title = pickLocalized(item.title, language);
@@ -105,21 +130,12 @@ export function AnnouncementsScreen({ navigation }: Props) {
       const audience = audienceLabel(item.target);
       const hasEvent = !!item.eventId;
 
-      return (
+      const card = (
         <Pressable
-          style={({ pressed }) => [
-            styles.card,
-            isUnread && styles.cardUnread,
-            pressed && hasEvent && styles.pressed,
-          ]}
-          disabled={!hasEvent}
-          onPress={() => {
-            if (item.eventId) {
-              navigation.navigate('EventDetail', { eventId: item.eventId });
-            }
-          }}
-          accessibilityRole={hasEvent ? 'button' : 'text'}
-          accessibilityLabel={hasEvent ? `${title}. ${t('announcements.viewEvent')}` : title}
+          style={({ pressed }) => [styles.card, isUnread && styles.cardUnread, pressed && styles.pressed]}
+          onPress={() => navigation.navigate('AnnouncementDetail', { announcement: item })}
+          accessibilityRole="button"
+          accessibilityLabel={`${title}. ${t('announcements.viewDetails')}`}
         >
           <View style={styles.cardTopRow}>
             <View style={styles.cardTopLeft}>
@@ -134,18 +150,45 @@ export function AnnouncementsScreen({ navigation }: Props) {
           </View>
 
           <Text style={styles.cardTitle}>{title}</Text>
-          {body ? <Text style={styles.cardBody}>{body}</Text> : null}
-
-          {hasEvent ? (
-            <View style={styles.cardFooter}>
-              <Text style={styles.viewEventText}>{t('announcements.viewEvent')}</Text>
-              <Text style={styles.viewEventArrow}>›</Text>
-            </View>
+          {body ? (
+            <Text style={styles.cardBody} numberOfLines={3}>
+              {body}
+            </Text>
           ) : null}
+
+          <View style={styles.cardFooter}>
+            <Text style={styles.viewEventText}>
+              {hasEvent ? t('announcements.viewEvent') : t('announcements.viewDetails')}
+            </Text>
+            <Text style={styles.viewEventArrow}>›</Text>
+          </View>
         </Pressable>
       );
+
+      // Staff can swipe a row left to reveal a Delete action (with confirmation).
+      if (!isStaff) {
+        return card;
+      }
+      return (
+        <ReanimatedSwipeable
+          friction={2}
+          rightThreshold={40}
+          renderRightActions={(_progress, _translation, swipeable) => (
+            <Pressable
+              style={styles.swipeDelete}
+              onPress={() => confirmDelete(item, swipeable)}
+              accessibilityRole="button"
+              accessibilityLabel={t('announcements.deleteAction')}
+            >
+              <Text style={styles.swipeDeleteText}>{t('announcements.deleteAction')}</Text>
+            </Pressable>
+          )}
+        >
+          {card}
+        </ReanimatedSwipeable>
+      );
     },
-    [language, viewedThreshold, navigation, t],
+    [language, viewedThreshold, navigation, t, isStaff, confirmDelete],
   );
 
   const showEmpty = announcements.length === 0;
@@ -342,6 +385,22 @@ const styles = StyleSheet.create({
     fontSize: typography.size.lg,
     color: colors.accent,
     marginTop: -2,
+  },
+
+  // ─── Swipe-to-delete (staff) ───────────────────────────────────────────────
+  swipeDelete: {
+    backgroundColor: colors.danger,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: radii.lg,
+    marginLeft: spacing.sm,
+    paddingHorizontal: spacing.lg,
+  },
+  swipeDeleteText: {
+    fontFamily: typography.family.body,
+    fontSize: typography.size.sm,
+    fontWeight: typography.weight.bold,
+    color: colors.surfaceWhite,
   },
 
   // ─── Empty / loading / error ───────────────────────────────────────────────

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 
 import {
   canUseAnnouncementsApi,
+  deleteAnnouncementRemote,
   fetchAnnouncements,
   type Announcement,
 } from '../../services/api/announcementsRepository';
@@ -30,6 +31,7 @@ type AnnouncementsState = {
   hydrate: () => Promise<void>;
   refresh: (options?: { force?: boolean }) => Promise<void>;
   markAllSeen: () => Promise<void>;
+  deleteAnnouncement: (id: number) => Promise<void>;
 };
 
 function isAnnouncement(raw: unknown): raw is Announcement {
@@ -146,5 +148,22 @@ export const useAnnouncementsStore = create<AnnouncementsState>((set, get) => ({
     }
     set({ lastSeenId: maxId });
     await secureStorage.setItem(LAST_SEEN_KEY, String(maxId));
+  },
+  deleteAnnouncement: async (id) => {
+    // Optimistically drop it from the list so the UI updates instantly, then confirm
+    // with the backend. On failure, restore the previous list and rethrow so the
+    // caller can surface the error. A successful delete is server-authoritative, so
+    // every other device sees it removed on its next feed refresh.
+    const previous = get().announcements;
+    const next = previous.filter((item) => item.id !== id);
+    set({ announcements: next });
+    await persistCache(next);
+    try {
+      await deleteAnnouncementRemote(id);
+    } catch (error) {
+      set({ announcements: previous });
+      await persistCache(previous);
+      throw error;
+    }
   },
 }));

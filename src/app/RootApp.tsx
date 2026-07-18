@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import * as Notifications from 'expo-notifications';
 import { NavigationContainer } from '@react-navigation/native';
 import { Alert, Animated, Linking, StyleSheet, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 
 import i18n from '../i18n';
@@ -222,6 +223,7 @@ export function RootApp() {
   }, [appReady, splashOpacity]);
 
   return (
+    <GestureHandlerRootView style={styles.root}>
     <SafeAreaProvider initialMetrics={initialWindowMetrics}>
       <View style={styles.root}>
         <StatusBar style="light" />
@@ -245,6 +247,7 @@ export function RootApp() {
         ) : null}
       </View>
     </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 

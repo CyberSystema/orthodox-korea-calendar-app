@@ -138,6 +138,40 @@ export function SecretMenuScreen({ navigation }: Props) {
     [busy, log],
   );
 
+  // Destructive server-side wipe of ALL events + announcements (subscribers kept).
+  // Two-step confirmation; the backend also requires an explicit { confirm: 'PURGE' }.
+  const handlePurgeData = () => {
+    Alert.alert(
+      '☠️ Purge ALL event & notification data',
+      `This permanently deletes EVERY event and EVERY announcement on:\n${configuredBaseUrl}\n\n` +
+        `Push subscribers are KEPT. Synced devices will drop their events on next sync. ` +
+        `Staging and production share one database, so this affects both. This cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Continue…',
+          style: 'destructive',
+          onPress: () =>
+            Alert.alert('Final confirmation', 'Wipe all events + announcements now?', [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'PURGE',
+                style: 'destructive',
+                onPress: () =>
+                  void runAction('Purge Event & Notification Data', async () => {
+                    const res = await backendClient.purgeData({ confirm: 'PURGE' });
+                    log(`  events deleted: ${res.eventsDeleted}`, 'data');
+                    log(`  announcements deleted: ${res.notificationsDeleted}`, 'data');
+                    log(`  delete-tombstones written: ${res.tombstonesWritten}`, 'data');
+                    return `events=${res.eventsDeleted}, announcements=${res.notificationsDeleted}`;
+                  }),
+              },
+            ]),
+        },
+      ],
+    );
+  };
+
   // ═══════════════════════════════════════════════════════════════
   //  1.  DIAGNOSTICS
   // ═══════════════════════════════════════════════════════════════
@@ -1508,6 +1542,16 @@ export function SecretMenuScreen({ navigation }: Props) {
           <ActionButton label="Verify Data Integrity" onPress={handleVerifyIntegrity} disabled={busy} />
           <ActionButton label="Reconcile Local ↔ Remote" onPress={handleReconcile} disabled={busy} />
           <ActionButton label="Full Resync (rebuild local DB)" onPress={handleFullResync} disabled={busy} danger />
+        </Section>
+
+        {/* ═══ SERVER DANGER ZONE ═══ */}
+        <Section title="☠️ Server Danger Zone">
+          <ActionButton
+            label="Purge ALL Events & Announcements (server)"
+            onPress={handlePurgeData}
+            disabled={busy}
+            danger
+          />
         </Section>
 
         {/* ═══ DEVICE & APP INFO ═══ */}

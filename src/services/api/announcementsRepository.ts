@@ -52,6 +52,17 @@ export function canUseAnnouncementsApi(): boolean {
   return isApiConfigured;
 }
 
+export async function deleteAnnouncementRemote(id: number): Promise<void> {
+  if (!isApiConfigured) {
+    throw new Error('Announcements API is not configured.');
+  }
+  try {
+    await backendClient.deleteAnnouncement(id);
+  } catch (error) {
+    throw new Error(`Failed to delete announcement: ${getErrorMessage(error)}`);
+  }
+}
+
 export async function fetchAnnouncements(limit = 30, offset = 0): Promise<Announcement[]> {
   if (!isApiConfigured) {
     return [];

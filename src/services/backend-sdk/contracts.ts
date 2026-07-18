@@ -152,6 +152,21 @@ export interface ListAnnouncementsResponse {
   hasMore: boolean;
 }
 
+export interface DeleteAnnouncementResponse {
+  id: number;
+  deleted: true;
+}
+
+export interface PurgeInput {
+  confirm: "PURGE";
+}
+
+export interface PurgeResult {
+  eventsDeleted: number;
+  notificationsDeleted: number;
+  tombstonesWritten: number;
+}
+
 export interface RegisterSubscriptionInput {
   token: string;
   platform: "ios" | "android" | "web";
