@@ -57,7 +57,12 @@ function clearYear(year: number) {
   delete yearDateIndex[year];
 }
 
-const SYNC_STALE_MS = 6 * 60 * 60 * 1000; // 6 hours
+// The calendar JSON lives in a public GitHub repo and is edited outside the app, so we
+// check for changes on EVERY cold start — editing a file should show up at the next
+// startup. The check is a single Contents-API request comparing each file's sha; an
+// actual download only happens for files that changed. This short floor exists only to
+// collapse duplicate calls within one session (boot sync + a reconnect sync).
+const SYNC_MIN_INTERVAL_MS = 60 * 1000; // 1 minute
 
 type GithubDataFile = {
   name: string;
@@ -214,12 +219,41 @@ async function writeOfflineFile(name: string, text: string) {
 
 /** Monotonically increasing counter bumped whenever calendar data changes in cache. */
 let _calendarDataVersion = 0;
+let _lastSyncedAt: number | null = null;
+const dataListeners = new Set<() => void>();
 
 export function getCalendarDataVersion(): number {
   return _calendarDataVersion;
 }
 
-export async function syncCalendarDataFromGithub() {
+/** Epoch ms of the last completed GitHub sync (null if never synced this install). */
+export function getLastCalendarSyncAt(): number | null {
+  return _lastSyncedAt;
+}
+
+/**
+ * Subscribe to calendar-data changes (fresh remote data downloaded, a year loaded).
+ * Lets screens repaint the moment new data lands instead of waiting for a relaunch.
+ */
+export function subscribeToCalendarData(listener: () => void): () => void {
+  dataListeners.add(listener);
+  return () => {
+    dataListeners.delete(listener);
+  };
+}
+
+function bumpCalendarDataVersion() {
+  _calendarDataVersion += 1;
+  for (const listener of dataListeners) {
+    try {
+      listener();
+    } catch {
+      // A misbehaving listener must never break syncing.
+    }
+  }
+}
+
+export async function syncCalendarDataFromGithub(options?: { force?: boolean }) {
   const storageReady = await ensureStorageDirectory();
   if (!storageReady) {
     console.warn('Calendar sync skipped: local storage is unavailable.');
@@ -227,9 +261,16 @@ export async function syncCalendarDataFromGithub() {
   }
 
   const existingManifest = await readManifest();
+  if (existingManifest.lastSyncedAt) {
+    _lastSyncedAt = existingManifest.lastSyncedAt;
+  }
 
-  // Skip GitHub API call if we synced recently (within SYNC_STALE_MS)
-  if (existingManifest.lastSyncedAt && Date.now() - existingManifest.lastSyncedAt < SYNC_STALE_MS) {
+  // Only skip when we synced moments ago (a duplicate call in the same session).
+  if (
+    !options?.force &&
+    existingManifest.lastSyncedAt &&
+    Date.now() - existingManifest.lastSyncedAt < SYNC_MIN_INTERVAL_MS
+  ) {
     return;
   }
 
@@ -243,6 +284,7 @@ export async function syncCalendarDataFromGithub() {
   const discoveredYears = new Set<number>();
   const currentYear = new Date().getFullYear();
   const preferredYears = new Set([currentYear - 1, currentYear, currentYear + 1, 2026]);
+  const refreshedYears = new Set<number>();
   let dataChanged = false;
 
   for (const file of remoteFiles) {
@@ -273,6 +315,7 @@ export async function syncCalendarDataFromGithub() {
       await writeOfflineFile(file.name, jsonText);
       if (!loadingYears.has(parsed.year)) {
         clearYear(parsed.year);
+        refreshedYears.add(parsed.year);
       }
       unavailableYears.delete(parsed.year);
       dataChanged = true;
@@ -299,9 +342,18 @@ export async function syncCalendarDataFromGithub() {
 
   discoveredYears.forEach((year) => unavailableYears.delete(year));
   await writeManifest(nextManifest);
+  _lastSyncedAt = nextManifest.lastSyncedAt ?? Date.now();
+
+  // Re-populate the in-memory cache for years we just replaced. Downloading clears the
+  // year, so without this a live screen would repaint against an empty cache and show
+  // "no data for this day" until the next navigation. ensureCalendarYear reads the
+  // freshly written files and notifies subscribers itself.
+  for (const year of refreshedYears) {
+    await ensureCalendarYear(year);
+  }
 
   if (dataChanged) {
-    _calendarDataVersion += 1;
+    bumpCalendarDataVersion();
   }
 }
 
@@ -357,13 +409,13 @@ export async function ensureCalendarYear(year: number): Promise<boolean> {
     if (fromOffline) {
       storeYear(year, mapToLiturgicalDays(fromOffline.en, fromOffline.kr));
       unavailableYears.delete(year);
-      _calendarDataVersion += 1;
+      bumpCalendarDataVersion();
       return true;
     }
 
     if (year === 2026) {
       storeYear(2026, loadBundled2026());
-      _calendarDataVersion += 1;
+      bumpCalendarDataVersion();
       return true;
     }
 
@@ -380,7 +432,7 @@ export async function ensureCalendarYear(year: number): Promise<boolean> {
       }
       storeYear(year, mapToLiturgicalDays(enDays, krDays || enDays));
       unavailableYears.delete(year);
-      _calendarDataVersion += 1;
+      bumpCalendarDataVersion();
       return true;
     }
 

@@ -33,7 +33,11 @@ import {
   registerCurrentPushSubscription,
   unregisterCurrentPushSubscription,
 } from '../../services/api/subscriptions';
-import { syncCalendarDataFromGithub } from '../../features/calendar/webCalendarSource';
+import {
+  getCalendarDataVersion,
+  getLastCalendarSyncAt,
+  syncCalendarDataFromGithub,
+} from '../../features/calendar/webCalendarSource';
 import { secureStorage } from '../../services/storage/secureStorage';
 import { useAppStore } from '../../store/useAppStore';
 import { useEventsStore } from '../../features/events/useEventsStore';
@@ -1330,8 +1334,12 @@ export function SecretMenuScreen({ navigation }: Props) {
   // ═══════════════════════════════════════════════════════════════
   const handleForceCalendarSync = () =>
     runAction('Force Calendar Data Sync (GitHub)', async () => {
-      await syncCalendarDataFromGithub();
-      return 'Calendar sync triggered — check console for details';
+      // force: bypass the short duplicate-call floor so this always hits GitHub.
+      await syncCalendarDataFromGithub({ force: true });
+      const syncedAt = getLastCalendarSyncAt();
+      log(`  Last synced: ${syncedAt ? new Date(syncedAt).toLocaleString() : 'never'}`, 'data');
+      log(`  Data version: ${getCalendarDataVersion()}`, 'data');
+      return 'Calendar data checked against GitHub';
     });
 
   const handleForceSyncYear = () => {

@@ -17,12 +17,12 @@ import { LiturgicalDayPanel } from '../../components/common/LiturgicalDayPanel';
 import { PromptModal } from '../../components/common/PromptModal';
 import {
   ensureLiturgicalYear,
-  getCalendarDataVersion,
   getEventsByDate,
   getLiturgicalDayByDate,
   searchLiturgicalContent,
   type LiturgicalSearchResult,
 } from '../../features/calendar/calendarService';
+import { useCalendarDataVersion } from '../../features/calendar/useCalendarDataVersion';
 import { useEventsStore } from '../../features/events/useEventsStore';
 import { loginAdminThroughCloudflare } from '../../services/api/adminAuth';
 import { useAppStore } from '../../store/useAppStore';
@@ -77,7 +77,8 @@ export function TodayScreen({ navigation }: Props) {
   const [selectedDay, setSelectedDay] = useState(dayjs().date());
   const syncYearEvents = useEventsStore((state) => state.syncYearEvents);
   const customEvents = useEventsStore((state) => state.customEvents);
-  const [dataVersion, setDataVersion] = useState(0);
+  // Repaints automatically when a background GitHub sync brings in newer calendar JSON.
+  const dataVersion = useCalendarDataVersion();
 
   // Secret menu: 7 rapid taps on brand text
   const [adminPromptVisible, setAdminPromptVisible] = useState(false);
@@ -121,7 +122,6 @@ export function TodayScreen({ navigation }: Props) {
     void ensureLiturgicalYear(year).then((ok) => {
       if (mounted) {
         setYearReady(ok);
-        setDataVersion(getCalendarDataVersion());
       }
     });
     return () => {

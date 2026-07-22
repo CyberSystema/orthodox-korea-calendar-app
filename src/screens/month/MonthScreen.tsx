@@ -19,13 +19,13 @@ import { LiturgicalDayPanel } from '../../components/common/LiturgicalDayPanel';
 import { PromptModal } from '../../components/common/PromptModal';
 import {
   ensureLiturgicalYear,
-  getCalendarDataVersion,
   getEventOccurrenceCountsForMonth,
   getEventsByDate,
   getLiturgicalDayByDate,
   searchLiturgicalContent,
   type LiturgicalSearchResult,
 } from '../../features/calendar/calendarService';
+import { useCalendarDataVersion } from '../../features/calendar/useCalendarDataVersion';
 import { localized, type EventRecurrence, type LiturgicalEvent } from '../../features/calendar/types';
 import { useEventsStore } from '../../features/events/useEventsStore';
 import type { MainTabsParamList, RootStackParamList } from '../../navigation/types';
@@ -103,7 +103,8 @@ export function MonthScreen({ navigation, route }: Props) {
   const [cursor, setCursor] = useState(initial.startOf('month'));
   const todayISO = dayjs().format('YYYY-MM-DD');
   const [yearReady, setYearReady] = useState(true);
-  const [dataVersion, setDataVersion] = useState(0);
+  // Repaints automatically when a background GitHub sync brings in newer calendar JSON.
+  const dataVersion = useCalendarDataVersion();
 
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -228,7 +229,6 @@ export function MonthScreen({ navigation, route }: Props) {
     void ensureLiturgicalYear(year).then((ok) => {
       if (mounted) {
         setYearReady(ok);
-        setDataVersion(getCalendarDataVersion());
       }
     });
     void syncYearEvents(year);
