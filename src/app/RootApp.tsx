@@ -17,6 +17,7 @@ import {
   initializeNotifications,
   runLaunchNotificationPermissionFlow,
 } from '../services/notifications/notifications';
+import { useOtaForegroundUpdates } from '../services/updates/otaUpdates';
 import { useAppStore } from '../store/useAppStore';
 import { initNetworkMonitor, useNetworkStore } from '../store/useNetworkStore';
 import { verifyAdminCloudflareSession } from '../services/api/adminAuth';
@@ -36,6 +37,10 @@ export function RootApp() {
   const isOnline = useNetworkStore((state) => state.isOnline);
   const wasOnlineRef = useRef(true);
   const [minSplashElapsed, setMinSplashElapsed] = useState(false);
+
+  // Apply published JS updates when the app is foregrounded, instead of only on the
+  // launch after next. No-op in development.
+  useOtaForegroundUpdates();
 
   useEffect(() => {
     let cancelled = false;

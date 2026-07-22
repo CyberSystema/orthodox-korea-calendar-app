@@ -21,7 +21,9 @@
     "build:android:production": "npm run check:calendar-data && npx eas build -p android --profile production",
     "build:ios:production": "npm run check:calendar-data && npx eas build -p ios --profile production",
     "submit:android": "npx eas submit -p android --latest",
-    "submit:ios": "npx eas submit -p ios --latest"
+    "submit:ios": "npx eas submit -p ios --latest",
+    "update:production": "npm run typecheck && npm run check:calendar-data && node scripts/publish-update.mjs --profile production",
+    "update:preview": "npm run typecheck && npm run check:calendar-data && node scripts/publish-update.mjs --profile preview"
   },
   "dependencies": {
     "@react-navigation/bottom-tabs": "^7.18.3",
