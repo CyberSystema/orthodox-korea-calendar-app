@@ -42,7 +42,7 @@ const ko: Translations = {
     done: '완료',
     draft: '초안',
     on: '날짜',
-    readings: '독서',
+    readings: '성경 구절',
     celebrations: '축일',
     saints: '성인',
     otherInfo: '기타 정보',
