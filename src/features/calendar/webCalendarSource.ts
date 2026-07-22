@@ -1,5 +1,6 @@
 import * as FileSystem from 'expo-file-system/legacy';
 
+import { BUNDLED_CALENDAR_YEARS } from './bundledCalendarData.generated';
 import type { LiturgicalDay, CelebrationEntry } from './types';
 
 type WebContentFields = {
@@ -141,10 +142,20 @@ function mapToLiturgicalDays(enDays: WebCalendarDay[], krDays: WebCalendarDay[])
   });
 }
 
-function loadBundled2026(): LiturgicalDay[] {
-  const enDays = require('../../../assets/webapp-source/data/2026_en.json') as WebCalendarDay[];
-  const krDays = require('../../../assets/webapp-source/data/2026_kr.json') as WebCalendarDay[];
-  return mapToLiturgicalDays(enDays, krDays);
+/**
+ * Offline seed for a first launch with no network. The years available here — and the
+ * JSON they point at — are generated from the single source of truth (public/data/ in
+ * the orthodox-korea-calendar repo) by `npm run sync:calendar-data`; never hand-edit.
+ * Returns null for a year that isn't bundled, so the caller falls through to the network.
+ */
+function loadBundledYear(year: number): LiturgicalDay[] | null {
+  const loader = BUNDLED_CALENDAR_YEARS[year];
+  if (!loader) return null;
+
+  const { en, kr } = loader();
+  const enDays = en as WebCalendarDay[];
+  if (!Array.isArray(enDays) || enDays.length === 0) return null;
+  return mapToLiturgicalDays(enDays, (kr ?? en) as WebCalendarDay[]);
 }
 
 function parseDataFilename(name: string): { year: number; language: WebLanguage } | null {
@@ -436,8 +447,9 @@ export async function ensureCalendarYear(year: number): Promise<boolean> {
       return true;
     }
 
-    if (year === 2026) {
-      storeYear(2026, loadBundled2026());
+    const bundled = loadBundledYear(year);
+    if (bundled) {
+      storeYear(year, bundled);
       bumpCalendarDataVersion();
       return true;
     }
