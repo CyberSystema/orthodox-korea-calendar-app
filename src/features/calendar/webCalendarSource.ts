@@ -57,12 +57,15 @@ function clearYear(year: number) {
   delete yearDateIndex[year];
 }
 
-// The calendar JSON lives in a public GitHub repo and is edited outside the app, so we
-// check for changes on EVERY cold start — editing a file should show up at the next
-// startup. The check is a single Contents-API request comparing each file's sha; an
-// actual download only happens for files that changed. This short floor exists only to
-// collapse duplicate calls within one session (boot sync + a reconnect sync).
-const SYNC_MIN_INTERVAL_MS = 60 * 1000; // 1 minute
+// The calendar JSON lives in a public GitHub repo and is edited outside the app, so the
+// app checks the repository for changes on EVERY startup. The check is a single
+// Contents-API request comparing each file's sha; a file is downloaded and migrated
+// into the local cache only when it actually changed.
+//
+// These live in module scope, so a cold start (a fresh JS process) always resets them
+// and re-checks. They only dedupe repeat calls inside a single session.
+let syncInFlight: Promise<void> | null = null;
+let checkedThisSession = false;
 
 type GithubDataFile = {
   name: string;
@@ -253,7 +256,33 @@ function bumpCalendarDataVersion() {
   }
 }
 
+/**
+ * Check the calendar-data repository for changes and migrate any into the local copy.
+ *
+ * Runs on EVERY app start — there is no time-based throttle, so editing a JSON file and
+ * relaunching immediately picks the change up. Concurrent callers share one in-flight
+ * request, and repeat calls within the same session are skipped unless `force` is set.
+ * `checkedThisSession` is only set once GitHub was actually reached, so a launch that
+ * began offline still checks when connectivity returns.
+ */
 export async function syncCalendarDataFromGithub(options?: { force?: boolean }) {
+  if (syncInFlight) {
+    await syncInFlight;
+    return;
+  }
+  if (checkedThisSession && !options?.force) {
+    return;
+  }
+
+  syncInFlight = runCalendarSync();
+  try {
+    await syncInFlight;
+  } finally {
+    syncInFlight = null;
+  }
+}
+
+async function runCalendarSync(): Promise<void> {
   const storageReady = await ensureStorageDirectory();
   if (!storageReady) {
     console.warn('Calendar sync skipped: local storage is unavailable.');
@@ -265,20 +294,14 @@ export async function syncCalendarDataFromGithub(options?: { force?: boolean }) 
     _lastSyncedAt = existingManifest.lastSyncedAt;
   }
 
-  // Only skip when we synced moments ago (a duplicate call in the same session).
-  if (
-    !options?.force &&
-    existingManifest.lastSyncedAt &&
-    Date.now() - existingManifest.lastSyncedAt < SYNC_MIN_INTERVAL_MS
-  ) {
-    return;
-  }
-
   const remoteFiles = await fetchGithubDataFiles();
   if (remoteFiles.length === 0) {
     console.warn('Calendar sync skipped: no remote data files discovered.');
     return;
   }
+
+  // Repository reached — this launch has had its check.
+  checkedThisSession = true;
 
   const nextManifest: LocalManifest = { files: {}, lastSyncedAt: Date.now() };
   const discoveredYears = new Set<number>();
