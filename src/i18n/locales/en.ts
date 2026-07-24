@@ -37,7 +37,7 @@ const en = {
     draft: 'Draft',
     on: 'on',
     readings: 'Readings',
-    celebrations: 'Celebrations',
+    celebrations: 'Observances',
     saints: 'Saints',
     otherInfo: 'Other Information',
     itemReadings: 'Readings',
