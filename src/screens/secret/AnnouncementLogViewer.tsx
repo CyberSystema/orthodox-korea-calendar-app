@@ -67,7 +67,13 @@ function targetLabel(target: AdminAnnouncementLogItem['target']): string {
   return 'ALL';
 }
 
-export function AnnouncementLogViewer({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+export function AnnouncementLogViewer({
+  visible,
+  onClose,
+}: {
+  visible: boolean;
+  onClose: () => void;
+}) {
   const insets = useSafeAreaInsets();
   const [filter, setFilter] = useState<AnnouncementLogFilter>('all');
   const [items, setItems] = useState<AdminAnnouncementLogItem[]>([]);
@@ -98,7 +104,11 @@ export function AnnouncementLogViewer({ visible, onClose }: { visible: boolean; 
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
     try {
-      const res = await backendClient.listAnnouncementLog({ filter, limit: PAGE, offset: items.length });
+      const res = await backendClient.listAnnouncementLog({
+        filter,
+        limit: PAGE,
+        offset: items.length,
+      });
       setItems((prev) => [...prev, ...res.items]);
       setCounts(res.counts);
       setHasMore(res.hasMore);
@@ -139,7 +149,8 @@ export function AnnouncementLogViewer({ visible, onClose }: { visible: boolean; 
       {
         text: 'Delete forever',
         style: 'destructive',
-        onPress: () => void runItemAction(item.id, () => backendClient.hardDeleteAnnouncement(item.id)),
+        onPress: () =>
+          void runItemAction(item.id, () => backendClient.hardDeleteAnnouncement(item.id)),
       },
     ]);
   const onCopy = (item: AdminAnnouncementLogItem) => {
@@ -150,12 +161,18 @@ export function AnnouncementLogViewer({ visible, onClose }: { visible: boolean; 
   const countFor = (key: AnnouncementLogFilter): number | null => {
     if (!counts) return null;
     switch (key) {
-      case 'all': return counts.total;
-      case 'visible': return counts.visible;
-      case 'hidden': return counts.hidden;
-      case 'deleted': return counts.deleted;
-      case 'orphaned': return counts.orphaned;
-      case 'standalone': return counts.standalone;
+      case 'all':
+        return counts.total;
+      case 'visible':
+        return counts.visible;
+      case 'hidden':
+        return counts.hidden;
+      case 'deleted':
+        return counts.deleted;
+      case 'orphaned':
+        return counts.orphaned;
+      case 'standalone':
+        return counts.standalone;
     }
   };
 
@@ -165,17 +182,16 @@ export function AnnouncementLogViewer({ visible, onClose }: { visible: boolean; 
     const koDiffers = item.title.ko && item.title.ko !== item.title.en;
 
     return (
-      <Pressable
-        style={styles.card}
-        onPress={() => setExpandedId(expanded ? null : item.id)}
-      >
+      <Pressable style={styles.card} onPress={() => setExpandedId(expanded ? null : item.id)}>
         <View style={styles.cardTop}>
           <View style={styles.statusWrap}>
             <View style={[styles.dot, { backgroundColor: status.color }]} />
             <Text style={[styles.statusLabel, { color: status.color }]}>{status.label}</Text>
             {!item.visible ? <Text style={styles.hiddenTag}>hidden</Text> : null}
           </View>
-          <Text style={styles.idText}>#{item.id} · {targetLabel(item.target)}</Text>
+          <Text style={styles.idText}>
+            #{item.id} · {targetLabel(item.target)}
+          </Text>
         </View>
 
         <Text style={styles.title} numberOfLines={expanded ? undefined : 1}>
@@ -201,18 +217,41 @@ export function AnnouncementLogViewer({ visible, onClose }: { visible: boolean; 
             {item.eventDate ? <Field label="Event date" value={item.eventDate} /> : null}
             <Field label="Sent at" value={`${fmtDateTime(item.sentAt)}  (${item.sentAt})`} />
             {item.deletedAt !== null ? (
-              <Field label="Deleted at" value={`${fmtDateTime(item.deletedAt)}  (${item.deletedAt})`} />
+              <Field
+                label="Deleted at"
+                value={`${fmtDateTime(item.deletedAt)}  (${item.deletedAt})`}
+              />
             ) : null}
             <Field label="Feed visible" value={item.visible ? 'yes' : 'no'} />
 
             <View style={styles.actions}>
               {item.deletedAt !== null ? (
-                <ActionChip label="Restore" color={C.green} disabled={busyId === item.id} onPress={() => onRestore(item)} />
+                <ActionChip
+                  label="Restore"
+                  color={C.green}
+                  disabled={busyId === item.id}
+                  onPress={() => onRestore(item)}
+                />
               ) : (
-                <ActionChip label="Hide from feed" color={C.orange} disabled={busyId === item.id} onPress={() => onHide(item)} />
+                <ActionChip
+                  label="Hide from feed"
+                  color={C.orange}
+                  disabled={busyId === item.id}
+                  onPress={() => onHide(item)}
+                />
               )}
-              <ActionChip label="Hard delete" color={C.red} disabled={busyId === item.id} onPress={() => onHardDelete(item)} />
-              <ActionChip label="Copy JSON" color={C.blue} disabled={false} onPress={() => onCopy(item)} />
+              <ActionChip
+                label="Hard delete"
+                color={C.red}
+                disabled={busyId === item.id}
+                onPress={() => onHardDelete(item)}
+              />
+              <ActionChip
+                label="Copy JSON"
+                color={C.blue}
+                disabled={false}
+                onPress={() => onCopy(item)}
+              />
             </View>
           </View>
         ) : null}
@@ -227,7 +266,11 @@ export function AnnouncementLogViewer({ visible, onClose }: { visible: boolean; 
         <View style={styles.header}>
           <Text style={styles.headerTitle}>📜 Announcement Log</Text>
           <View style={styles.headerBtns}>
-            <Pressable style={styles.headerBtn} onPress={() => void load(filter)} disabled={loading}>
+            <Pressable
+              style={styles.headerBtn}
+              onPress={() => void load(filter)}
+              disabled={loading}
+            >
               <Text style={styles.headerBtnText}>Refresh</Text>
             </Pressable>
             <Pressable style={styles.headerBtn} onPress={onClose}>
@@ -238,14 +281,24 @@ export function AnnouncementLogViewer({ visible, onClose }: { visible: boolean; 
         <Text style={styles.subtle}>{configuredBaseUrl}</Text>
 
         {/* Filter chips with counts */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScroll} contentContainerStyle={styles.chipsRow}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.chipsScroll}
+          contentContainerStyle={styles.chipsRow}
+        >
           {FILTERS.map((f) => {
             const active = f.key === filter;
             const n = countFor(f.key);
             return (
-              <Pressable key={f.key} style={[styles.chip, active && styles.chipActive]} onPress={() => setFilter(f.key)}>
+              <Pressable
+                key={f.key}
+                style={[styles.chip, active && styles.chipActive]}
+                onPress={() => setFilter(f.key)}
+              >
                 <Text style={[styles.chipText, active && styles.chipTextActive]}>
-                  {f.label}{n !== null ? ` ${n}` : ''}
+                  {f.label}
+                  {n !== null ? ` ${n}` : ''}
                 </Text>
               </Pressable>
             );
@@ -254,7 +307,9 @@ export function AnnouncementLogViewer({ visible, onClose }: { visible: boolean; 
 
         {/* Body */}
         {loading ? (
-          <View style={styles.center}><ActivityIndicator color={C.blue} /></View>
+          <View style={styles.center}>
+            <ActivityIndicator color={C.blue} />
+          </View>
         ) : error ? (
           <View style={styles.center}>
             <Text style={styles.errText}>⚠ {error}</Text>
@@ -263,7 +318,9 @@ export function AnnouncementLogViewer({ visible, onClose }: { visible: boolean; 
             </Pressable>
           </View>
         ) : items.length === 0 ? (
-          <View style={styles.center}><Text style={styles.emptyText}>No entries in this view.</Text></View>
+          <View style={styles.center}>
+            <Text style={styles.emptyText}>No entries in this view.</Text>
+          </View>
         ) : (
           <FlatList
             data={items}
@@ -272,7 +329,11 @@ export function AnnouncementLogViewer({ visible, onClose }: { visible: boolean; 
             contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 24 }]}
             ListFooterComponent={
               hasMore ? (
-                <Pressable style={styles.moreBtn} onPress={() => void loadMore()} disabled={loadingMore}>
+                <Pressable
+                  style={styles.moreBtn}
+                  onPress={() => void loadMore()}
+                  disabled={loadingMore}
+                >
                   <Text style={styles.moreText}>{loadingMore ? 'Loading…' : 'Load more'}</Text>
                 </Pressable>
               ) : (
@@ -295,9 +356,23 @@ function Field({ label, value }: { label: string; value: string }) {
   );
 }
 
-function ActionChip({ label, color, disabled, onPress }: { label: string; color: string; disabled: boolean; onPress: () => void }) {
+function ActionChip({
+  label,
+  color,
+  disabled,
+  onPress,
+}: {
+  label: string;
+  color: string;
+  disabled: boolean;
+  onPress: () => void;
+}) {
   return (
-    <Pressable style={[styles.actionChip, { borderColor: color }, disabled && styles.actionChipDisabled]} onPress={onPress} disabled={disabled}>
+    <Pressable
+      style={[styles.actionChip, { borderColor: color }, disabled && styles.actionChipDisabled]}
+      onPress={onPress}
+      disabled={disabled}
+    >
       <Text style={[styles.actionChipText, { color }]}>{label}</Text>
     </Pressable>
   );
@@ -316,13 +391,27 @@ const styles = StyleSheet.create({
   },
   headerTitle: { color: C.text, fontSize: 18, fontWeight: '700' },
   headerBtns: { flexDirection: 'row', gap: 8 },
-  headerBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6, borderWidth: 1, borderColor: C.border, backgroundColor: C.surface },
+  headerBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: C.border,
+    backgroundColor: C.surface,
+  },
   headerBtnText: { color: C.blue, fontSize: 13, fontWeight: '600' },
   subtle: { color: C.faint, fontSize: 11, paddingHorizontal: 14, paddingTop: 6 },
 
   chipsScroll: { flexGrow: 0, paddingVertical: 10 },
   chipsRow: { paddingHorizontal: 14, gap: 8 },
-  chip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, borderWidth: 1, borderColor: C.border, backgroundColor: C.surface },
+  chip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: C.border,
+    backgroundColor: C.surface,
+  },
   chipActive: { borderColor: C.blue, backgroundColor: '#1f2937' },
   chipText: { color: C.muted, fontSize: 13, fontWeight: '600' },
   chipTextActive: { color: C.cyan },
@@ -330,16 +419,39 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24 },
   errText: { color: C.red, fontSize: 14, textAlign: 'center' },
   emptyText: { color: C.muted, fontSize: 14 },
-  retryBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 6, borderWidth: 1, borderColor: C.blue },
+  retryBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: C.blue,
+  },
   retryText: { color: C.blue, fontWeight: '700' },
 
   listContent: { paddingHorizontal: 14, gap: 10, paddingTop: 4 },
-  card: { borderWidth: 1, borderColor: C.border, borderRadius: 10, backgroundColor: C.surface, padding: 12, gap: 4 },
+  card: {
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: 10,
+    backgroundColor: C.surface,
+    padding: 12,
+    gap: 4,
+  },
   cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   statusWrap: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },
   dot: { width: 9, height: 9, borderRadius: 5 },
   statusLabel: { fontSize: 12, fontWeight: '700' },
-  hiddenTag: { color: C.faint, fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.5, borderWidth: 1, borderColor: C.faint, borderRadius: 4, paddingHorizontal: 4, paddingVertical: 1 },
+  hiddenTag: {
+    color: C.faint,
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    borderWidth: 1,
+    borderColor: C.faint,
+    borderRadius: 4,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+  },
   idText: { color: C.faint, fontSize: 11 },
   title: { color: C.text, fontSize: 15, fontWeight: '600' },
   titleKo: { color: C.muted, fontSize: 13 },
@@ -355,7 +467,16 @@ const styles = StyleSheet.create({
   actionChipDisabled: { opacity: 0.4 },
   actionChipText: { fontSize: 12, fontWeight: '700' },
 
-  moreBtn: { marginTop: 12, alignSelf: 'center', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8, borderWidth: 1, borderColor: C.border, backgroundColor: C.surface },
+  moreBtn: {
+    marginTop: 12,
+    alignSelf: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: C.border,
+    backgroundColor: C.surface,
+  },
   moreText: { color: C.blue, fontWeight: '700' },
   endText: { color: C.faint, fontSize: 12, textAlign: 'center', marginTop: 12 },
 });

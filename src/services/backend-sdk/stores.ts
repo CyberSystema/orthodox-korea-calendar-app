@@ -41,13 +41,13 @@ interface LocalStorageLike {
 function getLocalStorageOrThrow(): LocalStorageLike {
   const g = globalThis as unknown as { localStorage?: LocalStorageLike };
   if (!g.localStorage) {
-    throw new Error("localStorage is not available in this environment");
+    throw new Error('localStorage is not available in this environment');
   }
   return g.localStorage;
 }
 
 export class WebSyncCursorStore implements SyncCursorStore {
-  constructor(private readonly key = "okn.sync.cursor") {}
+  constructor(private readonly key = 'okn.sync.cursor') {}
 
   async getCursor(): Promise<number> {
     const raw = getLocalStorageOrThrow().getItem(this.key);
@@ -62,7 +62,7 @@ export class WebSyncCursorStore implements SyncCursorStore {
 }
 
 export class WebAdminTokenStore implements AdminTokenStore {
-  constructor(private readonly key = "okn.admin.token") {}
+  constructor(private readonly key = 'okn.admin.token') {}
 
   async getToken(): Promise<string | null> {
     return getLocalStorageOrThrow().getItem(this.key);
@@ -80,13 +80,13 @@ export class WebAdminTokenStore implements AdminTokenStore {
 function getSessionStorageOrThrow(): LocalStorageLike {
   const g = globalThis as unknown as { sessionStorage?: LocalStorageLike };
   if (!g.sessionStorage) {
-    throw new Error("sessionStorage is not available in this environment");
+    throw new Error('sessionStorage is not available in this environment');
   }
   return g.sessionStorage;
 }
 
 export class WebSessionAdminTokenStore implements AdminTokenStore {
-  constructor(private readonly key = "okn.admin.token") {}
+  constructor(private readonly key = 'okn.admin.token') {}
 
   async getToken(): Promise<string | null> {
     return getSessionStorageOrThrow().getItem(this.key);
@@ -110,7 +110,7 @@ export interface AsyncStorageLike {
 export class NativeSyncCursorStore implements SyncCursorStore {
   constructor(
     private readonly storage: AsyncStorageLike,
-    private readonly key = "okn.sync.cursor"
+    private readonly key = 'okn.sync.cursor',
   ) {}
 
   async getCursor(): Promise<number> {
@@ -128,7 +128,7 @@ export class NativeSyncCursorStore implements SyncCursorStore {
 export class NativeAdminTokenStore implements AdminTokenStore {
   constructor(
     private readonly storage: AsyncStorageLike,
-    private readonly key = "okn.admin.token"
+    private readonly key = 'okn.admin.token',
   ) {}
 
   async getToken(): Promise<string | null> {

@@ -43,9 +43,7 @@ function transformPodfile(input) {
     );
   }
 
-  return input.replace(postInstall, (block) =>
-    block.replace(/\n  end\n$/, `\n${SNIPPET}  end\n`),
-  );
+  return input.replace(postInstall, (block) => block.replace(/\n  end\n$/, `\n${SNIPPET}  end\n`));
 }
 
 module.exports = function withMinIosDeploymentTarget(config) {

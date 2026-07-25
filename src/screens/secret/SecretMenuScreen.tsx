@@ -369,49 +369,64 @@ export function SecretMenuScreen({ navigation }: Props) {
   };
 
   const handleNotifyAll = () =>
-    confirmBroadcast('ALL', () =>
-      void runAction('Notify All', async () => {
-        const res = await backendClient.adminNotify({
-          target: 'all',
-          title_en: '[System Test] Push Check',
-          title_ko: '[시스템] 푸시 확인',
-          body_en: 'Test push from system console.',
-          body_ko: '시스템 콘솔 테스트 푸시.',
-        });
-        log(`  fcm=${res.fcmEnabled}/${res.fcmMode}, apns=${res.apnsEnabled}, total=${res.total}`, 'data');
-        if (res.message) log(`  message: ${res.message}`, 'data');
-        return `sent=${res.sent}, failed=${res.failed}, total=${res.total}`;
-      }),
+    confirmBroadcast(
+      'ALL',
+      () =>
+        void runAction('Notify All', async () => {
+          const res = await backendClient.adminNotify({
+            target: 'all',
+            title_en: '[System Test] Push Check',
+            title_ko: '[시스템] 푸시 확인',
+            body_en: 'Test push from system console.',
+            body_ko: '시스템 콘솔 테스트 푸시.',
+          });
+          log(
+            `  fcm=${res.fcmEnabled}/${res.fcmMode}, apns=${res.apnsEnabled}, total=${res.total}`,
+            'data',
+          );
+          if (res.message) log(`  message: ${res.message}`, 'data');
+          return `sent=${res.sent}, failed=${res.failed}, total=${res.total}`;
+        }),
     );
 
   const handleNotifyEnglish = () =>
-    confirmBroadcast('English', () =>
-      void runAction('Notify English', async () => {
-        const res = await backendClient.adminNotify({
-          target: 'en',
-          title_en: '[Test] English Push',
-          title_ko: '[테스트] 영어 푸시',
-          body_en: 'English-only test notification.',
-          body_ko: '',
-        });
-        log(`  fcm=${res.fcmEnabled}/${res.fcmMode}, apns=${res.apnsEnabled}, total=${res.total}`, 'data');
-        return `sent=${res.sent}, failed=${res.failed}, target=en`;
-      }),
+    confirmBroadcast(
+      'English',
+      () =>
+        void runAction('Notify English', async () => {
+          const res = await backendClient.adminNotify({
+            target: 'en',
+            title_en: '[Test] English Push',
+            title_ko: '[테스트] 영어 푸시',
+            body_en: 'English-only test notification.',
+            body_ko: '',
+          });
+          log(
+            `  fcm=${res.fcmEnabled}/${res.fcmMode}, apns=${res.apnsEnabled}, total=${res.total}`,
+            'data',
+          );
+          return `sent=${res.sent}, failed=${res.failed}, target=en`;
+        }),
     );
 
   const handleNotifyKorean = () =>
-    confirmBroadcast('Korean', () =>
-      void runAction('Notify Korean', async () => {
-        const res = await backendClient.adminNotify({
-          target: 'ko',
-          title_en: '[Test] Korean Push',
-          title_ko: '[테스트] 한국어 푸시',
-          body_en: '',
-          body_ko: '한국어 전용 테스트 알림.',
-        });
-        log(`  fcm=${res.fcmEnabled}/${res.fcmMode}, apns=${res.apnsEnabled}, total=${res.total}`, 'data');
-        return `sent=${res.sent}, failed=${res.failed}, target=ko`;
-      }),
+    confirmBroadcast(
+      'Korean',
+      () =>
+        void runAction('Notify Korean', async () => {
+          const res = await backendClient.adminNotify({
+            target: 'ko',
+            title_en: '[Test] Korean Push',
+            title_ko: '[테스트] 한국어 푸시',
+            body_en: '',
+            body_ko: '한국어 전용 테스트 알림.',
+          });
+          log(
+            `  fcm=${res.fcmEnabled}/${res.fcmMode}, apns=${res.apnsEnabled}, total=${res.total}`,
+            'data',
+          );
+          return `sent=${res.sent}, failed=${res.failed}, target=ko`;
+        }),
     );
 
   const handlePushDiagnostic = () =>
@@ -474,19 +489,23 @@ export function SecretMenuScreen({ navigation }: Props) {
     });
 
   const handleClearLocalEvents = () => {
-    Alert.alert('Clear Local Event Cache', 'This removes all cached events. Next sync will re-fetch.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Clear',
-        style: 'destructive',
-        onPress: () => {
-          void runAction('Clear Event Cache', async () => {
-            await secureStorage.deleteItem('events.cache');
-            return 'events.cache deleted';
-          });
+    Alert.alert(
+      'Clear Local Event Cache',
+      'This removes all cached events. Next sync will re-fetch.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear',
+          style: 'destructive',
+          onPress: () => {
+            void runAction('Clear Event Cache', async () => {
+              await secureStorage.deleteItem('events.cache');
+              return 'events.cache deleted';
+            });
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   const handleDumpAdminToken = () =>
@@ -684,7 +703,9 @@ export function SecretMenuScreen({ navigation }: Props) {
           const local = JSON.parse(raw) as unknown[];
           const diff = remote.count - local.length;
           if (diff !== 0) {
-            issues.push(`Count mismatch: remote=${remote.count}, local=${local.length} (diff=${diff})`);
+            issues.push(
+              `Count mismatch: remote=${remote.count}, local=${local.length} (diff=${diff})`,
+            );
           }
         }
       } catch {
@@ -734,7 +755,10 @@ export function SecretMenuScreen({ navigation }: Props) {
     log(`  Platform: ${Platform.OS} (v${Platform.Version})`, 'data');
     log(`  Is Physical Device: ${Device.isDevice}`, 'data');
     log(`  Device Type: ${Device.deviceType ?? 'unknown'}`, 'data');
-    log(`  Total Memory: ${Device.totalMemory ? `${(Device.totalMemory / 1024 / 1024 / 1024).toFixed(1)} GB` : 'unknown'}`, 'data');
+    log(
+      `  Total Memory: ${Device.totalMemory ? `${(Device.totalMemory / 1024 / 1024 / 1024).toFixed(1)} GB` : 'unknown'}`,
+      'data',
+    );
     log(`  Manufacturer: ${Device.manufacturer ?? 'unknown'}`, 'data');
   };
 
@@ -745,7 +769,10 @@ export function SecretMenuScreen({ navigation }: Props) {
     log(`  __DEV__: ${__DEV__}`, 'data');
     log(`  Push Environment: ${__DEV__ ? 'sandbox' : 'production'}`, 'data');
     log(`  Platform: ${Platform.OS}`, 'data');
-    log(`  React Native: ${Platform.constants?.reactNativeVersion ? `${Platform.constants.reactNativeVersion.major}.${Platform.constants.reactNativeVersion.minor}.${Platform.constants.reactNativeVersion.patch}` : 'unknown'}`, 'data');
+    log(
+      `  React Native: ${Platform.constants?.reactNativeVersion ? `${Platform.constants.reactNativeVersion.major}.${Platform.constants.reactNativeVersion.minor}.${Platform.constants.reactNativeVersion.patch}` : 'unknown'}`,
+      'data',
+    );
   };
 
   const handleNotifPermStatus = () =>
@@ -905,7 +932,11 @@ export function SecretMenuScreen({ navigation }: Props) {
       Alert.prompt('Batch Delete', 'Enter end date (YYYY-MM-DD):', (to) => {
         if (!to?.trim()) return;
         void runAction('Fetch events in range', async () => {
-          const data = await backendClient.listEvents({ from: from.trim(), to: to.trim(), limit: 500 });
+          const data = await backendClient.listEvents({
+            from: from.trim(),
+            to: to.trim(),
+            limit: 500,
+          });
           if (data.events.length === 0) return 'No events in range';
 
           for (const ev of data.events) {
@@ -971,27 +1002,37 @@ export function SecretMenuScreen({ navigation }: Props) {
     });
 
   const handleUnregisterPush = () => {
-    Alert.alert('Unregister Push', 'Remove push subscription from backend? You will stop receiving push notifications.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Unregister',
-        style: 'destructive',
-        onPress: () => {
-          void runAction('Unregister Push Subscription', async () => {
-            await unregisterCurrentPushSubscription();
-            return 'Push subscription removed from backend';
-          });
+    Alert.alert(
+      'Unregister Push',
+      'Remove push subscription from backend? You will stop receiving push notifications.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Unregister',
+          style: 'destructive',
+          onPress: () => {
+            void runAction('Unregister Push Subscription', async () => {
+              await unregisterCurrentPushSubscription();
+              return 'Push subscription removed from backend';
+            });
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   const handleTestAllBackends = () =>
     runAction('Test All Backend Endpoints', async () => {
       const endpoints = [
         { name: 'Development', url: 'https://orthodox-korea-calendar-backend.leontg.workers.dev' },
-        { name: 'Staging', url: 'https://orthodox-korea-calendar-backend-staging.leontg.workers.dev' },
-        { name: 'Production', url: 'https://orthodox-korea-calendar-backend-production.leontg.workers.dev' },
+        {
+          name: 'Staging',
+          url: 'https://orthodox-korea-calendar-backend-staging.leontg.workers.dev',
+        },
+        {
+          name: 'Production',
+          url: 'https://orthodox-korea-calendar-backend-production.leontg.workers.dev',
+        },
       ];
       const results: string[] = [];
       for (const ep of endpoints) {
@@ -999,13 +1040,16 @@ export function SecretMenuScreen({ navigation }: Props) {
         try {
           const res = await fetch(`${ep.url}/health`, { method: 'GET' });
           const latency = Date.now() - start;
-          const data = await res.json() as { ok: boolean; service?: string };
+          const data = (await res.json()) as { ok: boolean; service?: string };
           const status = data.ok ? '✅' : '⚠️';
           log(`  ${status} ${ep.name}: ${latency}ms (${res.status})`, data.ok ? 'ok' : 'err');
           results.push(`${ep.name}=${latency}ms`);
         } catch (e) {
           const latency = Date.now() - start;
-          log(`  ❌ ${ep.name}: ${e instanceof Error ? e.message : 'failed'} (${latency}ms)`, 'err');
+          log(
+            `  ❌ ${ep.name}: ${e instanceof Error ? e.message : 'failed'} (${latency}ms)`,
+            'err',
+          );
           results.push(`${ep.name}=FAIL`);
         }
       }
@@ -1070,7 +1114,10 @@ export function SecretMenuScreen({ navigation }: Props) {
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
         const token = await adminTokenStore.getToken();
         if (token) headers.Authorization = `Bearer ${token}`;
-        const res = await fetch(`${baseUrl}${path}`, { ...init, headers: { ...headers, ...init?.headers } });
+        const res = await fetch(`${baseUrl}${path}`, {
+          ...init,
+          headers: { ...headers, ...init?.headers },
+        });
         return res;
       };
 
@@ -1122,16 +1169,22 @@ export function SecretMenuScreen({ navigation }: Props) {
           case 'health': {
             const start = Date.now();
             const res = await termFetch('/health');
-            const data = await res.json() as { ok: boolean; service?: string };
+            const data = (await res.json()) as { ok: boolean; service?: string };
             const latency = Date.now() - start;
-            termLog(`ok=${data.ok}, service=${data.service ?? 'n/a'}, latency=${latency}ms`, data.ok ? 'ok' : 'err');
+            termLog(
+              `ok=${data.ok}, service=${data.service ?? 'n/a'}, latency=${latency}ms`,
+              data.ok ? 'ok' : 'err',
+            );
             break;
           }
 
           case 'me': {
             const res = await termFetch('/admin/me');
-            if (!res.ok) { termLog(`HTTP ${res.status}: ${res.statusText}`, 'err'); break; }
-            const data = await res.json() as { sessionId: string; expiresAt: number };
+            if (!res.ok) {
+              termLog(`HTTP ${res.status}: ${res.statusText}`, 'err');
+              break;
+            }
+            const data = (await res.json()) as { sessionId: string; expiresAt: number };
             termLog(`session: ${data.sessionId.slice(0, 12)}…`, 'data');
             termLog(`expires: ${new Date(data.expiresAt * 1000).toLocaleString()}`, 'data');
             break;
@@ -1146,7 +1199,10 @@ export function SecretMenuScreen({ navigation }: Props) {
 
           case 'token': {
             const token = await adminTokenStore.getToken();
-            if (!token) { termLog('No admin token stored', 'err'); break; }
+            if (!token) {
+              termLog('No admin token stored', 'err');
+              break;
+            }
             termLog(`Token: ${token.slice(0, 16)}…  (${token.length} chars)`, 'data');
             break;
           }
@@ -1156,24 +1212,33 @@ export function SecretMenuScreen({ navigation }: Props) {
             if (sub === 'list') {
               const limit = Number(args[1]) || 20;
               const res = await termFetch(`/events?limit=${limit}`);
-              const data = await res.json() as { count: number; events: Array<{ id: string; date: string; title: { en: string }; type: string }> };
+              const data = (await res.json()) as {
+                count: number;
+                events: Array<{ id: string; date: string; title: { en: string }; type: string }>;
+              };
               termLog(`Total: ${data.count} events (showing ${data.events.length})`, 'ok');
               for (const ev of data.events) {
                 termLog(`  [${ev.date}] ${ev.title.en} (${ev.type}, ${ev.id.slice(0, 8)})`, 'data');
               }
             } else if (sub === 'get') {
-              if (!args[1]) { termLog('Usage: events get <id>', 'err'); break; }
+              if (!args[1]) {
+                termLog('Usage: events get <id>', 'err');
+                break;
+              }
               const res = await termFetch(`/events/${args[1]}`);
-              if (!res.ok) { termLog(`HTTP ${res.status}: ${res.statusText}`, 'err'); break; }
+              if (!res.ok) {
+                termLog(`HTTP ${res.status}: ${res.statusText}`, 'err');
+                break;
+              }
               const data = await res.json();
               termLog(JSON.stringify(data, null, 2), 'data');
             } else if (sub === 'count') {
               const res = await termFetch('/events?limit=1');
-              const data = await res.json() as { count: number };
+              const data = (await res.json()) as { count: number };
               termLog(`Total events: ${data.count}`, 'ok');
               for (const type of ['feast', 'fast', 'commemoration', 'other']) {
                 const r = await termFetch(`/events?type=${type}&limit=1`);
-                const d = await r.json() as { count: number };
+                const d = (await r.json()) as { count: number };
                 termLog(`  ${type}: ${d.count}`, 'data');
               }
             } else {
@@ -1188,16 +1253,27 @@ export function SecretMenuScreen({ navigation }: Props) {
             if (sub === 'status') {
               const cursor = await syncCursorStore.getCursor();
               const res = await termFetch(`/sync?cursor=${cursor}&limit=1`);
-              const data = await res.json() as { cursor: number; hasMore: boolean; events: unknown[]; deletedIds: unknown[] };
+              const data = (await res.json()) as {
+                cursor: number;
+                hasMore: boolean;
+                events: unknown[];
+                deletedIds: unknown[];
+              };
               termLog(`Local cursor: ${cursor}`, 'data');
               termLog(`Has more: ${data.hasMore}`, 'data');
               termLog(`Next cursor: ${data.cursor}`, 'data');
-              termLog(cursor === data.cursor && !data.hasMore ? 'Fully synced' : 'Out of sync', data.hasMore ? 'err' : 'ok');
+              termLog(
+                cursor === data.cursor && !data.hasMore ? 'Fully synced' : 'Out of sync',
+                data.hasMore ? 'err' : 'ok',
+              );
             } else if (sub === 'run') {
               termLog('Running full sync…', 'info');
               const pages = await backendClient.syncAll({
                 onPage: (page) => {
-                  termLog(`  page: ${page.events.length} events, ${page.deletedIds.length} deleted, cursor=${page.cursor}`, 'data');
+                  termLog(
+                    `  page: ${page.events.length} events, ${page.deletedIds.length} deleted, cursor=${page.cursor}`,
+                    'data',
+                  );
                 },
               });
               const total = pages.reduce((s, p) => s + p.events.length, 0);
@@ -1214,7 +1290,10 @@ export function SecretMenuScreen({ navigation }: Props) {
           case 'push': {
             const sub = args[0] ?? 'status';
             if (sub === 'status') {
-              if (!Device.isDevice) { termLog('Not a physical device', 'err'); break; }
+              if (!Device.isDevice) {
+                termLog('Not a physical device', 'err');
+                break;
+              }
               const perms = await Notifications.getPermissionsAsync();
               termLog(`Permission: ${perms.status}`, 'data');
               if (perms.status === 'granted') {
@@ -1253,7 +1332,10 @@ export function SecretMenuScreen({ navigation }: Props) {
                 break;
               }
               const d = json.data;
-              termLog(`sent=${d.sent}, failed=${d.failed}, total=${d.total}`, d.failed === 0 ? 'ok' : 'err');
+              termLog(
+                `sent=${d.sent}, failed=${d.failed}, total=${d.total}`,
+                d.failed === 0 ? 'ok' : 'err',
+              );
             } else {
               termLog(`Unknown: push ${sub}. Use: status, test`, 'err');
             }
@@ -1271,18 +1353,27 @@ export function SecretMenuScreen({ navigation }: Props) {
               termLog(`  ping ${i + 1}: ${ms}ms`, 'data');
             }
             const avg = times.reduce((a, b) => a + b, 0) / times.length;
-            termLog(`avg=${avg.toFixed(0)}ms, min=${Math.min(...times)}ms, max=${Math.max(...times)}ms`, 'ok');
+            termLog(
+              `avg=${avg.toFixed(0)}ms, min=${Math.min(...times)}ms, max=${Math.max(...times)}ms`,
+              'ok',
+            );
             break;
           }
 
           case 'raw': {
-            if (args.length < 2) { termLog('Usage: raw <METHOD> <PATH> [JSON_BODY]', 'err'); break; }
+            if (args.length < 2) {
+              termLog('Usage: raw <METHOD> <PATH> [JSON_BODY]', 'err');
+              break;
+            }
             const method = args[0].toUpperCase();
             const path = args[1];
             const body = args.slice(2).join(' ') || undefined;
             const init: RequestInit = { method };
             if (body && !['GET', 'HEAD'].includes(method)) init.body = body;
-            if (!['GET', 'HEAD'].includes(method) && !(await confirmIfProd(`raw ${method} ${path}`))) {
+            if (
+              !['GET', 'HEAD'].includes(method) &&
+              !(await confirmIfProd(`raw ${method} ${path}`))
+            ) {
               termLog('Cancelled.', 'info');
               break;
             }
@@ -1300,7 +1391,10 @@ export function SecretMenuScreen({ navigation }: Props) {
           }
 
           case 'history':
-            if (termHistory.length === 0) { termLog('No history yet', 'info'); break; }
+            if (termHistory.length === 0) {
+              termLog('No history yet', 'info');
+              break;
+            }
             for (let i = 0; i < termHistory.length; i++) {
               termLog(`  ${i + 1}. ${termHistory[i]}`, 'data');
             }
@@ -1411,7 +1505,9 @@ export function SecretMenuScreen({ navigation }: Props) {
         }
         return `${remaining} unsynced events behind (${pages} pages)`;
       }
-      return localCursor === page.cursor ? 'Fully synced ✨' : `${page.events.length} pending change(s)`;
+      return localCursor === page.cursor
+        ? 'Fully synced ✨'
+        : `${page.events.length} pending change(s)`;
     });
 
   // ═══════════════════════════════════════════════════════════════
@@ -1439,7 +1535,10 @@ export function SecretMenuScreen({ navigation }: Props) {
       const latency = Date.now() - start;
       const text = await response.text();
 
-      log(`✅ ${response.status} ${response.statusText} (${latency}ms)`, response.ok ? 'ok' : 'err');
+      log(
+        `✅ ${response.status} ${response.statusText} (${latency}ms)`,
+        response.ok ? 'ok' : 'err',
+      );
 
       // Try to pretty-print JSON
       try {
@@ -1501,9 +1600,17 @@ export function SecretMenuScreen({ navigation }: Props) {
       <ScrollView style={styles.mainScroll} contentContainerStyle={styles.mainContent}>
         {/* ═══ DIAGNOSTICS ═══ */}
         <Section title="⚡ Diagnostics" defaultOpen>
-          <ActionButton label="Health Check (with latency)" onPress={handleHealthCheck} disabled={busy} />
+          <ActionButton
+            label="Health Check (with latency)"
+            onPress={handleHealthCheck}
+            disabled={busy}
+          />
           <ActionButton label="Admin Session Info" onPress={handleAdminMe} disabled={busy} />
-          <ActionButton label="Client Config (Firebase)" onPress={handleClientConfig} disabled={busy} />
+          <ActionButton
+            label="Client Config (Firebase)"
+            onPress={handleClientConfig}
+            disabled={busy}
+          />
           <ActionButton label="Show Backend URL" onPress={handleShowEndpoint} disabled={busy} />
           <ActionButton label="Check Admin Token" onPress={handleCheckToken} disabled={busy} />
         </Section>
@@ -1511,32 +1618,86 @@ export function SecretMenuScreen({ navigation }: Props) {
         {/* ═══ EVENTS / DATA ═══ */}
         <Section title="📦 Events & Data">
           <ActionButton label="List All Events" onPress={handleListAllEvents} disabled={busy} />
-          <ActionButton label="List Feasts" onPress={() => handleListByType('feast')} disabled={busy} />
-          <ActionButton label="List Fasts" onPress={() => handleListByType('fast')} disabled={busy} />
-          <ActionButton label="List Commemorations" onPress={() => handleListByType('commemoration')} disabled={busy} />
-          <ActionButton label="List Other" onPress={() => handleListByType('other')} disabled={busy} />
+          <ActionButton
+            label="List Feasts"
+            onPress={() => handleListByType('feast')}
+            disabled={busy}
+          />
+          <ActionButton
+            label="List Fasts"
+            onPress={() => handleListByType('fast')}
+            disabled={busy}
+          />
+          <ActionButton
+            label="List Commemorations"
+            onPress={() => handleListByType('commemoration')}
+            disabled={busy}
+          />
+          <ActionButton
+            label="List Other"
+            onPress={() => handleListByType('other')}
+            disabled={busy}
+          />
           <ActionButton label="Get Event by ID" onPress={handleGetEventById} disabled={busy} />
-          <ActionButton label="Dump All Events → Clipboard (JSON)" onPress={handleDumpAllEventsJSON} disabled={busy} />
-          <ActionButton label="Delete Event by ID" onPress={handleDeleteEvent} disabled={busy} danger />
+          <ActionButton
+            label="Dump All Events → Clipboard (JSON)"
+            onPress={handleDumpAllEventsJSON}
+            disabled={busy}
+          />
+          <ActionButton
+            label="Delete Event by ID"
+            onPress={handleDeleteEvent}
+            disabled={busy}
+            danger
+          />
         </Section>
 
         {/* ═══ SYNC ENGINE ═══ */}
         <Section title="🔄 Sync Engine">
           <ActionButton label="Sync All Pages (full)" onPress={handleSyncAll} disabled={busy} />
-          <ActionButton label="Sync Single Page (from cursor)" onPress={handleSyncSinglePage} disabled={busy} />
+          <ActionButton
+            label="Sync Single Page (from cursor)"
+            onPress={handleSyncSinglePage}
+            disabled={busy}
+          />
           <ActionButton label="Read Sync Cursor" onPress={handleReadSyncCursor} disabled={busy} />
           <ActionButton label="Set Sync Cursor" onPress={handleSetSyncCursor} disabled={busy} />
-          <ActionButton label="Reset Sync Cursor → 0" onPress={handleResetSyncCursor} disabled={busy} danger />
-          <ActionButton label="Force Store Sync (current year)" onPress={handleForceSyncStore} disabled={busy} />
+          <ActionButton
+            label="Reset Sync Cursor → 0"
+            onPress={handleResetSyncCursor}
+            disabled={busy}
+            danger
+          />
+          <ActionButton
+            label="Force Store Sync (current year)"
+            onPress={handleForceSyncStore}
+            disabled={busy}
+          />
         </Section>
 
         {/* ═══ NOTIFICATIONS ═══ */}
         <Section title="🔔 Notifications">
-          <ActionButton label="Push Subscription Diagnostic" onPress={handlePushDiagnostic} disabled={busy} />
+          <ActionButton
+            label="Push Subscription Diagnostic"
+            onPress={handlePushDiagnostic}
+            disabled={busy}
+          />
           <ActionButton label="Send Test Push → All" onPress={handleNotifyAll} disabled={busy} />
-          <ActionButton label="Send Test Push → English" onPress={handleNotifyEnglish} disabled={busy} />
-          <ActionButton label="Send Test Push → Korean" onPress={handleNotifyKorean} disabled={busy} />
-          <ActionButton label="Send Custom Notification" onPress={handleNotifyCustom} disabled={busy} />
+          <ActionButton
+            label="Send Test Push → English"
+            onPress={handleNotifyEnglish}
+            disabled={busy}
+          />
+          <ActionButton
+            label="Send Test Push → Korean"
+            onPress={handleNotifyKorean}
+            disabled={busy}
+          />
+          <ActionButton
+            label="Send Custom Notification"
+            onPress={handleNotifyCustom}
+            disabled={busy}
+          />
         </Section>
 
         {/* ═══ ANNOUNCEMENT LOG ═══ */}
@@ -1550,21 +1711,62 @@ export function SecretMenuScreen({ navigation }: Props) {
 
         {/* ═══ LOCAL STORAGE ═══ */}
         <Section title="💾 Local Storage & Cache">
-          <ActionButton label="Dump Local Event Cache → Clipboard" onPress={handleDumpLocalEvents} disabled={busy} />
-          <ActionButton label="Clear Local Event Cache" onPress={handleClearLocalEvents} disabled={busy} danger />
-          <ActionButton label="Dump Admin Token → Clipboard" onPress={handleDumpAdminToken} disabled={busy} />
-          <ActionButton label="Clear Admin Token" onPress={handleClearAdminToken} disabled={busy} danger />
+          <ActionButton
+            label="Dump Local Event Cache → Clipboard"
+            onPress={handleDumpLocalEvents}
+            disabled={busy}
+          />
+          <ActionButton
+            label="Clear Local Event Cache"
+            onPress={handleClearLocalEvents}
+            disabled={busy}
+            danger
+          />
+          <ActionButton
+            label="Dump Admin Token → Clipboard"
+            onPress={handleDumpAdminToken}
+            disabled={busy}
+          />
+          <ActionButton
+            label="Clear Admin Token"
+            onPress={handleClearAdminToken}
+            disabled={busy}
+            danger
+          />
           <ActionButton label="Read Secure Key" onPress={handleReadSecureKey} disabled={busy} />
           <ActionButton label="Write Secure Key" onPress={handleWriteSecureKey} disabled={busy} />
-          <ActionButton label="Delete Secure Key" onPress={handleDeleteSecureKey} disabled={busy} danger />
-          <ActionButton label="☢️ NUKE ALL LOCAL DATA" onPress={handleNukeAllStorage} disabled={busy} danger />
+          <ActionButton
+            label="Delete Secure Key"
+            onPress={handleDeleteSecureKey}
+            disabled={busy}
+            danger
+          />
+          <ActionButton
+            label="☢️ NUKE ALL LOCAL DATA"
+            onPress={handleNukeAllStorage}
+            disabled={busy}
+            danger
+          />
         </Section>
 
         {/* ═══ REPAIR / RECONSTRUCT ═══ */}
         <Section title="🛠 Repair & Reconstruct">
-          <ActionButton label="Verify Data Integrity" onPress={handleVerifyIntegrity} disabled={busy} />
-          <ActionButton label="Reconcile Local ↔ Remote" onPress={handleReconcile} disabled={busy} />
-          <ActionButton label="Full Resync (rebuild local DB)" onPress={handleFullResync} disabled={busy} danger />
+          <ActionButton
+            label="Verify Data Integrity"
+            onPress={handleVerifyIntegrity}
+            disabled={busy}
+          />
+          <ActionButton
+            label="Reconcile Local ↔ Remote"
+            onPress={handleReconcile}
+            disabled={busy}
+          />
+          <ActionButton
+            label="Full Resync (rebuild local DB)"
+            onPress={handleFullResync}
+            disabled={busy}
+            danger
+          />
         </Section>
 
         {/* ═══ SERVER DANGER ZONE ═══ */}
@@ -1581,41 +1783,112 @@ export function SecretMenuScreen({ navigation }: Props) {
         <Section title="📱 Device & App Info">
           <ActionButton label="Show Device Info" onPress={handleDeviceInfo} disabled={busy} />
           <ActionButton label="Show App Info" onPress={handleAppInfo} disabled={busy} />
-          <ActionButton label="Notification Permission Details" onPress={handleNotifPermStatus} disabled={busy} />
-          <ActionButton label="List All Secure Storage Keys" onPress={handleListAllSecureKeys} disabled={busy} />
-          <ActionButton label="List Scheduled Notifications" onPress={handleScheduledNotifList} disabled={busy} />
-          <ActionButton label="Cancel All Scheduled Notifications" onPress={handleCancelAllScheduled} disabled={busy} danger />
+          <ActionButton
+            label="Notification Permission Details"
+            onPress={handleNotifPermStatus}
+            disabled={busy}
+          />
+          <ActionButton
+            label="List All Secure Storage Keys"
+            onPress={handleListAllSecureKeys}
+            disabled={busy}
+          />
+          <ActionButton
+            label="List Scheduled Notifications"
+            onPress={handleScheduledNotifList}
+            disabled={busy}
+          />
+          <ActionButton
+            label="Cancel All Scheduled Notifications"
+            onPress={handleCancelAllScheduled}
+            disabled={busy}
+            danger
+          />
         </Section>
 
         {/* ═══ EVENT MANAGEMENT ═══ */}
         <Section title="✏️ Event Management">
-          <ActionButton label="Quick Create Test Event (today)" onPress={handleQuickCreateTestEvent} disabled={busy} />
-          <ActionButton label="Create Custom Event" onPress={handleCreateCustomEvent} disabled={busy} />
+          <ActionButton
+            label="Quick Create Test Event (today)"
+            onPress={handleQuickCreateTestEvent}
+            disabled={busy}
+          />
+          <ActionButton
+            label="Create Custom Event"
+            onPress={handleCreateCustomEvent}
+            disabled={busy}
+          />
           <ActionButton label="Update Event Field" onPress={handleUpdateEvent} disabled={busy} />
-          <ActionButton label="Clone Event to New Date" onPress={handleCloneEvent} disabled={busy} />
-          <ActionButton label="Batch Delete by Date Range" onPress={handleBatchDeleteRange} disabled={busy} danger />
+          <ActionButton
+            label="Clone Event to New Date"
+            onPress={handleCloneEvent}
+            disabled={busy}
+          />
+          <ActionButton
+            label="Batch Delete by Date Range"
+            onPress={handleBatchDeleteRange}
+            disabled={busy}
+            danger
+          />
         </Section>
 
         {/* ═══ SUBSCRIPTION & NETWORK ═══ */}
         <Section title="📡 Subscription & Network">
-          <ActionButton label="Show Full Push Token" onPress={handleShowFullPushToken} disabled={busy} />
-          <ActionButton label="Force Re-register Push Token" onPress={handleForceReregister} disabled={busy} />
-          <ActionButton label="Unregister Push (stop notifications)" onPress={handleUnregisterPush} disabled={busy} danger />
-          <ActionButton label="Test All 3 Backends (latency)" onPress={handleTestAllBackends} disabled={busy} />
-          <ActionButton label="Benchmark Backend (10 pings)" onPress={handleBenchmarkBackend} disabled={busy} />
+          <ActionButton
+            label="Show Full Push Token"
+            onPress={handleShowFullPushToken}
+            disabled={busy}
+          />
+          <ActionButton
+            label="Force Re-register Push Token"
+            onPress={handleForceReregister}
+            disabled={busy}
+          />
+          <ActionButton
+            label="Unregister Push (stop notifications)"
+            onPress={handleUnregisterPush}
+            disabled={busy}
+            danger
+          />
+          <ActionButton
+            label="Test All 3 Backends (latency)"
+            onPress={handleTestAllBackends}
+            disabled={busy}
+          />
+          <ActionButton
+            label="Benchmark Backend (10 pings)"
+            onPress={handleBenchmarkBackend}
+            disabled={busy}
+          />
         </Section>
 
         {/* ═══ CALENDAR DATA ═══ */}
         <Section title="📅 Calendar Data (GitHub)">
-          <ActionButton label="Force Calendar Sync (GitHub)" onPress={handleForceCalendarSync} disabled={busy} />
-          <ActionButton label="Force Store Sync (custom year)" onPress={handleForceSyncYear} disabled={busy} />
+          <ActionButton
+            label="Force Calendar Sync (GitHub)"
+            onPress={handleForceCalendarSync}
+            disabled={busy}
+          />
+          <ActionButton
+            label="Force Store Sync (custom year)"
+            onPress={handleForceSyncYear}
+            disabled={busy}
+          />
         </Section>
 
         {/* ═══ ANALYTICS ═══ */}
         <Section title="📊 Analytics & Stats">
           <ActionButton label="Event Count by Type" onPress={handleEventStats} disabled={busy} />
-          <ActionButton label="Events per Month (current year)" onPress={handleEventsPerMonth} disabled={busy} />
-          <ActionButton label="Sync Cursor Delta (local vs remote)" onPress={handleSyncCursorDelta} disabled={busy} />
+          <ActionButton
+            label="Events per Month (current year)"
+            onPress={handleEventsPerMonth}
+            disabled={busy}
+          />
+          <ActionButton
+            label="Sync Cursor Delta (local vs remote)"
+            onPress={handleSyncCursorDelta}
+            disabled={busy}
+          />
         </Section>
 
         {/* ═══ RAW HTTP ═══ */}
@@ -1691,63 +1964,74 @@ export function SecretMenuScreen({ navigation }: Props) {
         <Pressable style={styles.modalBackdrop} onPress={() => setRawModalVisible(false)}>
           <KeyboardSafeView keyboardVerticalOffset={insets.top}>
             <Pressable style={styles.modalCard} onPress={() => {}}>
-                <Text style={styles.modalTitle}>Raw HTTP Request</Text>
-                <Text style={styles.modalSubtitle}>{configuredBaseUrl}</Text>
+              <Text style={styles.modalTitle}>Raw HTTP Request</Text>
+              <Text style={styles.modalSubtitle}>{configuredBaseUrl}</Text>
 
-                <Text style={styles.modalFieldLabel}>Method</Text>
-                <View style={styles.methodRow}>
-                  {(['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const).map((m) => (
-                    <Pressable
-                      key={m}
-                      style={[styles.methodChip, rawMethod === m && styles.methodChipActive]}
-                      onPress={() => setRawMethod(m)}
+              <Text style={styles.modalFieldLabel}>Method</Text>
+              <View style={styles.methodRow}>
+                {(['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const).map((m) => (
+                  <Pressable
+                    key={m}
+                    style={[styles.methodChip, rawMethod === m && styles.methodChipActive]}
+                    onPress={() => setRawMethod(m)}
+                  >
+                    <Text
+                      style={[
+                        styles.methodChipText,
+                        rawMethod === m && styles.methodChipTextActive,
+                      ]}
                     >
-                      <Text
-                        style={[styles.methodChipText, rawMethod === m && styles.methodChipTextActive]}
-                      >
-                        {m}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-
-                <Text style={styles.modalFieldLabel}>Path</Text>
-                <TextInput
-                  style={styles.modalInput}
-                  value={rawPath}
-                  onChangeText={setRawPath}
-                  placeholder="/health"
-                  placeholderTextColor="#484f58"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-
-                <Text style={styles.modalFieldLabel}>Body (JSON, for POST/PUT/PATCH)</Text>
-                <TextInput
-                  style={[styles.modalInput, styles.modalInputMulti]}
-                  value={rawBody}
-                  onChangeText={setRawBody}
-                  placeholder='{"key": "value"}'
-                  placeholderTextColor="#484f58"
-                  multiline
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-
-                <View style={styles.modalButtonRow}>
-                  <Pressable
-                    style={({ pressed }) => [styles.modalBtn, styles.modalBtnCancel, pressed && styles.pressed]}
-                    onPress={() => setRawModalVisible(false)}
-                  >
-                    <Text style={styles.modalBtnText}>Cancel</Text>
+                      {m}
+                    </Text>
                   </Pressable>
-                  <Pressable
-                    style={({ pressed }) => [styles.modalBtn, styles.modalBtnSend, pressed && styles.pressed]}
-                    onPress={handleRawRequest}
-                  >
-                    <Text style={styles.modalBtnTextSend}>Send Request</Text>
-                  </Pressable>
-                </View>
+                ))}
+              </View>
+
+              <Text style={styles.modalFieldLabel}>Path</Text>
+              <TextInput
+                style={styles.modalInput}
+                value={rawPath}
+                onChangeText={setRawPath}
+                placeholder="/health"
+                placeholderTextColor="#484f58"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+
+              <Text style={styles.modalFieldLabel}>Body (JSON, for POST/PUT/PATCH)</Text>
+              <TextInput
+                style={[styles.modalInput, styles.modalInputMulti]}
+                value={rawBody}
+                onChangeText={setRawBody}
+                placeholder='{"key": "value"}'
+                placeholderTextColor="#484f58"
+                multiline
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+
+              <View style={styles.modalButtonRow}>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.modalBtn,
+                    styles.modalBtnCancel,
+                    pressed && styles.pressed,
+                  ]}
+                  onPress={() => setRawModalVisible(false)}
+                >
+                  <Text style={styles.modalBtnText}>Cancel</Text>
+                </Pressable>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.modalBtn,
+                    styles.modalBtnSend,
+                    pressed && styles.pressed,
+                  ]}
+                  onPress={handleRawRequest}
+                >
+                  <Text style={styles.modalBtnTextSend}>Send Request</Text>
+                </Pressable>
+              </View>
             </Pressable>
           </KeyboardSafeView>
         </Pressable>
@@ -1760,97 +2044,107 @@ export function SecretMenuScreen({ navigation }: Props) {
           keyboardVerticalOffset={insets.top}
         >
           <View style={{ flex: 1 }}>
-          {/* Header */}
-          <View style={styles.termHeader}>
-            <View style={styles.termHeaderLeft}>
-              <Text style={styles.termTitle}>Terminal</Text>
-              <View style={[styles.termEnvBadge, termEnv === 'prod' && styles.termEnvBadgeProd]}>
-                <Text style={styles.termEnvBadgeText}>{termEnv}</Text>
+            {/* Header */}
+            <View style={styles.termHeader}>
+              <View style={styles.termHeaderLeft}>
+                <Text style={styles.termTitle}>Terminal</Text>
+                <View style={[styles.termEnvBadge, termEnv === 'prod' && styles.termEnvBadgeProd]}>
+                  <Text style={styles.termEnvBadgeText}>{termEnv}</Text>
+                </View>
               </View>
-            </View>
-            <Pressable
-              style={({ pressed }) => [styles.termCloseBtn, pressed && styles.pressed]}
-              onPress={() => setTermVisible(false)}
-            >
-              <Text style={styles.termCloseBtnText}>✕ Close</Text>
-            </Pressable>
-          </View>
-
-          {/* Env Switcher */}
-          <View style={styles.termEnvRow}>
-            {(['dev', 'staging', 'prod'] as const).map((env) => (
               <Pressable
-                key={env}
-                style={[styles.termEnvChip, termEnv === env && styles.termEnvChipActive]}
-                onPress={() => {
-                  setTermEnv(env);
-                  termLog(`Switched to ${env}: ${BACKEND_URLS[env]}`, 'ok');
-                }}
+                style={({ pressed }) => [styles.termCloseBtn, pressed && styles.pressed]}
+                onPress={() => setTermVisible(false)}
               >
-                <Text style={[styles.termEnvChipText, termEnv === env && styles.termEnvChipTextActive]}>
-                  {env}
-                </Text>
+                <Text style={styles.termCloseBtnText}>✕ Close</Text>
               </Pressable>
-            ))}
-          </View>
+            </View>
 
-          {/* Output */}
-          <ScrollView
-            ref={termScrollRef}
-            style={styles.termOutput}
-            contentContainerStyle={styles.termOutputContent}
-            keyboardShouldPersistTaps="handled"
-            keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
-          >
-            {termLines.map((line, i) => (
-              <Text
-                key={i}
-                style={[
-                  styles.termLine,
-                  line.type === 'cmd' && styles.termLineCmd,
-                  line.type === 'ok' && styles.termLineOk,
-                  line.type === 'err' && styles.termLineErr,
-                  line.type === 'data' && styles.termLineData,
-                ]}
-              >
-                {line.text}
-              </Text>
-            ))}
-            {termBusy && <Text style={styles.termLineBusy}>Running…</Text>}
-          </ScrollView>
+            {/* Env Switcher */}
+            <View style={styles.termEnvRow}>
+              {(['dev', 'staging', 'prod'] as const).map((env) => (
+                <Pressable
+                  key={env}
+                  style={[styles.termEnvChip, termEnv === env && styles.termEnvChipActive]}
+                  onPress={() => {
+                    setTermEnv(env);
+                    termLog(`Switched to ${env}: ${BACKEND_URLS[env]}`, 'ok');
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.termEnvChipText,
+                      termEnv === env && styles.termEnvChipTextActive,
+                    ]}
+                  >
+                    {env}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
 
-          {/* Input */}
-          <View style={[styles.termInputRow, { paddingBottom: Math.max(insets.bottom, spacing.sm) }]}>
-            <Text style={styles.termPrompt}>$</Text>
-            <TextInput
-              style={styles.termInput}
-              value={termInput}
-              onChangeText={setTermInput}
-              placeholder="Type a command…"
-              placeholderTextColor="#484f58"
-              autoCapitalize="none"
-              autoCorrect={false}
-              returnKeyType="send"
-              editable={!termBusy}
-              onSubmitEditing={handleTermSubmit}
-            />
-            <Pressable
-              style={({ pressed }) => [
-                styles.termSendBtn,
-                termBusy && styles.termSendBtnDisabled,
-                pressed && styles.pressed,
-              ]}
-              onPress={handleTermSubmit}
-              disabled={termBusy}
+            {/* Output */}
+            <ScrollView
+              ref={termScrollRef}
+              style={styles.termOutput}
+              contentContainerStyle={styles.termOutputContent}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
             >
-              <Text style={styles.termSendBtnText}>Run</Text>
-            </Pressable>
-          </View>
+              {termLines.map((line, i) => (
+                <Text
+                  key={i}
+                  style={[
+                    styles.termLine,
+                    line.type === 'cmd' && styles.termLineCmd,
+                    line.type === 'ok' && styles.termLineOk,
+                    line.type === 'err' && styles.termLineErr,
+                    line.type === 'data' && styles.termLineData,
+                  ]}
+                >
+                  {line.text}
+                </Text>
+              ))}
+              {termBusy && <Text style={styles.termLineBusy}>Running…</Text>}
+            </ScrollView>
+
+            {/* Input */}
+            <View
+              style={[styles.termInputRow, { paddingBottom: Math.max(insets.bottom, spacing.sm) }]}
+            >
+              <Text style={styles.termPrompt}>$</Text>
+              <TextInput
+                style={styles.termInput}
+                value={termInput}
+                onChangeText={setTermInput}
+                placeholder="Type a command…"
+                placeholderTextColor="#484f58"
+                autoCapitalize="none"
+                autoCorrect={false}
+                returnKeyType="send"
+                editable={!termBusy}
+                onSubmitEditing={handleTermSubmit}
+              />
+              <Pressable
+                style={({ pressed }) => [
+                  styles.termSendBtn,
+                  termBusy && styles.termSendBtnDisabled,
+                  pressed && styles.pressed,
+                ]}
+                onPress={handleTermSubmit}
+                disabled={termBusy}
+              >
+                <Text style={styles.termSendBtnText}>Run</Text>
+              </Pressable>
+            </View>
           </View>
         </KeyboardSafeView>
       </Modal>
 
-      <AnnouncementLogViewer visible={logViewerVisible} onClose={() => setLogViewerVisible(false)} />
+      <AnnouncementLogViewer
+        visible={logViewerVisible}
+        onClose={() => setLogViewerVisible(false)}
+      />
     </View>
   );
 }

@@ -1,14 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
-import Svg, {
-  Circle,
-  Defs,
-  G,
-  LinearGradient,
-  Path,
-  Rect,
-  Stop,
-} from 'react-native-svg';
+import Svg, { Circle, Defs, G, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
@@ -212,7 +204,11 @@ export function ByzantineSplashScreen() {
 
   return (
     <View style={styles.container}>
-      <Svg style={StyleSheet.absoluteFill} viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+      <Svg
+        style={StyleSheet.absoluteFill}
+        viewBox="0 0 100 100"
+        preserveAspectRatio="xMidYMid slice"
+      >
         <Defs>
           <LinearGradient id="background" x1="0" y1="0" x2="1" y2="1">
             <Stop offset="0" stopColor={colors.primaryDeep} />
@@ -231,8 +227,16 @@ export function ByzantineSplashScreen() {
         </Defs>
 
         <Rect x="0" y="0" width="100" height="100" fill="url(#background)" />
-        <Path d="M0 18 C14 8, 28 8, 42 18 C56 28, 70 28, 84 18 C91 13, 96 11, 100 12 V0 H0 Z" fill={colors.primarySoft} opacity="0.3" />
-        <Path d="M0 82 C14 72, 28 72, 42 82 C56 92, 70 92, 84 82 C91 77, 96 75, 100 76 V100 H0 Z" fill={colors.primaryDeep} opacity="0.24" />
+        <Path
+          d="M0 18 C14 8, 28 8, 42 18 C56 28, 70 28, 84 18 C91 13, 96 11, 100 12 V0 H0 Z"
+          fill={colors.primarySoft}
+          opacity="0.3"
+        />
+        <Path
+          d="M0 82 C14 72, 28 72, 42 82 C56 92, 70 92, 84 82 C91 77, 96 75, 100 76 V100 H0 Z"
+          fill={colors.primaryDeep}
+          opacity="0.24"
+        />
 
         <G opacity="0.18" stroke="url(#filigree)" strokeWidth="0.5" fill="none">
           <Path d="M0 18 H100" />
@@ -254,12 +258,29 @@ export function ByzantineSplashScreen() {
 
       {particles}
 
-      <AnimatedView style={[styles.halo, { opacity: haloOpacity, transform: [{ scale: haloScale }] }]} />
+      <AnimatedView
+        style={[styles.halo, { opacity: haloOpacity, transform: [{ scale: haloScale }] }]}
+      />
 
       <AnimatedView style={[styles.ringLayer, { transform: [{ rotate: slowRotation }] }]}>
         <Svg width={360} height={360} viewBox="0 0 360 360">
-          <Circle cx="180" cy="180" r="150" fill="none" stroke={colors.accentDim} strokeWidth="1.2" />
-          <Circle cx="180" cy="180" r="128" fill="none" stroke={colors.accentLine} strokeWidth="1.1" strokeDasharray="3 9" />
+          <Circle
+            cx="180"
+            cy="180"
+            r="150"
+            fill="none"
+            stroke={colors.accentDim}
+            strokeWidth="1.2"
+          />
+          <Circle
+            cx="180"
+            cy="180"
+            r="128"
+            fill="none"
+            stroke={colors.accentLine}
+            strokeWidth="1.1"
+            strokeDasharray="3 9"
+          />
           <Circle cx="180" cy="30" r="4" fill={colors.accentBright} />
           <Circle cx="330" cy="180" r="4" fill={colors.accentBright} />
           <Circle cx="180" cy="330" r="4" fill={colors.accentBright} />
@@ -269,7 +290,13 @@ export function ByzantineSplashScreen() {
 
       <AnimatedView style={[styles.ringLayer, { transform: [{ rotate: reverseRotation }] }]}>
         <Svg width={300} height={300} viewBox="0 0 300 300">
-          <G opacity="0.72" stroke={colors.accentPale} strokeWidth="1.2" fill="none" strokeLinecap="round">
+          <G
+            opacity="0.72"
+            stroke={colors.accentPale}
+            strokeWidth="1.2"
+            fill="none"
+            strokeLinecap="round"
+          >
             <Path d="M150 18 L150 48" />
             <Path d="M150 282 L150 252" />
             <Path d="M18 150 L48 150" />

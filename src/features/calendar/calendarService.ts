@@ -193,7 +193,11 @@ export function getEventsByDate(dateISO: string, includeDrafts = false): Liturgi
   return events.sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));
 }
 
-export function getEventsByMonth(year: number, month1to12: number, includeDrafts = false): LiturgicalEvent[] {
+export function getEventsByMonth(
+  year: number,
+  month1to12: number,
+  includeDrafts = false,
+): LiturgicalEvent[] {
   const prefix = `${year}-${String(month1to12).padStart(2, '0')}`;
   rebuildEventIndexes(year);
   const source = includeDrafts ? eventIndexes.byMonthAll : eventIndexes.byMonthPublic;
@@ -246,11 +250,7 @@ export function getEventCountByDate(dateISO: string, includeDrafts = false): num
 
 export function getLiturgicalDayByDate(dateISO: string): LiturgicalDay | null {
   const normalized = normalizeISODate(dateISO);
-  return (
-    getCalendarDayFromCache(normalized) ||
-    seededDayIndex.get(normalized) ||
-    null
-  );
+  return getCalendarDayFromCache(normalized) || seededDayIndex.get(normalized) || null;
 }
 
 export type LiturgicalSearchResult = {
@@ -271,7 +271,7 @@ function buildYearSet(targetYears: number[]): number[] {
 export async function searchLiturgicalContent(
   query: string,
   language: SupportedLanguage,
-  targetYears: number[]
+  targetYears: number[],
 ): Promise<LiturgicalSearchResult[]> {
   const needle = normalizedSearchText(query);
   if (!needle) return [];
@@ -284,17 +284,20 @@ export async function searchLiturgicalContent(
   for (const year of years) {
     const days = getCalendarDaysForYearFromCache(year);
     for (const day of days) {
-      const celebrations = language === 'ko'
-        ? day.celebrationsLocalized?.ko || day.celebrations
-        : day.celebrationsLocalized?.en || day.celebrations;
+      const celebrations =
+        language === 'ko'
+          ? day.celebrationsLocalized?.ko || day.celebrations
+          : day.celebrationsLocalized?.en || day.celebrations;
 
-      const saints = language === 'ko'
-        ? day.saintsLocalized?.ko || day.saints || []
-        : day.saintsLocalized?.en || day.saints || [];
+      const saints =
+        language === 'ko'
+          ? day.saintsLocalized?.ko || day.saints || []
+          : day.saintsLocalized?.en || day.saints || [];
 
-      const readings = language === 'ko'
-        ? day.readingsLocalized?.ko || day.readings
-        : day.readingsLocalized?.en || day.readings;
+      const readings =
+        language === 'ko'
+          ? day.readingsLocalized?.ko || day.readings
+          : day.readingsLocalized?.en || day.readings;
 
       for (const entry of celebrations) {
         const label = localized(entry.title, language);
@@ -319,7 +322,9 @@ export async function searchLiturgicalContent(
   }
 
   return results
-    .sort((a, b) => (a.dateISO === b.dateISO ? a.label.localeCompare(b.label) : a.dateISO.localeCompare(b.dateISO)))
+    .sort((a, b) =>
+      a.dateISO === b.dateISO ? a.label.localeCompare(b.label) : a.dateISO.localeCompare(b.dateISO),
+    )
     .slice(0, 80);
 }
 

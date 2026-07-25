@@ -1,7 +1,15 @@
 import { useEffect, useState } from 'react';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import dayjs from 'dayjs';
-import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Linking,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -99,7 +107,9 @@ export function EventDetailScreen({ route }: Props) {
     const body = encodeURIComponent(localized(event.details, language));
     const startdt = encodeURIComponent(`${eventDateISO}T00:00:00Z`);
     const enddt = encodeURIComponent(`${eventDateISO}T23:59:00Z`);
-    const recurrence = recurrenceRule ? `&recurrence=${encodeURIComponent(recurrenceRule.replace('RRULE:', ''))}` : '';
+    const recurrence = recurrenceRule
+      ? `&recurrence=${encodeURIComponent(recurrenceRule.replace('RRULE:', ''))}`
+      : '';
     const url = `https://outlook.live.com/calendar/0/deeplink/compose?path=/calendar/action/compose&rru=addevent&subject=${title}&body=${body}&startdt=${startdt}&enddt=${enddt}${recurrence}`;
     await Linking.openURL(url);
   };
@@ -108,7 +118,11 @@ export function EventDetailScreen({ route }: Props) {
     if (!event) return;
 
     const escapeIcs = (value: string) =>
-      value.replaceAll('\\', '\\\\').replaceAll(';', '\\;').replaceAll(',', '\\,').replaceAll('\n', '\\n');
+      value
+        .replaceAll('\\', '\\\\')
+        .replaceAll(';', '\\;')
+        .replaceAll(',', '\\,')
+        .replaceAll('\n', '\\n');
 
     const lines = [
       'BEGIN:VCALENDAR',
@@ -116,7 +130,10 @@ export function EventDetailScreen({ route }: Props) {
       'PRODID:-//Orthodox Korea//Calendar//EN',
       'BEGIN:VEVENT',
       `UID:${event.id}@orthodox-korea-calendar`,
-      `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z')}`,
+      `DTSTAMP:${new Date()
+        .toISOString()
+        .replace(/[-:]/g, '')
+        .replace(/\.\d{3}Z$/, 'Z')}`,
       `DTSTART;VALUE=DATE:${calendarDate(eventDateISO)}`,
       `DTEND;VALUE=DATE:${calendarDate(addDays(eventDateISO, 1))}`,
       `SUMMARY:${escapeIcs(localized(event.title, language))}`,
@@ -154,7 +171,10 @@ export function EventDetailScreen({ route }: Props) {
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={[styles.content, { paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.lg }]}
+      contentContainerStyle={[
+        styles.content,
+        { paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.lg },
+      ]}
     >
       <StatusBar style="light" />
       {/* ═══ EVENT HEADER CARD ═══ */}
@@ -179,7 +199,9 @@ export function EventDetailScreen({ route }: Props) {
       <View style={styles.metaCard}>
         <View style={styles.metaRow}>
           <Text style={styles.metaLabel}>{t('event.date')}</Text>
-          <Text style={styles.metaValue}>{formatDisplayDate(dateISO ?? event.dateISO, language)}</Text>
+          <Text style={styles.metaValue}>
+            {formatDisplayDate(dateISO ?? event.dateISO, language)}
+          </Text>
         </View>
         <View style={styles.metaDivider} />
         <View style={styles.metaRow}>
@@ -210,13 +232,22 @@ export function EventDetailScreen({ route }: Props) {
       <View style={styles.actionsCard}>
         <OrnamentTitle text={t('event.addToCalendar')} />
         <View style={styles.actionsRow}>
-          <Pressable style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]} onPress={openGoogleCalendar}>
+          <Pressable
+            style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}
+            onPress={openGoogleCalendar}
+          >
             <Text style={styles.actionButtonText}>{t('event.googleCalendar')}</Text>
           </Pressable>
-          <Pressable style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]} onPress={openAppleCalendar}>
+          <Pressable
+            style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}
+            onPress={openAppleCalendar}
+          >
             <Text style={styles.actionButtonText}>{t('event.appleCalendar')}</Text>
           </Pressable>
-          <Pressable style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]} onPress={openOutlook}>
+          <Pressable
+            style={({ pressed }) => [styles.actionButton, pressed && styles.pressed]}
+            onPress={openOutlook}
+          >
             <Text style={styles.actionButtonText}>{t('event.outlookCalendar')}</Text>
           </Pressable>
         </View>

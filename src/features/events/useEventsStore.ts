@@ -103,7 +103,9 @@ function normalizeStoredEvent(raw: unknown): LiturgicalEvent | null {
     allDay: typeof value.allDay === 'boolean' ? value.allDay : undefined,
     notify: typeof value.notify === 'boolean' ? value.notify : undefined,
     notificationTarget:
-      value.notificationTarget === 'english' || value.notificationTarget === 'korean' || value.notificationTarget === 'all'
+      value.notificationTarget === 'english' ||
+      value.notificationTarget === 'korean' ||
+      value.notificationTarget === 'all'
         ? value.notificationTarget
         : undefined,
     recurrence:
@@ -247,15 +249,23 @@ export const useEventsStore = create<EventsState>((set, get) => ({
             throw new Error('Sync cursor stalled. Stopping sync to avoid a runaway loop.');
           }
           if (pagesFetched >= MAX_SYNC_PAGES) {
-            throw new Error(`Sync exceeded ${MAX_SYNC_PAGES} pages. Stopping to protect device performance.`);
+            throw new Error(
+              `Sync exceeded ${MAX_SYNC_PAGES} pages. Stopping to protect device performance.`,
+            );
           }
 
           seenCursors.add(cursor);
           const batch = await fetchSyncBatch(cursor);
-          pages.push({ events: batch.events, deletedIds: batch.deletedIds, snapshot: batch.snapshot });
+          pages.push({
+            events: batch.events,
+            deletedIds: batch.deletedIds,
+            snapshot: batch.snapshot,
+          });
 
           if (batch.hasMore && batch.cursor === cursor) {
-            throw new Error('Sync cursor did not advance while hasMore=true. Stopping sync to avoid infinite requests.');
+            throw new Error(
+              'Sync cursor did not advance while hasMore=true. Stopping sync to avoid infinite requests.',
+            );
           }
 
           cursor = batch.cursor;
@@ -302,12 +312,18 @@ export const useEventsStore = create<EventsState>((set, get) => ({
   },
   addEvent: async (draft) => {
     if (!canUseEventsApi()) {
-      set({ syncState: 'error', syncError: 'Events API is unavailable. Cannot sync event changes.' });
+      set({
+        syncState: 'error',
+        syncError: 'Events API is unavailable. Cannot sync event changes.',
+      });
       return;
     }
 
     if (!(await hasAdminAuthToken())) {
-      set({ syncState: 'error', syncError: 'Cloudflare admin session is required for synchronized event changes.' });
+      set({
+        syncState: 'error',
+        syncError: 'Cloudflare admin session is required for synchronized event changes.',
+      });
       return;
     }
 
@@ -327,17 +343,27 @@ export const useEventsStore = create<EventsState>((set, get) => ({
     if (!draft.id) return;
 
     if (!canUseEventsApi()) {
-      set({ syncState: 'error', syncError: 'Events API is unavailable. Cannot sync event changes.' });
+      set({
+        syncState: 'error',
+        syncError: 'Events API is unavailable. Cannot sync event changes.',
+      });
       return;
     }
 
     if (!(await hasAdminAuthToken())) {
-      set({ syncState: 'error', syncError: 'Cloudflare admin session is required for synchronized event changes.' });
+      set({
+        syncState: 'error',
+        syncError: 'Cloudflare admin session is required for synchronized event changes.',
+      });
       return;
     }
 
     if (draft.id.startsWith('local-')) {
-      set({ syncState: 'error', syncError: 'Local draft events are not supported for synchronized mode. Create a new remote event.' });
+      set({
+        syncState: 'error',
+        syncError:
+          'Local draft events are not supported for synchronized mode. Create a new remote event.',
+      });
       return;
     }
 
@@ -355,17 +381,26 @@ export const useEventsStore = create<EventsState>((set, get) => ({
   },
   deleteEvent: async (eventId) => {
     if (!canUseEventsApi()) {
-      set({ syncState: 'error', syncError: 'Events API is unavailable. Cannot sync event changes.' });
+      set({
+        syncState: 'error',
+        syncError: 'Events API is unavailable. Cannot sync event changes.',
+      });
       return;
     }
 
     if (!(await hasAdminAuthToken())) {
-      set({ syncState: 'error', syncError: 'Cloudflare admin session is required for synchronized event changes.' });
+      set({
+        syncState: 'error',
+        syncError: 'Cloudflare admin session is required for synchronized event changes.',
+      });
       return;
     }
 
     if (eventId.startsWith('local-')) {
-      set({ syncState: 'error', syncError: 'Local draft events are not supported for synchronized mode.' });
+      set({
+        syncState: 'error',
+        syncError: 'Local draft events are not supported for synchronized mode.',
+      });
       return;
     }
 

@@ -7,7 +7,11 @@ type ByzantineOrnamentProps = {
   color?: string;
 };
 
-export function ByzantineOrnament({ width = 96, height = 16, color = '#B8942E' }: ByzantineOrnamentProps) {
+export function ByzantineOrnament({
+  width = 96,
+  height = 16,
+  color = '#B8942E',
+}: ByzantineOrnamentProps) {
   return (
     <Svg width={width} height={height} viewBox="0 0 96 16">
       <Path d="M2 8 H30" stroke={color} strokeWidth={1.2} strokeLinecap="round" />

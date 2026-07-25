@@ -21,7 +21,11 @@ import { fileURLToPath } from 'node:url';
 const APP_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SEED_DIR = path.join(APP_ROOT, 'assets', 'webapp-source', 'data');
 const GENERATED_MODULE = path.join(
-  APP_ROOT, 'src', 'features', 'calendar', 'bundledCalendarData.generated.ts',
+  APP_ROOT,
+  'src',
+  'features',
+  'calendar',
+  'bundledCalendarData.generated.ts',
 );
 const LOCAL_CANONICAL = path.resolve(APP_ROOT, '..', 'orthodox-korea-calendar', 'public', 'data');
 const GITHUB_CONTENTS =
@@ -115,7 +119,8 @@ async function main() {
     const kr = canonical.names.includes(`${year}_kr.json`) ? `${year}_kr.json` : en;
     plan.push({ year, en, kr });
   }
-  if (plan.length === 0) throw new Error(`No English data for seed year(s) ${seedYears.join(', ')}.`);
+  if (plan.length === 0)
+    throw new Error(`No English data for seed year(s) ${seedYears.join(', ')}.`);
 
   const wanted = new Map();
   for (const { en, kr } of plan) {
@@ -173,7 +178,9 @@ async function main() {
     console.log(`  removed stale ${extra}`);
     written++;
   }
-  const haveModule = (await exists(GENERATED_MODULE)) ? await fs.readFile(GENERATED_MODULE, 'utf8') : null;
+  const haveModule = (await exists(GENERATED_MODULE))
+    ? await fs.readFile(GENERATED_MODULE, 'utf8')
+    : null;
   if (haveModule !== moduleText) {
     await fs.writeFile(GENERATED_MODULE, moduleText);
     console.log('  updated bundledCalendarData.generated.ts');

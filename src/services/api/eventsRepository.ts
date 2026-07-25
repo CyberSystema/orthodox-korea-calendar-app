@@ -33,7 +33,9 @@ type SyncBatch = {
 
 function ensureConfigured() {
   if (!isApiConfigured) {
-    throw new Error('Events API is not configured. Set EXPO_PUBLIC_APP_API_BASE_URL for the native app API.');
+    throw new Error(
+      'Events API is not configured. Set EXPO_PUBLIC_APP_API_BASE_URL for the native app API.',
+    );
   }
 }
 
@@ -91,7 +93,7 @@ function toLiturgicalEvent(remote: ApiEvent): LiturgicalEvent {
     // never treat it as recurring, or the client would re-expand it into duplicates.
     recurrence: remote.isOccurrence ? 'none' : remote.recurrence?.frequency || 'none',
     recurrenceInterval: remote.isOccurrence ? undefined : remote.recurrence?.interval,
-    recurrenceUntil: remote.isOccurrence ? undefined : remote.recurrence?.until ?? undefined,
+    recurrenceUntil: remote.isOccurrence ? undefined : (remote.recurrence?.until ?? undefined),
     createdAt: fromUnixSeconds(remote.createdAt),
     updatedAt: fromUnixSeconds(remote.updatedAt),
     isAdminDraft: false,
@@ -105,7 +107,9 @@ function mapDraftType(draft: EventDraft): CreateOrUpdateEventInput['type'] {
   return 'commemoration';
 }
 
-function mapDraftRecurrence(recurrence: EventRecurrence | undefined): CreateOrUpdateEventInput['recurrence'] {
+function mapDraftRecurrence(
+  recurrence: EventRecurrence | undefined,
+): CreateOrUpdateEventInput['recurrence'] {
   if (!recurrence || recurrence === 'none') {
     return null;
   }
@@ -209,7 +213,9 @@ export async function updateRemoteEvent(draft: EventDraft): Promise<LiturgicalEv
   }
 
   try {
-    const updatedEvent = toLiturgicalEvent(await backendClient.updateEvent(draft.id, toEventInput(draft)));
+    const updatedEvent = toLiturgicalEvent(
+      await backendClient.updateEvent(draft.id, toEventInput(draft)),
+    );
     if (draft.notify) {
       await sendEventNotification(updatedEvent);
     }

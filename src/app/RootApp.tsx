@@ -32,7 +32,9 @@ export function RootApp() {
   const eventsHydrated = useEventsStore((state) => state.isHydrated);
   const hydrateEvents = useEventsStore((state) => state.hydrateEvents);
   const adminMode = useAppStore((state) => state.adminMode);
-  const setCloudflareAdminAuthenticated = useAppStore((state) => state.setCloudflareAdminAuthenticated);
+  const setCloudflareAdminAuthenticated = useAppStore(
+    (state) => state.setCloudflareAdminAuthenticated,
+  );
   const language = useAppStore((state) => state.language);
   const isOnline = useNetworkStore((state) => state.isOnline);
   const wasOnlineRef = useRef(true);
@@ -53,9 +55,7 @@ export function RootApp() {
       await hydratePreferences().catch((err) =>
         console.warn('[App] preference hydration failed:', err),
       );
-      await hydrateEvents().catch((err) =>
-        console.warn('[App] event hydration failed:', err),
-      );
+      await hydrateEvents().catch((err) => console.warn('[App] event hydration failed:', err));
       // Load the announcements feed (cached first, then a background refresh) so the
       // tab badge and list are ready — this also serves users who receive no push.
       await useAnnouncementsStore
@@ -229,29 +229,29 @@ export function RootApp() {
 
   return (
     <GestureHandlerRootView style={styles.root}>
-    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-      <View style={styles.root}>
-        <StatusBar style="light" />
-        {appReady ? (
-          <View style={styles.appHost}>
-            <View style={styles.navHost}>
-              <NavigationContainer linking={linking} theme={navigationTheme}>
-                <RootNavigator />
-              </NavigationContainer>
+      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+        <View style={styles.root}>
+          <StatusBar style="light" />
+          {appReady ? (
+            <View style={styles.appHost}>
+              <View style={styles.navHost}>
+                <NavigationContainer linking={linking} theme={navigationTheme}>
+                  <RootNavigator />
+                </NavigationContainer>
+              </View>
+              <OfflineBanner />
             </View>
-            <OfflineBanner />
-          </View>
-        ) : null}
-        {splashMounted ? (
-          <Animated.View
-            pointerEvents="none"
-            style={[StyleSheet.absoluteFill, { opacity: splashOpacity }]}
-          >
-            <ByzantineSplashScreen />
-          </Animated.View>
-        ) : null}
-      </View>
-    </SafeAreaProvider>
+          ) : null}
+          {splashMounted ? (
+            <Animated.View
+              pointerEvents="none"
+              style={[StyleSheet.absoluteFill, { opacity: splashOpacity }]}
+            >
+              <ByzantineSplashScreen />
+            </Animated.View>
+          ) : null}
+        </View>
+      </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }

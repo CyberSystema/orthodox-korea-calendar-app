@@ -27,7 +27,8 @@ const en = {
     deleteFailedTitle: "Couldn't delete announcement",
   },
   offline: {
-    banner: "You're offline — showing your saved calendar. Event updates and Staff Mode are paused until you reconnect.",
+    banner:
+      "You're offline — showing your saved calendar. Event updates and Staff Mode are paused until you reconnect.",
   },
   common: {
     events: 'events',
@@ -136,9 +137,11 @@ const en = {
     subtitle: 'Language, notifications, and app preferences',
     adminMode: 'Staff Mode',
     notifications: 'Notifications',
-    notificationsAutoPrompt: 'Notification permission is requested automatically on first launch. If denied, we will remind you later.',
+    notificationsAutoPrompt:
+      'Notification permission is requested automatically on first launch. If denied, we will remind you later.',
     notificationReminderTitle: 'Turn On Notifications',
-    notificationReminderBody: 'To receive calendar reminders, please enable notifications in Settings.',
+    notificationReminderBody:
+      'To receive calendar reminders, please enable notifications in Settings.',
     notificationReminderOpenSettings: 'Open Settings',
     notificationReminderLater: 'Later',
     webAdminSync: 'Web Admin Sync',
@@ -146,7 +149,8 @@ const en = {
     apiUnavailable: 'API base URL unavailable.',
     adminPasscodePlaceholder: 'Staff Passcode',
     saveAdminPasscode: 'Save Staff Passcode',
-    stuffPasscodeStored: 'Staff session is active and stored securely. Disable Staff Mode to sign out.',
+    stuffPasscodeStored:
+      'Staff session is active and stored securely. Disable Staff Mode to sign out.',
     sessionExpired: 'Your staff session has expired. Enter the passcode to continue.',
     passcodeCleared: 'Admin passcode cleared.',
     passcodeSaved: 'Admin passcode verified and saved.',
@@ -156,7 +160,8 @@ const en = {
     passcodeRequired: 'Set and verify Staff Passcode before enabling Staff Mode.',
     adminEnabled: 'Staff Mode enabled and synchronized.',
     version: 'Version {{version}}',
-    offlineStaffDisabled: "Staff Mode needs an internet connection. It will resume automatically when you're back online.",
+    offlineStaffDisabled:
+      "Staff Mode needs an internet connection. It will resume automatically when you're back online.",
   },
   a11y: {
     openSettings: 'Open settings',

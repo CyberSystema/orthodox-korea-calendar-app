@@ -7,7 +7,10 @@ import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { AnnouncementsScreen } from '../screens/announcements/AnnouncementsScreen';
 import { MonthScreen } from '../screens/month/MonthScreen';
 import { TodayScreen } from '../screens/today/TodayScreen';
-import { countUnread, useAnnouncementsStore } from '../features/announcements/useAnnouncementsStore';
+import {
+  countUnread,
+  useAnnouncementsStore,
+} from '../features/announcements/useAnnouncementsStore';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import type { MainTabsParamList } from './types';
@@ -55,7 +58,16 @@ function BellIcon({ color, size }: { color: string; size: number }) {
 function CalendarIcon({ color, size }: { color: string; size: number }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
-      <Rect x={3} y={4} width={18} height={18} rx={2} stroke={color} strokeWidth={1.8} fill="none" />
+      <Rect
+        x={3}
+        y={4}
+        width={18}
+        height={18}
+        rx={2}
+        stroke={color}
+        strokeWidth={1.8}
+        fill="none"
+      />
       <Path d="M3 9 H21" stroke={color} strokeWidth={1.5} />
       <Path d="M8 2 V6" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
       <Path d="M16 2 V6" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
@@ -72,7 +84,9 @@ function CalendarIcon({ color, size }: { color: string; size: number }) {
 export function MainTabs() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const unreadCount = useAnnouncementsStore((state) => countUnread(state.announcements, state.lastSeenId));
+  const unreadCount = useAnnouncementsStore((state) =>
+    countUnread(state.announcements, state.lastSeenId),
+  );
 
   return (
     <Tab.Navigator

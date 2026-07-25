@@ -5,7 +5,8 @@ import {
 } from '../backend-sdk';
 import { secureStorage } from '../storage/secureStorage';
 
-const PRODUCTION_API_BASE_URL = 'https://orthodox-korea-calendar-backend-production.leontg.workers.dev';
+const PRODUCTION_API_BASE_URL =
+  'https://orthodox-korea-calendar-backend-production.leontg.workers.dev';
 const DEVELOPMENT_API_BASE_URL = 'https://orthodox-korea-calendar-backend.leontg.workers.dev';
 
 const DEFAULT_API_BASE_URL = __DEV__ ? DEVELOPMENT_API_BASE_URL : PRODUCTION_API_BASE_URL;

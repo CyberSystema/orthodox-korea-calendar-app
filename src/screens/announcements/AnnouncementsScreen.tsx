@@ -3,15 +3,7 @@ import type { CompositeScreenProps } from '@react-navigation/native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useState } from 'react';
-import {
-  Alert,
-  FlatList,
-  Pressable,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import ReanimatedSwipeable, {
   type SwipeableMethods,
 } from 'react-native-gesture-handler/ReanimatedSwipeable';
@@ -21,9 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
 import { ByzantineKnot } from '../../components/common/ByzantineKnot';
-import {
-  useAnnouncementsStore,
-} from '../../features/announcements/useAnnouncementsStore';
+import { useAnnouncementsStore } from '../../features/announcements/useAnnouncementsStore';
 import type { Announcement } from '../../services/api/announcementsRepository';
 import type { LocalizedText } from '../../features/calendar/types';
 import { useAppStore } from '../../store/useAppStore';
@@ -132,7 +122,11 @@ export function AnnouncementsScreen({ navigation }: Props) {
 
       const card = (
         <Pressable
-          style={({ pressed }) => [styles.card, isUnread && styles.cardUnread, pressed && styles.pressed]}
+          style={({ pressed }) => [
+            styles.card,
+            isUnread && styles.cardUnread,
+            pressed && styles.pressed,
+          ]}
           onPress={() => navigation.navigate('AnnouncementDetail', { announcement: item })}
           accessibilityRole="button"
           accessibilityLabel={`${title}. ${t('announcements.viewDetails')}`}

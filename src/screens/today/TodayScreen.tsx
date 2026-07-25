@@ -3,7 +3,19 @@ import type { CompositeScreenProps } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import dayjs from 'dayjs';
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { Alert, Dimensions, Keyboard, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Alert,
+  Dimensions,
+  Keyboard,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useKeyboardHeight } from '../../hooks/useKeyboardHeight';
@@ -61,8 +73,15 @@ export function TodayScreen({ navigation }: Props) {
   // The search modal is top-anchored at (insets.top + 28) — a comfortable gap below the
   // notch — and capped to the band above the keyboard, so the WHOLE card is always on
   // screen (28 below the notch, 16 above the keyboard) no matter how long the list is.
-  const searchCardMaxHeight = WINDOW_HEIGHT - insets.top - 28 - Math.max(keyboardHeight, insets.bottom) - 16;
-  const { language, setLanguage, adminMode, setSecretMenuUnlocked, setCloudflareAdminAuthenticated } = useAppStore();
+  const searchCardMaxHeight =
+    WINDOW_HEIGHT - insets.top - 28 - Math.max(keyboardHeight, insets.bottom) - 16;
+  const {
+    language,
+    setLanguage,
+    adminMode,
+    setSecretMenuUnlocked,
+    setCloudflareAdminAuthenticated,
+  } = useAppStore();
   const [activeDateISO, setActiveDateISO] = useState(dayjs().format('YYYY-MM-DD'));
   const todayISO = dayjs().format('YYYY-MM-DD');
   const [yearReady, setYearReady] = useState(true);
@@ -112,9 +131,17 @@ export function TodayScreen({ navigation }: Props) {
     [navigation, setCloudflareAdminAuthenticated, setSecretMenuUnlocked, t],
   );
   const activeYear = dayjs(activeDateISO).year();
-  const events = useMemo(() => getEventsByDate(activeDateISO, adminMode), [activeDateISO, adminMode, customEvents]);
-  const liturgicalDay = useMemo(() => getLiturgicalDayByDate(activeDateISO), [activeDateISO, dataVersion]);
-  const maxDayInSelectedMonth = dayjs(`${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`).daysInMonth();
+  const events = useMemo(
+    () => getEventsByDate(activeDateISO, adminMode),
+    [activeDateISO, adminMode, customEvents],
+  );
+  const liturgicalDay = useMemo(
+    () => getLiturgicalDayByDate(activeDateISO),
+    [activeDateISO, dataVersion],
+  );
+  const maxDayInSelectedMonth = dayjs(
+    `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`,
+  ).daysInMonth();
 
   useEffect(() => {
     let mounted = true;
@@ -262,7 +289,12 @@ export function TodayScreen({ navigation }: Props) {
           <View style={styles.headerCenter}>
             <View style={styles.headerLine} />
             <ByzantineKnot size={14} color={colors.accentBright} />
-            <Pressable onPress={handleBrandTap} hitSlop={4} accessibilityRole="header" accessibilityLabel={t('a11y.brandTitle')}>
+            <Pressable
+              onPress={handleBrandTap}
+              hitSlop={4}
+              accessibilityRole="header"
+              accessibilityLabel={t('a11y.brandTitle')}
+            >
               <Text style={styles.headerBrand}>ORTHODOX KOREA</Text>
             </Pressable>
             <ByzantineKnot size={14} color={colors.accentBright} />
@@ -289,136 +321,194 @@ export function TodayScreen({ navigation }: Props) {
           { paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.lg },
         ]}
       >
-      {/* ═══ ACTION PILLS ═══ */}
-      <View style={styles.actionRow}>
-        <Pressable style={({ pressed }) => [styles.actionPill, pressed && styles.pressed]} onPress={openDatePicker} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('today.openDatePicker')}>
-          <Text style={styles.actionPillText}>{t('today.openDatePicker')}</Text>
-        </Pressable>
-        <Pressable style={({ pressed }) => [styles.actionPill, pressed && styles.pressed]} onPress={toggleLanguage} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('today.toggleLanguage')}>
-          <Text style={styles.actionPillText}>
-            {language === 'en' ? '한국어' : 'English'}
-          </Text>
-        </Pressable>
-        {!isOnToday ? (
-          <Pressable style={({ pressed }) => [styles.actionPillAccent, pressed && styles.pressed]} onPress={goToday} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('today.goToday')}>
-            <Text style={styles.actionPillAccentText}>{t('today.goToday')}</Text>
+        {/* ═══ ACTION PILLS ═══ */}
+        <View style={styles.actionRow}>
+          <Pressable
+            style={({ pressed }) => [styles.actionPill, pressed && styles.pressed]}
+            onPress={openDatePicker}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t('today.openDatePicker')}
+          >
+            <Text style={styles.actionPillText}>{t('today.openDatePicker')}</Text>
           </Pressable>
+          <Pressable
+            style={({ pressed }) => [styles.actionPill, pressed && styles.pressed]}
+            onPress={toggleLanguage}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t('today.toggleLanguage')}
+          >
+            <Text style={styles.actionPillText}>{language === 'en' ? '한국어' : 'English'}</Text>
+          </Pressable>
+          {!isOnToday ? (
+            <Pressable
+              style={({ pressed }) => [styles.actionPillAccent, pressed && styles.pressed]}
+              onPress={goToday}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={t('today.goToday')}
+            >
+              <Text style={styles.actionPillAccentText}>{t('today.goToday')}</Text>
+            </Pressable>
+          ) : null}
+        </View>
+
+        {/* ═══ DAY NAVIGATOR ═══ */}
+        <View style={[styles.dayNavigator, isOnToday && styles.dayNavigatorToday]}>
+          <Pressable
+            style={({ pressed }) => [styles.dayArrowButton, pressed && styles.pressed]}
+            onPress={goPreviousDay}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t('a11y.previousDay')}
+          >
+            <ByzantineArrow direction="left" size={22} color={colors.accent} />
+          </Pressable>
+          <View style={styles.dayNavLine} />
+          <Text style={styles.dayNavDate}>{formatDisplayDate(activeDateISO, language)}</Text>
+          <View style={styles.dayNavLine} />
+          <Pressable
+            style={({ pressed }) => [styles.dayArrowButton, pressed && styles.pressed]}
+            onPress={goNextDay}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t('a11y.nextDay')}
+          >
+            <ByzantineArrow direction="right" size={22} color={colors.accent} />
+          </Pressable>
+        </View>
+
+        {/* ═══ WARNINGS ═══ */}
+        {!yearReady ? (
+          <Text style={styles.warningText}>
+            {t('today.noYearDataPublished', { year: dayjs(activeDateISO).year() })}
+          </Text>
         ) : null}
-      </View>
+        {yearReady && !liturgicalDay ? (
+          <Text style={styles.warningText}>{t('today.noDayData')}</Text>
+        ) : null}
 
-      {/* ═══ DAY NAVIGATOR ═══ */}
-      <View style={[styles.dayNavigator, isOnToday && styles.dayNavigatorToday]}>
-        <Pressable style={({ pressed }) => [styles.dayArrowButton, pressed && styles.pressed]} onPress={goPreviousDay} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('a11y.previousDay')}>
-          <ByzantineArrow direction="left" size={22} color={colors.accent} />
-        </Pressable>
-        <View style={styles.dayNavLine} />
-        <Text style={styles.dayNavDate}>{formatDisplayDate(activeDateISO, language)}</Text>
-        <View style={styles.dayNavLine} />
-        <Pressable style={({ pressed }) => [styles.dayArrowButton, pressed && styles.pressed]} onPress={goNextDay} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('a11y.nextDay')}>
-          <ByzantineArrow direction="right" size={22} color={colors.accent} />
-        </Pressable>
-      </View>
-
-      {/* ═══ WARNINGS ═══ */}
-      {!yearReady ? (
-        <Text style={styles.warningText}>{t('today.noYearDataPublished', { year: dayjs(activeDateISO).year() })}</Text>
-      ) : null}
-      {yearReady && !liturgicalDay ? (
-        <Text style={styles.warningText}>{t('today.noDayData')}</Text>
-      ) : null}
-
-      {/* ═══ DAY PANEL ═══ */}
-      <View style={styles.manuscriptFrame}>
-        <LiturgicalDayPanel
-          language={language}
-          dateISO={activeDateISO}
-          liturgicalDay={liturgicalDay}
-          events={events}
-          labels={{
-            readings: t('common.readings'),
-            celebrations: t('common.celebrations'),
-            saints: t('common.saints'),
-            otherInfo: t('common.otherInfo'),
-            events: t('common.events'),
-            itemReadings: t('common.itemReadings'),
-            tone: t('common.tone'),
-            matins: t('common.matins'),
-            noReadings: t('common.noReadings'),
-            noSaints: t('common.noSaints'),
-            noOtherInfo: t('common.noOtherInfo'),
-            noEvents: t('common.noEvents'),
-            fast: t('common.fast'),
-            cheese: t('common.cheese'),
-            fish: t('common.fish'),
-            pres: t('common.pres'),
-            basil: t('common.basil'),
-            dl: t('common.dl'),
-          }}
-          onEventPress={(event) => navigation.navigate('EventDetail', { eventId: event.id, dateISO: event.dateISO })}
-        />
-      </View>
+        {/* ═══ DAY PANEL ═══ */}
+        <View style={styles.manuscriptFrame}>
+          <LiturgicalDayPanel
+            language={language}
+            dateISO={activeDateISO}
+            liturgicalDay={liturgicalDay}
+            events={events}
+            labels={{
+              readings: t('common.readings'),
+              celebrations: t('common.celebrations'),
+              saints: t('common.saints'),
+              otherInfo: t('common.otherInfo'),
+              events: t('common.events'),
+              itemReadings: t('common.itemReadings'),
+              tone: t('common.tone'),
+              matins: t('common.matins'),
+              noReadings: t('common.noReadings'),
+              noSaints: t('common.noSaints'),
+              noOtherInfo: t('common.noOtherInfo'),
+              noEvents: t('common.noEvents'),
+              fast: t('common.fast'),
+              cheese: t('common.cheese'),
+              fish: t('common.fish'),
+              pres: t('common.pres'),
+              basil: t('common.basil'),
+              dl: t('common.dl'),
+            }}
+            onEventPress={(event) =>
+              navigation.navigate('EventDetail', { eventId: event.id, dateISO: event.dateISO })
+            }
+          />
+        </View>
       </ScrollView>
 
       {/* ═══ SEARCH MODAL ═══ */}
-      <Modal visible={searchVisible} transparent statusBarTranslucent animationType="fade" onRequestClose={() => setSearchVisible(false)}>
+      <Modal
+        visible={searchVisible}
+        transparent
+        statusBarTranslucent
+        animationType="fade"
+        onRequestClose={() => setSearchVisible(false)}
+      >
         <Pressable
-          style={[styles.modalBackdrop, { justifyContent: 'flex-start', paddingTop: insets.top + 28 }]}
+          style={[
+            styles.modalBackdrop,
+            { justifyContent: 'flex-start', paddingTop: insets.top + 28 },
+          ]}
           onPress={() => setSearchVisible(false)}
         >
-            <Pressable style={[styles.modalCard, { maxHeight: searchCardMaxHeight }]} onPress={() => {}}>
-                <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>{t('today.searchTitle')}</Text>
-                </View>
-                <TextInput
-                  style={styles.modalInput}
-                  placeholder={t('today.searchPlaceholder')}
-                  placeholderTextColor={colors.textSecondary}
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  autoFocus
-                />
+          <Pressable
+            style={[styles.modalCard, { maxHeight: searchCardMaxHeight }]}
+            onPress={() => {}}
+          >
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{t('today.searchTitle')}</Text>
+            </View>
+            <TextInput
+              style={styles.modalInput}
+              placeholder={t('today.searchPlaceholder')}
+              placeholderTextColor={colors.textSecondary}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoFocus
+            />
 
-                <ScrollView
-                  style={styles.searchList}
-                  contentContainerStyle={styles.searchListContent}
-                  keyboardShouldPersistTaps="handled"
-                  keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
-                >
-                  {searchBusy ? <Text style={styles.modalHint}>{t('common.loading')}</Text> : null}
-                  {!searchBusy && searchQuery.trim().length < 2 ? <Text style={styles.modalHint}>{t('today.searchHint')}</Text> : null}
-                  {!searchBusy && searchQuery.trim().length >= 2 && searchResults.length === 0 ? (
-                    <Text style={styles.modalHint}>{t('today.noSearchResults')}</Text>
-                  ) : null}
+            <ScrollView
+              style={styles.searchList}
+              contentContainerStyle={styles.searchListContent}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+            >
+              {searchBusy ? <Text style={styles.modalHint}>{t('common.loading')}</Text> : null}
+              {!searchBusy && searchQuery.trim().length < 2 ? (
+                <Text style={styles.modalHint}>{t('today.searchHint')}</Text>
+              ) : null}
+              {!searchBusy && searchQuery.trim().length >= 2 && searchResults.length === 0 ? (
+                <Text style={styles.modalHint}>{t('today.noSearchResults')}</Text>
+              ) : null}
 
-                  {!searchBusy
-                    ? searchResults.map((result) => (
-                        <Pressable
-                          key={`${result.kind}-${result.dateISO}-${result.label}`}
-                          style={({ pressed }) => [styles.searchResultItem, pressed && styles.pressed]}
-                          onPress={() => openSearchResult(result)}
-                          accessibilityRole="button"
-                        >
-                          <View style={styles.searchResultTopRow}>
-                            <Text style={styles.searchResultKind}>{searchKindLabel(result.kind)}</Text>
-                            <Text style={styles.searchResultDate}>{formatDisplayDate(result.dateISO, language)}</Text>
-                          </View>
-                          <Text style={styles.searchResultLabel}>{result.label}</Text>
-                        </Pressable>
-                      ))
-                    : null}
-                </ScrollView>
+              {!searchBusy
+                ? searchResults.map((result) => (
+                    <Pressable
+                      key={`${result.kind}-${result.dateISO}-${result.label}`}
+                      style={({ pressed }) => [styles.searchResultItem, pressed && styles.pressed]}
+                      onPress={() => openSearchResult(result)}
+                      accessibilityRole="button"
+                    >
+                      <View style={styles.searchResultTopRow}>
+                        <Text style={styles.searchResultKind}>{searchKindLabel(result.kind)}</Text>
+                        <Text style={styles.searchResultDate}>
+                          {formatDisplayDate(result.dateISO, language)}
+                        </Text>
+                      </View>
+                      <Text style={styles.searchResultLabel}>{result.label}</Text>
+                    </Pressable>
+                  ))
+                : null}
+            </ScrollView>
 
-                <Pressable style={({ pressed }) => [styles.modalCloseButton, pressed && styles.pressed]} onPress={() => setSearchVisible(false)} accessibilityRole="button">
-                  <Text style={styles.modalCloseButtonText}>{t('today.cancel')}</Text>
-                </Pressable>
+            <Pressable
+              style={({ pressed }) => [styles.modalCloseButton, pressed && styles.pressed]}
+              onPress={() => setSearchVisible(false)}
+              accessibilityRole="button"
+            >
+              <Text style={styles.modalCloseButtonText}>{t('today.cancel')}</Text>
             </Pressable>
+          </Pressable>
         </Pressable>
       </Modal>
 
       {/* ═══ DATE PICKER MODAL ═══ */}
-      <Modal visible={datePickerVisible} transparent statusBarTranslucent animationType="fade" onRequestClose={() => setDatePickerVisible(false)}>
+      <Modal
+        visible={datePickerVisible}
+        transparent
+        statusBarTranslucent
+        animationType="fade"
+        onRequestClose={() => setDatePickerVisible(false)}
+      >
         <Pressable style={styles.modalBackdrop} onPress={() => setDatePickerVisible(false)}>
           <Pressable style={styles.modalCard} onPress={() => Keyboard.dismiss()}>
             <View style={styles.modalHeader}>
@@ -428,11 +518,23 @@ export function TodayScreen({ navigation }: Props) {
             <View style={styles.pickerRow}>
               <Text style={styles.pickerLabel}>{t('today.yearLabel')}</Text>
               <View style={styles.pickerControl}>
-                <Pressable style={styles.pickerArrowButton} onPress={() => changeYear(-1)} hitSlop={8} accessibilityRole="button" accessibilityLabel={`${t('today.yearLabel')} ${t('a11y.decreaseValue')}`}>
+                <Pressable
+                  style={styles.pickerArrowButton}
+                  onPress={() => changeYear(-1)}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${t('today.yearLabel')} ${t('a11y.decreaseValue')}`}
+                >
                   <ByzantineArrow direction="left" size={18} color={colors.accent} />
                 </Pressable>
                 <Text style={styles.pickerValue}>{selectedYear}</Text>
-                <Pressable style={styles.pickerArrowButton} onPress={() => changeYear(1)} hitSlop={8} accessibilityRole="button" accessibilityLabel={`${t('today.yearLabel')} ${t('a11y.increaseValue')}`}>
+                <Pressable
+                  style={styles.pickerArrowButton}
+                  onPress={() => changeYear(1)}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${t('today.yearLabel')} ${t('a11y.increaseValue')}`}
+                >
                   <ByzantineArrow direction="right" size={18} color={colors.accent} />
                 </Pressable>
               </View>
@@ -441,15 +543,30 @@ export function TodayScreen({ navigation }: Props) {
             <View style={styles.pickerRow}>
               <Text style={styles.pickerLabel}>{t('today.monthLabel')}</Text>
               <View style={styles.pickerControl}>
-                <Pressable style={styles.pickerArrowButton} onPress={() => changeMonth(-1)} hitSlop={8} accessibilityRole="button" accessibilityLabel={`${t('today.monthLabel')} ${t('a11y.decreaseValue')}`}>
+                <Pressable
+                  style={styles.pickerArrowButton}
+                  onPress={() => changeMonth(-1)}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${t('today.monthLabel')} ${t('a11y.decreaseValue')}`}
+                >
                   <ByzantineArrow direction="left" size={18} color={colors.accent} />
                 </Pressable>
                 <Text style={styles.pickerValue}>
-                  {new Date(selectedYear, selectedMonth - 1, 1).toLocaleDateString(language === 'ko' ? 'ko' : 'en', {
-                    month: 'long',
-                  })}
+                  {new Date(selectedYear, selectedMonth - 1, 1).toLocaleDateString(
+                    language === 'ko' ? 'ko' : 'en',
+                    {
+                      month: 'long',
+                    },
+                  )}
                 </Text>
-                <Pressable style={styles.pickerArrowButton} onPress={() => changeMonth(1)} hitSlop={8} accessibilityRole="button" accessibilityLabel={`${t('today.monthLabel')} ${t('a11y.increaseValue')}`}>
+                <Pressable
+                  style={styles.pickerArrowButton}
+                  onPress={() => changeMonth(1)}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${t('today.monthLabel')} ${t('a11y.increaseValue')}`}
+                >
                   <ByzantineArrow direction="right" size={18} color={colors.accent} />
                 </Pressable>
               </View>
@@ -458,21 +575,41 @@ export function TodayScreen({ navigation }: Props) {
             <View style={styles.pickerRow}>
               <Text style={styles.pickerLabel}>{t('today.dayLabel')}</Text>
               <View style={styles.pickerControl}>
-                <Pressable style={styles.pickerArrowButton} onPress={() => changeDay(-1)} hitSlop={8} accessibilityRole="button" accessibilityLabel={`${t('today.dayLabel')} ${t('a11y.decreaseValue')}`}>
+                <Pressable
+                  style={styles.pickerArrowButton}
+                  onPress={() => changeDay(-1)}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${t('today.dayLabel')} ${t('a11y.decreaseValue')}`}
+                >
                   <ByzantineArrow direction="left" size={18} color={colors.accent} />
                 </Pressable>
                 <Text style={styles.pickerValue}>{selectedDay}</Text>
-                <Pressable style={styles.pickerArrowButton} onPress={() => changeDay(1)} hitSlop={8} accessibilityRole="button" accessibilityLabel={`${t('today.dayLabel')} ${t('a11y.increaseValue')}`}>
+                <Pressable
+                  style={styles.pickerArrowButton}
+                  onPress={() => changeDay(1)}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${t('today.dayLabel')} ${t('a11y.increaseValue')}`}
+                >
                   <ByzantineArrow direction="right" size={18} color={colors.accent} />
                 </Pressable>
               </View>
             </View>
 
             <View style={styles.modalActionsRow}>
-              <Pressable style={({ pressed }) => [styles.modalActionButtonMuted, pressed && styles.pressed]} onPress={() => setDatePickerVisible(false)} accessibilityRole="button">
+              <Pressable
+                style={({ pressed }) => [styles.modalActionButtonMuted, pressed && styles.pressed]}
+                onPress={() => setDatePickerVisible(false)}
+                accessibilityRole="button"
+              >
                 <Text style={styles.modalActionButtonMutedText}>{t('today.cancel')}</Text>
               </Pressable>
-              <Pressable style={({ pressed }) => [styles.modalActionButton, pressed && styles.pressed]} onPress={() => void goToSelectedDate()} accessibilityRole="button">
+              <Pressable
+                style={({ pressed }) => [styles.modalActionButton, pressed && styles.pressed]}
+                onPress={() => void goToSelectedDate()}
+                accessibilityRole="button"
+              >
                 <Text style={styles.modalActionButtonText}>{t('today.jumpButton')}</Text>
               </Pressable>
             </View>

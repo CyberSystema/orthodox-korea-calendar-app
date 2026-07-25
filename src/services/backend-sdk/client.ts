@@ -31,8 +31,8 @@ import type {
   SyncParams,
   SyncResponse,
   ApiEvent,
-} from "./contracts";
-import type { AdminTokenStore, SyncCursorStore } from "./stores";
+} from './contracts';
+import type { AdminTokenStore, SyncCursorStore } from './stores';
 
 export class BackendApiError extends Error {
   constructor(
@@ -40,10 +40,10 @@ export class BackendApiError extends Error {
     public readonly code: string,
     public readonly status: number,
     public readonly details?: unknown,
-    public readonly retryAfter?: number
+    public readonly retryAfter?: number,
   ) {
     super(message);
-    this.name = "BackendApiError";
+    this.name = 'BackendApiError';
   }
 }
 
@@ -65,7 +65,7 @@ export class OrthodoxCalendarApiClient {
   private readonly defaultHeaders: Record<string, string>;
 
   constructor(baseUrl: string, options: OrthodoxCalendarApiClientOptions = {}) {
-    this.baseUrl = baseUrl.replace(/\/+$/, "");
+    this.baseUrl = baseUrl.replace(/\/+$/, '');
     this.fetchImpl = options.fetchImpl ?? fetch;
     this.tokenStore = options.tokenStore;
     this.defaultHeaders = options.defaultHeaders ?? {};
@@ -78,7 +78,7 @@ export class OrthodoxCalendarApiClient {
       qs.set(key, String(val));
     }
     const out = qs.toString();
-    return out ? `?${out}` : "";
+    return out ? `?${out}` : '';
   }
 
   private static parseRetryAfterHeader(value: string | null): number | undefined {
@@ -95,12 +95,12 @@ export class OrthodoxCalendarApiClient {
     code: string,
     message: string,
     details: unknown,
-    retryAfterHeader: string | null
+    retryAfterHeader: string | null,
   ): BackendApiError {
     const retryAfter = OrthodoxCalendarApiClient.parseRetryAfterHeader(retryAfterHeader);
-    if ((code === "RATE_LIMITED" || status === 429) && retryAfter !== undefined) {
+    if ((code === 'RATE_LIMITED' || status === 429) && retryAfter !== undefined) {
       const mergedDetails: RateLimitedDetails =
-        details && typeof details === "object"
+        details && typeof details === 'object'
           ? { ...(details as Record<string, unknown>), retryAfter }
           : { retryAfter };
       return new BackendApiError(message, code, status, mergedDetails, retryAfter);
@@ -115,7 +115,7 @@ export class OrthodoxCalendarApiClient {
       body?: unknown;
       auth?: boolean;
       headers?: Record<string, string>;
-    } = {}
+    } = {},
   ): Promise<T> {
     const headers: Record<string, string> = {
       ...this.defaultHeaders,
@@ -123,16 +123,16 @@ export class OrthodoxCalendarApiClient {
     };
 
     if (options.body !== undefined) {
-      headers["Content-Type"] = "application/json";
+      headers['Content-Type'] = 'application/json';
     }
 
     if (options.auth) {
       if (!this.tokenStore) {
-        throw new Error("tokenStore is required for auth requests");
+        throw new Error('tokenStore is required for auth requests');
       }
       const token = await this.tokenStore.getToken();
       if (!token) {
-        throw new BackendApiError("Missing admin token", "UNAUTHORIZED", 401);
+        throw new BackendApiError('Missing admin token', 'UNAUTHORIZED', 401);
       }
       headers.Authorization = `Bearer ${token}`;
     }
@@ -146,7 +146,7 @@ export class OrthodoxCalendarApiClient {
     }
 
     const res = await this.fetchImpl(`${this.baseUrl}${path}`, requestInit);
-    const retryAfterHeader = res.headers.get("Retry-After");
+    const retryAfterHeader = res.headers.get('Retry-After');
 
     let json: ApiResponse<T> | null = null;
     try {
@@ -155,18 +155,18 @@ export class OrthodoxCalendarApiClient {
       if (!res.ok) {
         throw OrthodoxCalendarApiClient.toBackendError(
           res.status,
-          "HTTP_ERROR",
+          'HTTP_ERROR',
           `HTTP ${res.status} without JSON body`,
           undefined,
-          retryAfterHeader
+          retryAfterHeader,
         );
       }
       throw OrthodoxCalendarApiClient.toBackendError(
         res.status,
-        "INVALID_RESPONSE",
-        "Expected JSON response",
+        'INVALID_RESPONSE',
+        'Expected JSON response',
         undefined,
-        retryAfterHeader
+        retryAfterHeader,
       );
     }
 
@@ -176,7 +176,7 @@ export class OrthodoxCalendarApiClient {
         json.error.code,
         json.error.message,
         json.error.details,
-        retryAfterHeader
+        retryAfterHeader,
       );
     }
 
@@ -184,21 +184,25 @@ export class OrthodoxCalendarApiClient {
   }
 
   async health(): Promise<{ ok: true; service: string; ts: number }> {
-    const res = await this.fetchImpl(`${this.baseUrl}/health`, { method: "GET" });
+    const res = await this.fetchImpl(`${this.baseUrl}/health`, { method: 'GET' });
     if (!res.ok) {
-      throw new BackendApiError(`Health check failed with HTTP ${res.status}`, "HTTP_ERROR", res.status);
+      throw new BackendApiError(
+        `Health check failed with HTTP ${res.status}`,
+        'HTTP_ERROR',
+        res.status,
+      );
     }
     return (await res.json()) as HealthResponse;
   }
 
   async clientConfig(): Promise<ClientConfigResponse> {
-    return this.request<ClientConfigResponse>("GET", "/config/client");
+    return this.request<ClientConfigResponse>('GET', '/config/client');
   }
 
   // ─── Admin ─────────────────────────────────────────────────────────────────
 
   async adminLogin(input: LoginRequest): Promise<LoginResponse> {
-    const data = await this.request<LoginResponse>("POST", "/admin/login", { body: input });
+    const data = await this.request<LoginResponse>('POST', '/admin/login', { body: input });
     if (this.tokenStore) {
       await this.tokenStore.setToken(data.token);
     }
@@ -206,7 +210,7 @@ export class OrthodoxCalendarApiClient {
   }
 
   async staffLogin(input: StaffLoginRequest): Promise<LoginResponse> {
-    const data = await this.request<LoginResponse>("POST", "/staff/login", { body: input });
+    const data = await this.request<LoginResponse>('POST', '/staff/login', { body: input });
     if (this.tokenStore) {
       await this.tokenStore.setToken(data.token);
     }
@@ -214,7 +218,7 @@ export class OrthodoxCalendarApiClient {
   }
 
   async adminLogout(): Promise<LogoutResponse> {
-    const data = await this.request<LogoutResponse>("DELETE", "/admin/logout", { auth: true });
+    const data = await this.request<LogoutResponse>('DELETE', '/admin/logout', { auth: true });
     if (this.tokenStore) {
       await this.tokenStore.setToken(null);
     }
@@ -223,7 +227,7 @@ export class OrthodoxCalendarApiClient {
 
   async setAdminToken(token: string | null): Promise<void> {
     if (!this.tokenStore) {
-      throw new Error("tokenStore is required to persist admin token");
+      throw new Error('tokenStore is required to persist admin token');
     }
     await this.tokenStore.setToken(token);
   }
@@ -236,7 +240,7 @@ export class OrthodoxCalendarApiClient {
   }
 
   async adminMe(): Promise<AdminMeResponse> {
-    return this.request<AdminMeResponse>("GET", "/admin/me", { auth: true });
+    return this.request<AdminMeResponse>('GET', '/admin/me', { auth: true });
   }
 
   // ─── Events ────────────────────────────────────────────────────────────────
@@ -249,30 +253,28 @@ export class OrthodoxCalendarApiClient {
       limit: params.limit,
       offset: params.offset,
     });
-    return this.request<ListEventsResponse>("GET", `/events${query}`);
+    return this.request<ListEventsResponse>('GET', `/events${query}`);
   }
 
   async getEvent(id: string): Promise<ApiEvent> {
-    return this.request<ApiEvent>("GET", `/events/${encodeURIComponent(id)}`);
+    return this.request<ApiEvent>('GET', `/events/${encodeURIComponent(id)}`);
   }
 
   async createEvent(input: CreateOrUpdateEventInput): Promise<ApiEvent> {
-    return this.request<ApiEvent>("POST", "/events", { body: input, auth: true });
+    return this.request<ApiEvent>('POST', '/events', { body: input, auth: true });
   }
 
   async updateEvent(id: string, input: CreateOrUpdateEventInput): Promise<ApiEvent> {
-    return this.request<ApiEvent>("PUT", `/events/${encodeURIComponent(id)}`, {
+    return this.request<ApiEvent>('PUT', `/events/${encodeURIComponent(id)}`, {
       body: input,
       auth: true,
     });
   }
 
   async deleteEvent(id: string): Promise<{ id: string; deleted: true }> {
-    return this.request<DeleteEventResponse>(
-      "DELETE",
-      `/events/${encodeURIComponent(id)}`,
-      { auth: true }
-    );
+    return this.request<DeleteEventResponse>('DELETE', `/events/${encodeURIComponent(id)}`, {
+      auth: true,
+    });
   }
 
   // ─── Sync ──────────────────────────────────────────────────────────────────
@@ -284,7 +286,7 @@ export class OrthodoxCalendarApiClient {
       from: params.from,
       to: params.to,
     });
-    return this.request<SyncResponse>("GET", `/sync${query}`);
+    return this.request<SyncResponse>('GET', `/sync${query}`);
   }
 
   async syncAll(options: SyncAllOptions = {}): Promise<SyncResponse[]> {
@@ -311,7 +313,7 @@ export class OrthodoxCalendarApiClient {
 
   async syncAndPersistCursor(
     cursorStore: SyncCursorStore,
-    options: Omit<SyncAllOptions, "cursor"> = {}
+    options: Omit<SyncAllOptions, 'cursor'> = {},
   ): Promise<SyncResponse[]> {
     const cursor = await cursorStore.getCursor();
     const pages = await this.syncAll({
@@ -327,21 +329,23 @@ export class OrthodoxCalendarApiClient {
 
   // ─── Subscriptions / Notifications ─────────────────────────────────────────
 
-  async registerSubscription(input: RegisterSubscriptionInput): Promise<RegisterSubscriptionResponse> {
-    return this.request<RegisterSubscriptionResponse>("POST", "/subscriptions", {
+  async registerSubscription(
+    input: RegisterSubscriptionInput,
+  ): Promise<RegisterSubscriptionResponse> {
+    return this.request<RegisterSubscriptionResponse>('POST', '/subscriptions', {
       body: input,
     });
   }
 
   async deleteSubscription(token: string): Promise<DeleteSubscriptionResponse> {
     return this.request<DeleteSubscriptionResponse>(
-      "DELETE",
-      `/subscriptions/${encodeURIComponent(token)}`
+      'DELETE',
+      `/subscriptions/${encodeURIComponent(token)}`,
     );
   }
 
   async notify(input: NotifyInput): Promise<NotifyResponse> {
-    return this.request<NotifyResponse>("POST", "/subscriptions/notify", {
+    return this.request<NotifyResponse>('POST', '/subscriptions/notify', {
       body: input,
       auth: true,
     });
@@ -354,26 +358,28 @@ export class OrthodoxCalendarApiClient {
 
   // ─── Announcements (public feed) ───────────────────────────────────────────
 
-  async listAnnouncements(params: ListAnnouncementsParams = {}): Promise<ListAnnouncementsResponse> {
+  async listAnnouncements(
+    params: ListAnnouncementsParams = {},
+  ): Promise<ListAnnouncementsResponse> {
     const query = OrthodoxCalendarApiClient.toQuery({
       limit: params.limit,
       offset: params.offset,
     });
-    return this.request<ListAnnouncementsResponse>("GET", `/announcements${query}`);
+    return this.request<ListAnnouncementsResponse>('GET', `/announcements${query}`);
   }
 
   async deleteAnnouncement(id: number): Promise<DeleteAnnouncementResponse> {
     return this.request<DeleteAnnouncementResponse>(
-      "DELETE",
+      'DELETE',
       `/announcements/${encodeURIComponent(String(id))}`,
-      { auth: true }
+      { auth: true },
     );
   }
 
   // ─── Maintenance (admin) ───────────────────────────────────────────────────
 
   async purgeData(input: PurgeInput): Promise<PurgeResult> {
-    return this.request<PurgeResult>("POST", "/admin/maintenance/purge", {
+    return this.request<PurgeResult>('POST', '/admin/maintenance/purge', {
       body: input,
       auth: true,
     });
@@ -381,30 +387,32 @@ export class OrthodoxCalendarApiClient {
 
   // ─── Announcement log (owner console; unfiltered) ──────────────────────────
 
-  async listAnnouncementLog(params: ListAnnouncementLogParams = {}): Promise<AdminAnnouncementLogResponse> {
+  async listAnnouncementLog(
+    params: ListAnnouncementLogParams = {},
+  ): Promise<AdminAnnouncementLogResponse> {
     const query = OrthodoxCalendarApiClient.toQuery({
       limit: params.limit,
       offset: params.offset,
       filter: params.filter,
     });
-    return this.request<AdminAnnouncementLogResponse>("GET", `/admin/announcements/log${query}`, {
+    return this.request<AdminAnnouncementLogResponse>('GET', `/admin/announcements/log${query}`, {
       auth: true,
     });
   }
 
   async restoreAnnouncement(id: number): Promise<RestoreAnnouncementResponse> {
     return this.request<RestoreAnnouncementResponse>(
-      "POST",
+      'POST',
       `/admin/announcements/${encodeURIComponent(String(id))}/restore`,
-      { auth: true }
+      { auth: true },
     );
   }
 
   async hardDeleteAnnouncement(id: number): Promise<HardDeleteAnnouncementResponse> {
     return this.request<HardDeleteAnnouncementResponse>(
-      "DELETE",
+      'DELETE',
       `/admin/announcements/${encodeURIComponent(String(id))}/hard`,
-      { auth: true }
+      { auth: true },
     );
   }
 }

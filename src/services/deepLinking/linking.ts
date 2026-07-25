@@ -42,9 +42,7 @@ function normalizeIncomingUrl(url: string | null): string | null {
   return url;
 }
 
-function extractData(
-  response: Notifications.NotificationResponse,
-): Record<string, unknown> | null {
+function extractData(response: Notifications.NotificationResponse): Record<string, unknown> | null {
   // For Expo push notifications, data lives in content.data
   const contentData = response.notification.request.content.data;
   if (contentData && typeof contentData === 'object' && Object.keys(contentData).length > 0) {
@@ -112,12 +110,14 @@ export const linking: LinkingOptions<RootStackParamList> = {
       }
     });
 
-    const notificationSubscription = Notifications.addNotificationResponseReceivedListener((response) => {
-      const notificationURL = normalizeIncomingUrl(getNotificationUrl(extractData(response)));
-      if (notificationURL) {
-        listener(notificationURL);
-      }
-    });
+    const notificationSubscription = Notifications.addNotificationResponseReceivedListener(
+      (response) => {
+        const notificationURL = normalizeIncomingUrl(getNotificationUrl(extractData(response)));
+        if (notificationURL) {
+          listener(notificationURL);
+        }
+      },
+    );
 
     return () => {
       appSubscription.remove();

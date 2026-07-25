@@ -13,9 +13,7 @@
       "bundleIdentifier": "com.cybersystema.okncalendar",
       "appleTeamId": "4S3VW22A8G",
       "googleServicesFile": "./GoogleService-Info.plist",
-      "associatedDomains": [
-        "applinks:orthodox-korea-calendar.pages.dev"
-      ],
+      "associatedDomains": ["applinks:orthodox-korea-calendar.pages.dev"],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -36,15 +34,10 @@
               "pathPrefix": "/"
             }
           ],
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ]
+          "category": ["BROWSABLE", "DEFAULT"]
         }
       ],
-      "permissions": [
-        "POST_NOTIFICATIONS"
-      ],
+      "permissions": ["POST_NOTIFICATIONS"],
       "adaptiveIcon": {
         "backgroundColor": "#5C1414",
         "foregroundImage": "./assets/android-icon-foreground.png",

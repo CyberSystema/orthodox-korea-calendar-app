@@ -1,5 +1,13 @@
 import type { ReactElement } from 'react';
-import { Keyboard, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, type KeyboardAvoidingViewProps, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableWithoutFeedback,
+  type KeyboardAvoidingViewProps,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 
 type KeyboardSafeViewProps = {
   children: ReactElement;

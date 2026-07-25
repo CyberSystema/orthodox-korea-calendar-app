@@ -16,7 +16,9 @@ export type AdminLoginResult =
 
 function ensureConfigured() {
   if (!configuredBaseUrl) {
-    throw new Error('Events API is not configured. Set EXPO_PUBLIC_APP_API_BASE_URL for Cloudflare auth.');
+    throw new Error(
+      'Events API is not configured. Set EXPO_PUBLIC_APP_API_BASE_URL for Cloudflare auth.',
+    );
   }
 }
 

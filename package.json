@@ -23,7 +23,9 @@
     "submit:android": "npx eas submit -p android --latest",
     "submit:ios": "npx eas submit -p ios --latest",
     "update:production": "npm run typecheck && npm run check:calendar-data && node scripts/publish-update.mjs --profile production",
-    "update:preview": "npm run typecheck && npm run check:calendar-data && node scripts/publish-update.mjs --profile preview"
+    "update:preview": "npm run typecheck && npm run check:calendar-data && node scripts/publish-update.mjs --profile preview",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@react-navigation/bottom-tabs": "^7.18.3",
@@ -62,6 +64,7 @@
     "@types/react": "~19.2.17",
     "babel-preset-expo": "~56.0.15",
     "patch-package": "^8.0.1",
+    "prettier": "^3.9.6",
     "typescript": "~6.0.3"
   },
   "private": true

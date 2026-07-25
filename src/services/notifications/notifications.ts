@@ -82,7 +82,8 @@ export async function runLaunchNotificationPermissionFlow(): Promise<LaunchPermi
   const lastSuggestionAtRaw = await secureStorage.getItem(NOTIFICATION_DENIED_SUGGESTION_AT_KEY);
   const lastSuggestionAt = Number(lastSuggestionAtRaw);
   const hasValidTimestamp = Number.isFinite(lastSuggestionAt) && lastSuggestionAt > 0;
-  const shouldSuggest = !hasValidTimestamp || now - lastSuggestionAt >= DENIED_SUGGESTION_COOLDOWN_MS;
+  const shouldSuggest =
+    !hasValidTimestamp || now - lastSuggestionAt >= DENIED_SUGGESTION_COOLDOWN_MS;
 
   if (shouldSuggest) {
     await secureStorage.setItem(NOTIFICATION_DENIED_SUGGESTION_AT_KEY, String(now));

@@ -80,7 +80,11 @@ type LocalManifest = {
   lastSyncedAt?: number;
 };
 
-function entriesFromDay(day: WebCalendarDay | undefined, language: WebLanguage, fallbackDate: string): CelebrationEntry[] {
+function entriesFromDay(
+  day: WebCalendarDay | undefined,
+  language: WebLanguage,
+  fallbackDate: string,
+): CelebrationEntry[] {
   if (!day) return [];
 
   return (day.content || []).map((item, index) => ({
@@ -358,7 +362,9 @@ async function runCalendarSync(): Promise<void> {
     }
   }
 
-  const staleFiles = Object.keys(existingManifest.files).filter((name) => !nextManifest.files[name]);
+  const staleFiles = Object.keys(existingManifest.files).filter(
+    (name) => !nextManifest.files[name],
+  );
   for (const staleName of staleFiles) {
     try {
       await FileSystem.deleteAsync(`${STORAGE_DIR}/${staleName}`, { idempotent: true });
@@ -391,7 +397,11 @@ async function runCalendarSync(): Promise<void> {
   }
 }
 
-async function fetchYearFrom(baseUrl: string, year: number, language: WebLanguage): Promise<WebCalendarDay[] | null> {
+async function fetchYearFrom(
+  baseUrl: string,
+  year: number,
+  language: WebLanguage,
+): Promise<WebCalendarDay[] | null> {
   const file = `${year}_${language}.json`;
   try {
     const response = await fetch(`${baseUrl}${file}`);
@@ -402,7 +412,10 @@ async function fetchYearFrom(baseUrl: string, year: number, language: WebLanguag
   }
 }
 
-async function fetchYearData(year: number, language: WebLanguage): Promise<WebCalendarDay[] | null> {
+async function fetchYearData(
+  year: number,
+  language: WebLanguage,
+): Promise<WebCalendarDay[] | null> {
   if (configuredAppDataBaseUrl) {
     const fromAppInfra = await fetchYearFrom(configuredAppDataBaseUrl, year, language);
     if (fromAppInfra && fromAppInfra.length > 0) {
@@ -418,7 +431,9 @@ async function fetchYearData(year: number, language: WebLanguage): Promise<WebCa
   return null;
 }
 
-async function loadYearFromOfflineStorage(year: number): Promise<{ en: WebCalendarDay[]; kr: WebCalendarDay[] } | null> {
+async function loadYearFromOfflineStorage(
+  year: number,
+): Promise<{ en: WebCalendarDay[]; kr: WebCalendarDay[] } | null> {
   const [en, kr] = await Promise.all([
     readOfflineFile(`${year}_en.json`),
     readOfflineFile(`${year}_kr.json`),
@@ -454,7 +469,10 @@ export async function ensureCalendarYear(year: number): Promise<boolean> {
       return true;
     }
 
-    const [enDays, krDays] = await Promise.all([fetchYearData(year, 'en'), fetchYearData(year, 'kr')]);
+    const [enDays, krDays] = await Promise.all([
+      fetchYearData(year, 'en'),
+      fetchYearData(year, 'kr'),
+    ]);
     if (enDays && enDays.length > 0) {
       const storageReady = await ensureStorageDirectory();
       if (storageReady) {

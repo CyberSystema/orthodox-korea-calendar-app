@@ -20,10 +20,10 @@ export function getAppVersionLabel(): string {
 
   const build =
     Platform.OS === 'ios'
-      ? cfg?.ios?.buildNumber ?? Application.nativeBuildVersion ?? ''
+      ? (cfg?.ios?.buildNumber ?? Application.nativeBuildVersion ?? '')
       : cfg?.android?.versionCode != null
         ? String(cfg.android.versionCode)
-        : Application.nativeBuildVersion ?? '';
+        : (Application.nativeBuildVersion ?? '');
 
   return build ? `${version} (${build})` : version;
 }

@@ -4,7 +4,19 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ko';
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { Alert, Dimensions, Keyboard, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Alert,
+  Dimensions,
+  Keyboard,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useKeyboardHeight } from '../../hooks/useKeyboardHeight';
@@ -26,7 +38,11 @@ import {
   type LiturgicalSearchResult,
 } from '../../features/calendar/calendarService';
 import { useCalendarDataVersion } from '../../features/calendar/useCalendarDataVersion';
-import { localized, type EventRecurrence, type LiturgicalEvent } from '../../features/calendar/types';
+import {
+  localized,
+  type EventRecurrence,
+  type LiturgicalEvent,
+} from '../../features/calendar/types';
 import { useEventsStore } from '../../features/events/useEventsStore';
 import type { MainTabsParamList, RootStackParamList } from '../../navigation/types';
 import { loginAdminThroughCloudflare } from '../../services/api/adminAuth';
@@ -88,8 +104,16 @@ export function MonthScreen({ navigation, route }: Props) {
   // The search modal is top-anchored at (insets.top + 28) — a comfortable gap below the
   // notch — and capped to the band above the keyboard, so the WHOLE card is always on
   // screen (28 below the notch, 16 above the keyboard) no matter how long the list is.
-  const searchCardMaxHeight = WINDOW_HEIGHT - insets.top - 28 - Math.max(keyboardHeight, insets.bottom) - 16;
-  const { language, adminMode, selectedDateISO, setSelectedDateISO, setSecretMenuUnlocked, setCloudflareAdminAuthenticated } = useAppStore();
+  const searchCardMaxHeight =
+    WINDOW_HEIGHT - insets.top - 28 - Math.max(keyboardHeight, insets.bottom) - 16;
+  const {
+    language,
+    adminMode,
+    selectedDateISO,
+    setSelectedDateISO,
+    setSecretMenuUnlocked,
+    setCloudflareAdminAuthenticated,
+  } = useAppStore();
   const isOnline = useNetworkStore((state) => state.isOnline);
   const addEvent = useEventsStore((state) => state.addEvent);
   const updateEvent = useEventsStore((state) => state.updateEvent);
@@ -99,7 +123,10 @@ export function MonthScreen({ navigation, route }: Props) {
   const syncError = useEventsStore((state) => state.syncError);
   const customEvents = useEventsStore((state) => state.customEvents);
 
-  const initial = route.params?.year && route.params?.month ? dayjs(`${route.params.year}-${route.params.month}-01`) : dayjs();
+  const initial =
+    route.params?.year && route.params?.month
+      ? dayjs(`${route.params.year}-${route.params.month}-01`)
+      : dayjs();
   const [cursor, setCursor] = useState(initial.startOf('month'));
   const todayISO = dayjs().format('YYYY-MM-DD');
   const [yearReady, setYearReady] = useState(true);
@@ -176,7 +203,9 @@ export function MonthScreen({ navigation, route }: Props) {
 
   const monthPrefix = cursor.format('YYYY-MM');
   const defaultMonthDateISO = todayISO.startsWith(monthPrefix) ? todayISO : `${monthPrefix}-01`;
-  const activeDateISO = selectedDateISO?.startsWith(monthPrefix) ? selectedDateISO : defaultMonthDateISO;
+  const activeDateISO = selectedDateISO?.startsWith(monthPrefix)
+    ? selectedDateISO
+    : defaultMonthDateISO;
 
   const cells = useMemo(() => createMonthCells(cursor), [cursor]);
   const monthEventCounts = useMemo(
@@ -209,15 +238,32 @@ export function MonthScreen({ navigation, route }: Props) {
       const hasHighRank = Boolean(dayData?.celebrations?.some((entry) => entry.highRank));
       const hasFeast = Boolean(dayData?.celebrations?.some((entry) => entry.celeb));
       const hasFast = Boolean(dayData?.fast);
-      const hasLiturgy = Boolean(dayData?.divineLiturgy || dayData?.saintBasil || dayData?.presanctified);
-      map.set(day, { day, dateISO, eventCount, isSunday, hasHighRank, hasFeast, hasFast, hasLiturgy });
+      const hasLiturgy = Boolean(
+        dayData?.divineLiturgy || dayData?.saintBasil || dayData?.presanctified,
+      );
+      map.set(day, {
+        day,
+        dateISO,
+        eventCount,
+        isSunday,
+        hasHighRank,
+        hasFeast,
+        hasFast,
+        hasLiturgy,
+      });
     }
     return map;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cursor, monthEventCounts, dataVersion]);
 
-  const selectedEvents = useMemo(() => getEventsByDate(activeDateISO, adminMode), [activeDateISO, adminMode, customEvents]);
-  const selectedLiturgicalDay = useMemo(() => getLiturgicalDayByDate(activeDateISO), [activeDateISO, dataVersion]);
+  const selectedEvents = useMemo(
+    () => getEventsByDate(activeDateISO, adminMode),
+    [activeDateISO, adminMode, customEvents],
+  );
+  const selectedLiturgicalDay = useMemo(
+    () => getLiturgicalDayByDate(activeDateISO),
+    [activeDateISO, dataVersion],
+  );
 
   useEffect(() => {
     setSelectedDateISO(activeDateISO);
@@ -265,7 +311,9 @@ export function MonthScreen({ navigation, route }: Props) {
       });
     }, 350);
 
-    return () => { clearTimeout(timer); };
+    return () => {
+      clearTimeout(timer);
+    };
   }, [searchQuery, searchVisible, language, cursor]);
 
   const openSearch = () => {
@@ -315,7 +363,9 @@ export function MonthScreen({ navigation, route }: Props) {
 
   const openEditEditor = (event: LiturgicalEvent) => {
     setEditingId(event.id);
-    setEditingOriginalYear(Number.parseInt((event.seriesStartDate || event.dateISO).slice(0, 4), 10));
+    setEditingOriginalYear(
+      Number.parseInt((event.seriesStartDate || event.dateISO).slice(0, 4), 10),
+    );
     setFormDateISO(event.seriesStartDate || event.dateISO);
     setTitleEn(event.title.en);
     setTitleKo(event.title.ko);
@@ -331,7 +381,11 @@ export function MonthScreen({ navigation, route }: Props) {
   const onSaveEditor = async () => {
     const normalizedDate = formDateISO.trim();
     const parsedDate = dayjs(normalizedDate);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(normalizedDate) || !parsedDate.isValid() || parsedDate.format('YYYY-MM-DD') !== normalizedDate) {
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/.test(normalizedDate) ||
+      !parsedDate.isValid() ||
+      parsedDate.format('YYYY-MM-DD') !== normalizedDate
+    ) {
       Alert.alert(t('month.eventDate'), t('today.invalidDate'));
       return;
     }
@@ -409,7 +463,12 @@ export function MonthScreen({ navigation, route }: Props) {
           <View style={styles.headerCenter}>
             <View style={styles.headerLine} />
             <ByzantineKnot size={14} color={colors.accentBright} />
-            <Pressable onPress={handleBrandTap} hitSlop={4} accessibilityRole="header" accessibilityLabel={t('a11y.brandTitle')}>
+            <Pressable
+              onPress={handleBrandTap}
+              hitSlop={4}
+              accessibilityRole="header"
+              accessibilityLabel={t('a11y.brandTitle')}
+            >
               <Text style={styles.headerBrand}>ORTHODOX KOREA</Text>
             </Pressable>
             <ByzantineKnot size={14} color={colors.accentBright} />
@@ -436,157 +495,216 @@ export function MonthScreen({ navigation, route }: Props) {
           { paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.lg },
         ]}
       >
-      {/* ═══ MONTH NAVIGATOR ═══ */}
-      <View style={styles.monthNav}>
-        <Pressable style={({ pressed }) => [styles.monthArrowButton, pressed && styles.pressed]} onPress={goPrev} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('a11y.previousMonth')}>
-          <ByzantineArrow direction="left" size={20} color={colors.accent} />
-        </Pressable>
-        <Text style={styles.monthLabel}>{cursor.locale(language).format('MMMM YYYY')}</Text>
-        <Pressable style={({ pressed }) => [styles.monthArrowButton, pressed && styles.pressed]} onPress={goNext} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('a11y.nextMonth')}>
-          <ByzantineArrow direction="right" size={20} color={colors.accent} />
-        </Pressable>
-      </View>
-
-      {/* ═══ CALENDAR GRID ═══ */}
-      <View style={styles.gridCard}>
-        <View style={styles.weekHeaderRow}>
-          {weekLabels.map((header: string) => (
-            <Text key={header} style={styles.weekHeaderText}>
-              {header}
-            </Text>
-          ))}
+        {/* ═══ MONTH NAVIGATOR ═══ */}
+        <View style={styles.monthNav}>
+          <Pressable
+            style={({ pressed }) => [styles.monthArrowButton, pressed && styles.pressed]}
+            onPress={goPrev}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t('a11y.previousMonth')}
+          >
+            <ByzantineArrow direction="left" size={20} color={colors.accent} />
+          </Pressable>
+          <Text style={styles.monthLabel}>{cursor.locale(language).format('MMMM YYYY')}</Text>
+          <Pressable
+            style={({ pressed }) => [styles.monthArrowButton, pressed && styles.pressed]}
+            onPress={goNext}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t('a11y.nextMonth')}
+          >
+            <ByzantineArrow direction="right" size={20} color={colors.accent} />
+          </Pressable>
         </View>
 
-        <View style={styles.grid}>
-          {cells.map((day, index) => {
-            if (!day) {
-              return <View key={`empty-${index}`} style={[styles.cell, styles.emptyCell]} />;
-            }
+        {/* ═══ CALENDAR GRID ═══ */}
+        <View style={styles.gridCard}>
+          <View style={styles.weekHeaderRow}>
+            {weekLabels.map((header: string) => (
+              <Text key={header} style={styles.weekHeaderText}>
+                {header}
+              </Text>
+            ))}
+          </View>
 
-            const cd = cellDataMap.get(day);
-            if (!cd) return <View key={`empty-${index}`} style={[styles.cell, styles.emptyCell]} />;
+          <View style={styles.grid}>
+            {cells.map((day, index) => {
+              if (!day) {
+                return <View key={`empty-${index}`} style={[styles.cell, styles.emptyCell]} />;
+              }
 
-            const isSelected = activeDateISO === cd.dateISO;
-            const isToday = todayISO === cd.dateISO;
+              const cd = cellDataMap.get(day);
+              if (!cd)
+                return <View key={`empty-${index}`} style={[styles.cell, styles.emptyCell]} />;
 
-            return (
-              <Pressable
-                key={cd.dateISO}
-                onPress={() => pickDate(day)}
-                accessibilityRole="button"
-                accessibilityLabel={formatDisplayDate(cd.dateISO, language)}
-                accessibilityState={{ selected: isSelected }}
-                style={[
-                  styles.cell,
-                  (cd.isSunday || cd.hasHighRank) && styles.cellHigh,
-                  !cd.isSunday && !cd.hasHighRank && cd.hasFeast && styles.cellFeast,
-                  isToday && !isSelected && styles.cellToday,
-                  isSelected && styles.cellSelected,
-                ]}
-              >
-                <Text
+              const isSelected = activeDateISO === cd.dateISO;
+              const isToday = todayISO === cd.dateISO;
+
+              return (
+                <Pressable
+                  key={cd.dateISO}
+                  onPress={() => pickDate(day)}
+                  accessibilityRole="button"
+                  accessibilityLabel={formatDisplayDate(cd.dateISO, language)}
+                  accessibilityState={{ selected: isSelected }}
                   style={[
-                    styles.cellDay,
-                    (cd.isSunday || cd.hasHighRank) && styles.cellDayHigh,
-                    isSelected && styles.cellDaySelected,
+                    styles.cell,
+                    (cd.isSunday || cd.hasHighRank) && styles.cellHigh,
+                    !cd.isSunday && !cd.hasHighRank && cd.hasFeast && styles.cellFeast,
+                    isToday && !isSelected && styles.cellToday,
+                    isSelected && styles.cellSelected,
                   ]}
                 >
-                  {day}
-                </Text>
-                {/* Colored pips for liturgical flags */}
-                <View style={styles.cellPipRow}>
-                  {cd.hasFast ? <View style={[styles.pip, { backgroundColor: isSelected ? colors.accentPale : colors.pipFast }]} /> : null}
-                  {cd.hasLiturgy ? <View style={[styles.pip, { backgroundColor: isSelected ? colors.accentPale : colors.pipLiturgy }]} /> : null}
-                  {cd.eventCount > 0 ? <View style={[styles.pip, { backgroundColor: isSelected ? colors.accentPale : colors.pipEvent }]} /> : null}
-                </View>
-              </Pressable>
-            );
-          })}
+                  <Text
+                    style={[
+                      styles.cellDay,
+                      (cd.isSunday || cd.hasHighRank) && styles.cellDayHigh,
+                      isSelected && styles.cellDaySelected,
+                    ]}
+                  >
+                    {day}
+                  </Text>
+                  {/* Colored pips for liturgical flags */}
+                  <View style={styles.cellPipRow}>
+                    {cd.hasFast ? (
+                      <View
+                        style={[
+                          styles.pip,
+                          { backgroundColor: isSelected ? colors.accentPale : colors.pipFast },
+                        ]}
+                      />
+                    ) : null}
+                    {cd.hasLiturgy ? (
+                      <View
+                        style={[
+                          styles.pip,
+                          { backgroundColor: isSelected ? colors.accentPale : colors.pipLiturgy },
+                        ]}
+                      />
+                    ) : null}
+                    {cd.eventCount > 0 ? (
+                      <View
+                        style={[
+                          styles.pip,
+                          { backgroundColor: isSelected ? colors.accentPale : colors.pipEvent },
+                        ]}
+                      />
+                    ) : null}
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
-      </View>
 
-      {/* ═══ SELECTION BAR ═══ */}
-      <View style={[styles.selectionBar, activeDateISO === todayISO && styles.selectionBarToday]}>
-        <Text style={styles.selectionDate}>{formatDisplayDate(activeDateISO, language)}</Text>
-        {activeDateISO !== todayISO ? (
-          <Pressable style={({ pressed }) => [styles.selectionTodayButton, pressed && styles.pressed]} onPress={goToday}>
-            <Text style={styles.selectionTodayButtonText}>{t('today.goToday')}</Text>
-          </Pressable>
-        ) : null}
-      </View>
+        {/* ═══ SELECTION BAR ═══ */}
+        <View style={[styles.selectionBar, activeDateISO === todayISO && styles.selectionBarToday]}>
+          <Text style={styles.selectionDate}>{formatDisplayDate(activeDateISO, language)}</Text>
+          {activeDateISO !== todayISO ? (
+            <Pressable
+              style={({ pressed }) => [styles.selectionTodayButton, pressed && styles.pressed]}
+              onPress={goToday}
+            >
+              <Text style={styles.selectionTodayButtonText}>{t('today.goToday')}</Text>
+            </Pressable>
+          ) : null}
+        </View>
 
-      {/* ═══ WARNINGS ═══ */}
-      {!yearReady ? <Text style={styles.warningText}>{t('today.noYearDataPublished', { year: cursor.year() })}</Text> : null}
-      {yearReady && !selectedLiturgicalDay ? <Text style={styles.warningText}>{t('today.noDayData')}</Text> : null}
-
-      {/* ═══ DAY PANEL ═══ */}
-      <View style={styles.manuscriptFrame}>
-        <LiturgicalDayPanel
-          language={language}
-          dateISO={activeDateISO}
-          liturgicalDay={selectedLiturgicalDay}
-          events={selectedEvents}
-          labels={{
-            readings: t('common.readings'),
-            celebrations: t('common.celebrations'),
-            saints: t('common.saints'),
-            otherInfo: t('common.otherInfo'),
-            events: t('common.events'),
-            itemReadings: t('common.itemReadings'),
-            tone: t('common.tone'),
-            matins: t('common.matins'),
-            noReadings: t('common.noReadings'),
-            noSaints: t('common.noSaints'),
-            noOtherInfo: t('common.noOtherInfo'),
-            noEvents: t('common.noEvents'),
-            fast: t('common.fast'),
-            cheese: t('common.cheese'),
-            fish: t('common.fish'),
-            pres: t('common.pres'),
-            basil: t('common.basil'),
-            dl: t('common.dl'),
-          }}
-          onEventPress={(event) => navigation.navigate('EventDetail', { eventId: event.id, dateISO: event.dateISO })}
-        />
-      </View>
-
-      {/* ═══ ADMIN SECTION ═══ (hidden offline — staff editing needs the backend) */}
-      {adminMode && isOnline ? (
-        <View style={styles.adminCard}>
-          <Text style={styles.adminTitle}>{t('month.adminWorkflow')}</Text>
-          <Text style={styles.adminSyncText}>
-            {syncState === 'syncing' ? t('month.syncingApi') : syncError || t('month.syncedApi')}
+        {/* ═══ WARNINGS ═══ */}
+        {!yearReady ? (
+          <Text style={styles.warningText}>
+            {t('today.noYearDataPublished', { year: cursor.year() })}
           </Text>
-          <Pressable style={({ pressed }) => [styles.adminPrimaryButton, pressed && styles.pressed]} onPress={openCreateEditor}>
-            <Text style={styles.adminPrimaryButtonText}>{t('month.addEventOnDate')}</Text>
-          </Pressable>
+        ) : null}
+        {yearReady && !selectedLiturgicalDay ? (
+          <Text style={styles.warningText}>{t('today.noDayData')}</Text>
+        ) : null}
 
-          {selectedEvents.map((event) => (
-            <View key={event.id} style={styles.adminRow}>
-              <Text style={styles.adminRowTitle} numberOfLines={1}>
-                {localized(event.title, language)}
-              </Text>
-              <Text style={styles.adminRowMeta}>{t(`month.recurrence.${event.recurrence || 'none'}`)}</Text>
-              <View style={styles.adminRowActions}>
-                <Pressable style={({ pressed }) => [styles.adminGhostButton, pressed && styles.pressed]} onPress={() => openEditEditor(event)}>
-                  <Text style={styles.adminGhostButtonText}>{t('month.editEvent')}</Text>
-                </Pressable>
-                <Pressable style={({ pressed }) => [styles.adminDangerButton, pressed && styles.pressed]} onPress={() => onDeleteEvent(event)}>
-                  <Text style={styles.adminDangerButtonText}>{t('month.deleteEvent')}</Text>
-                </Pressable>
-              </View>
-            </View>
-          ))}
+        {/* ═══ DAY PANEL ═══ */}
+        <View style={styles.manuscriptFrame}>
+          <LiturgicalDayPanel
+            language={language}
+            dateISO={activeDateISO}
+            liturgicalDay={selectedLiturgicalDay}
+            events={selectedEvents}
+            labels={{
+              readings: t('common.readings'),
+              celebrations: t('common.celebrations'),
+              saints: t('common.saints'),
+              otherInfo: t('common.otherInfo'),
+              events: t('common.events'),
+              itemReadings: t('common.itemReadings'),
+              tone: t('common.tone'),
+              matins: t('common.matins'),
+              noReadings: t('common.noReadings'),
+              noSaints: t('common.noSaints'),
+              noOtherInfo: t('common.noOtherInfo'),
+              noEvents: t('common.noEvents'),
+              fast: t('common.fast'),
+              cheese: t('common.cheese'),
+              fish: t('common.fish'),
+              pres: t('common.pres'),
+              basil: t('common.basil'),
+              dl: t('common.dl'),
+            }}
+            onEventPress={(event) =>
+              navigation.navigate('EventDetail', { eventId: event.id, dateISO: event.dateISO })
+            }
+          />
         </View>
-      ) : null}
+
+        {/* ═══ ADMIN SECTION ═══ (hidden offline — staff editing needs the backend) */}
+        {adminMode && isOnline ? (
+          <View style={styles.adminCard}>
+            <Text style={styles.adminTitle}>{t('month.adminWorkflow')}</Text>
+            <Text style={styles.adminSyncText}>
+              {syncState === 'syncing' ? t('month.syncingApi') : syncError || t('month.syncedApi')}
+            </Text>
+            <Pressable
+              style={({ pressed }) => [styles.adminPrimaryButton, pressed && styles.pressed]}
+              onPress={openCreateEditor}
+            >
+              <Text style={styles.adminPrimaryButtonText}>{t('month.addEventOnDate')}</Text>
+            </Pressable>
+
+            {selectedEvents.map((event) => (
+              <View key={event.id} style={styles.adminRow}>
+                <Text style={styles.adminRowTitle} numberOfLines={1}>
+                  {localized(event.title, language)}
+                </Text>
+                <Text style={styles.adminRowMeta}>
+                  {t(`month.recurrence.${event.recurrence || 'none'}`)}
+                </Text>
+                <View style={styles.adminRowActions}>
+                  <Pressable
+                    style={({ pressed }) => [styles.adminGhostButton, pressed && styles.pressed]}
+                    onPress={() => openEditEditor(event)}
+                  >
+                    <Text style={styles.adminGhostButtonText}>{t('month.editEvent')}</Text>
+                  </Pressable>
+                  <Pressable
+                    style={({ pressed }) => [styles.adminDangerButton, pressed && styles.pressed]}
+                    onPress={() => onDeleteEvent(event)}
+                  >
+                    <Text style={styles.adminDangerButtonText}>{t('month.deleteEvent')}</Text>
+                  </Pressable>
+                </View>
+              </View>
+            ))}
+          </View>
+        ) : null}
       </ScrollView>
 
       {/* ═══ EDITOR MODAL ═══ */}
-      <Modal visible={editorVisible} transparent statusBarTranslucent animationType="fade" onRequestClose={() => setEditorVisible(false)}>
-        <KeyboardSafeView
-          style={styles.editorBackdrop}
-          keyboardVerticalOffset={insets.top}
-        >
+      <Modal
+        visible={editorVisible}
+        transparent
+        statusBarTranslucent
+        animationType="fade"
+        onRequestClose={() => setEditorVisible(false)}
+      >
+        <KeyboardSafeView style={styles.editorBackdrop} keyboardVerticalOffset={insets.top}>
           <ScrollView
             contentContainerStyle={styles.editorScrollContent}
             keyboardShouldPersistTaps="handled"
@@ -594,12 +712,18 @@ export function MonthScreen({ navigation, route }: Props) {
           >
             <View style={styles.editorCard}>
               <View style={styles.editorHeader}>
-                <Text style={styles.editorTitle}>{editingId ? t('month.editEvent') : t('month.addEvent')}</Text>
+                <Text style={styles.editorTitle}>
+                  {editingId ? t('month.editEvent') : t('month.addEvent')}
+                </Text>
               </View>
               <Text style={styles.editorDate}>{formatDisplayDate(formDateISO, language)}</Text>
 
               <Pressable
-                style={({ pressed }) => [styles.input, styles.datePickerTrigger, pressed && { opacity: 0.7 }]}
+                style={({ pressed }) => [
+                  styles.input,
+                  styles.datePickerTrigger,
+                  pressed && { opacity: 0.7 },
+                ]}
                 onPress={() => setFormDatePickerOpen(true)}
               >
                 <Text style={styles.datePickerTriggerText}>{formDateISO}</Text>
@@ -612,40 +736,119 @@ export function MonthScreen({ navigation, route }: Props) {
                     <View style={styles.datePickerSegment}>
                       <Text style={styles.datePickerLabel}>{t('today.yearLabel')}</Text>
                       <View style={styles.datePickerStepper}>
-                        <Pressable onPress={() => setFormDatePart('year', -1)} style={styles.datePickerArrow} hitSlop={8} accessibilityRole="button" accessibilityLabel={`${t('today.yearLabel')} ${t('a11y.decreaseValue')}`}><Text style={styles.datePickerArrowText}>‹</Text></Pressable>
+                        <Pressable
+                          onPress={() => setFormDatePart('year', -1)}
+                          style={styles.datePickerArrow}
+                          hitSlop={8}
+                          accessibilityRole="button"
+                          accessibilityLabel={`${t('today.yearLabel')} ${t('a11y.decreaseValue')}`}
+                        >
+                          <Text style={styles.datePickerArrowText}>‹</Text>
+                        </Pressable>
                         <Text style={styles.datePickerValue}>{formDateYear}</Text>
-                        <Pressable onPress={() => setFormDatePart('year', 1)} style={styles.datePickerArrow} hitSlop={8} accessibilityRole="button" accessibilityLabel={`${t('today.yearLabel')} ${t('a11y.increaseValue')}`}><Text style={styles.datePickerArrowText}>›</Text></Pressable>
+                        <Pressable
+                          onPress={() => setFormDatePart('year', 1)}
+                          style={styles.datePickerArrow}
+                          hitSlop={8}
+                          accessibilityRole="button"
+                          accessibilityLabel={`${t('today.yearLabel')} ${t('a11y.increaseValue')}`}
+                        >
+                          <Text style={styles.datePickerArrowText}>›</Text>
+                        </Pressable>
                       </View>
                     </View>
 
                     <View style={styles.datePickerSegment}>
                       <Text style={styles.datePickerLabel}>{t('today.monthLabel')}</Text>
                       <View style={styles.datePickerStepper}>
-                        <Pressable onPress={() => setFormDatePart('month', -1)} style={styles.datePickerArrow} hitSlop={8} accessibilityRole="button" accessibilityLabel={`${t('today.monthLabel')} ${t('a11y.decreaseValue')}`}><Text style={styles.datePickerArrowText}>‹</Text></Pressable>
-                        <Text style={styles.datePickerValue}>{String(formDateMonth).padStart(2, '0')}</Text>
-                        <Pressable onPress={() => setFormDatePart('month', 1)} style={styles.datePickerArrow} hitSlop={8} accessibilityRole="button" accessibilityLabel={`${t('today.monthLabel')} ${t('a11y.increaseValue')}`}><Text style={styles.datePickerArrowText}>›</Text></Pressable>
+                        <Pressable
+                          onPress={() => setFormDatePart('month', -1)}
+                          style={styles.datePickerArrow}
+                          hitSlop={8}
+                          accessibilityRole="button"
+                          accessibilityLabel={`${t('today.monthLabel')} ${t('a11y.decreaseValue')}`}
+                        >
+                          <Text style={styles.datePickerArrowText}>‹</Text>
+                        </Pressable>
+                        <Text style={styles.datePickerValue}>
+                          {String(formDateMonth).padStart(2, '0')}
+                        </Text>
+                        <Pressable
+                          onPress={() => setFormDatePart('month', 1)}
+                          style={styles.datePickerArrow}
+                          hitSlop={8}
+                          accessibilityRole="button"
+                          accessibilityLabel={`${t('today.monthLabel')} ${t('a11y.increaseValue')}`}
+                        >
+                          <Text style={styles.datePickerArrowText}>›</Text>
+                        </Pressable>
                       </View>
                     </View>
 
                     <View style={styles.datePickerSegment}>
                       <Text style={styles.datePickerLabel}>{t('today.dayLabel')}</Text>
                       <View style={styles.datePickerStepper}>
-                        <Pressable onPress={() => setFormDatePart('day', -1)} style={styles.datePickerArrow} hitSlop={8} accessibilityRole="button" accessibilityLabel={`${t('today.dayLabel')} ${t('a11y.decreaseValue')}`}><Text style={styles.datePickerArrowText}>‹</Text></Pressable>
-                        <Text style={styles.datePickerValue}>{String(formDateDay).padStart(2, '0')}</Text>
-                        <Pressable onPress={() => setFormDatePart('day', 1)} style={styles.datePickerArrow} hitSlop={8} accessibilityRole="button" accessibilityLabel={`${t('today.dayLabel')} ${t('a11y.increaseValue')}`}><Text style={styles.datePickerArrowText}>›</Text></Pressable>
+                        <Pressable
+                          onPress={() => setFormDatePart('day', -1)}
+                          style={styles.datePickerArrow}
+                          hitSlop={8}
+                          accessibilityRole="button"
+                          accessibilityLabel={`${t('today.dayLabel')} ${t('a11y.decreaseValue')}`}
+                        >
+                          <Text style={styles.datePickerArrowText}>‹</Text>
+                        </Pressable>
+                        <Text style={styles.datePickerValue}>
+                          {String(formDateDay).padStart(2, '0')}
+                        </Text>
+                        <Pressable
+                          onPress={() => setFormDatePart('day', 1)}
+                          style={styles.datePickerArrow}
+                          hitSlop={8}
+                          accessibilityRole="button"
+                          accessibilityLabel={`${t('today.dayLabel')} ${t('a11y.increaseValue')}`}
+                        >
+                          <Text style={styles.datePickerArrowText}>›</Text>
+                        </Pressable>
                       </View>
                     </View>
                   </View>
-                  <Pressable style={styles.datePickerDone} onPress={() => setFormDatePickerOpen(false)}>
+                  <Pressable
+                    style={styles.datePickerDone}
+                    onPress={() => setFormDatePickerOpen(false)}
+                  >
                     <Text style={styles.datePickerDoneText}>{t('common.done')}</Text>
                   </Pressable>
                 </View>
               )}
 
-              <TextInput value={titleEn} onChangeText={setTitleEn} placeholder={t('month.titleEnPlaceholder')} style={styles.input} placeholderTextColor={colors.textSecondary} />
-              <TextInput value={titleKo} onChangeText={setTitleKo} placeholder={t('month.titleKoPlaceholder')} style={styles.input} placeholderTextColor={colors.textSecondary} />
-              <TextInput value={summaryEn} onChangeText={setSummaryEn} placeholder={t('month.summaryEnPlaceholder')} style={styles.input} placeholderTextColor={colors.textSecondary} />
-              <TextInput value={summaryKo} onChangeText={setSummaryKo} placeholder={t('month.summaryKoPlaceholder')} style={styles.input} placeholderTextColor={colors.textSecondary} />
+              <TextInput
+                value={titleEn}
+                onChangeText={setTitleEn}
+                placeholder={t('month.titleEnPlaceholder')}
+                style={styles.input}
+                placeholderTextColor={colors.textSecondary}
+              />
+              <TextInput
+                value={titleKo}
+                onChangeText={setTitleKo}
+                placeholder={t('month.titleKoPlaceholder')}
+                style={styles.input}
+                placeholderTextColor={colors.textSecondary}
+              />
+              <TextInput
+                value={summaryEn}
+                onChangeText={setSummaryEn}
+                placeholder={t('month.summaryEnPlaceholder')}
+                style={styles.input}
+                placeholderTextColor={colors.textSecondary}
+              />
+              <TextInput
+                value={summaryKo}
+                onChangeText={setSummaryKo}
+                placeholder={t('month.summaryKoPlaceholder')}
+                style={styles.input}
+                placeholderTextColor={colors.textSecondary}
+              />
               <TextInput
                 value={detailsEn}
                 onChangeText={setDetailsEn}
@@ -668,10 +871,18 @@ export function MonthScreen({ navigation, route }: Props) {
                 {(['none', 'daily', 'weekly', 'monthly'] as EventRecurrence[]).map((recurrence) => (
                   <Pressable
                     key={recurrence}
-                    style={[styles.optionPill, formRecurrence === recurrence && styles.optionPillActive]}
+                    style={[
+                      styles.optionPill,
+                      formRecurrence === recurrence && styles.optionPillActive,
+                    ]}
                     onPress={() => setFormRecurrence(recurrence)}
                   >
-                    <Text style={[styles.optionPillText, formRecurrence === recurrence && styles.optionPillTextActive]}>
+                    <Text
+                      style={[
+                        styles.optionPillText,
+                        formRecurrence === recurrence && styles.optionPillTextActive,
+                      ]}
+                    >
                       {t(`month.recurrence.${recurrence}`)}
                     </Text>
                   </Pressable>
@@ -681,7 +892,10 @@ export function MonthScreen({ navigation, route }: Props) {
               {/* Notify choice shown for BOTH create and edit. On edit it defaults
                   off (see openEditEditor), so re-notifying is an explicit opt-in:
                   a typo fix stays silent, a time/venue change can be announced. */}
-              <Pressable style={({ pressed }) => [styles.checkboxRow, pressed && styles.pressed]} onPress={() => setFormNotify((prev) => !prev)}>
+              <Pressable
+                style={({ pressed }) => [styles.checkboxRow, pressed && styles.pressed]}
+                onPress={() => setFormNotify((prev) => !prev)}
+              >
                 <View style={[styles.checkboxBox, formNotify && styles.checkboxBoxActive]}>
                   {formNotify ? <Text style={styles.checkboxTick}>✓</Text> : null}
                 </View>
@@ -691,10 +905,16 @@ export function MonthScreen({ navigation, route }: Props) {
               </Pressable>
 
               <View style={styles.editorActions}>
-                <Pressable style={({ pressed }) => [styles.editorCancel, pressed && styles.pressed]} onPress={() => setEditorVisible(false)}>
+                <Pressable
+                  style={({ pressed }) => [styles.editorCancel, pressed && styles.pressed]}
+                  onPress={() => setEditorVisible(false)}
+                >
                   <Text style={styles.editorCancelText}>{t('today.cancel')}</Text>
                 </Pressable>
-                <Pressable style={({ pressed }) => [styles.editorSave, pressed && styles.pressed]} onPress={onSaveEditor}>
+                <Pressable
+                  style={({ pressed }) => [styles.editorSave, pressed && styles.pressed]}
+                  onPress={onSaveEditor}
+                >
                   <Text style={styles.editorSaveText}>{t('month.save')}</Text>
                 </Pressable>
               </View>
@@ -704,59 +924,78 @@ export function MonthScreen({ navigation, route }: Props) {
       </Modal>
 
       {/* ═══ SEARCH MODAL ═══ */}
-      <Modal visible={searchVisible} transparent statusBarTranslucent animationType="fade" onRequestClose={() => setSearchVisible(false)}>
+      <Modal
+        visible={searchVisible}
+        transparent
+        statusBarTranslucent
+        animationType="fade"
+        onRequestClose={() => setSearchVisible(false)}
+      >
         <Pressable
-          style={[styles.searchBackdrop, { justifyContent: 'flex-start', paddingTop: insets.top + 28 }]}
+          style={[
+            styles.searchBackdrop,
+            { justifyContent: 'flex-start', paddingTop: insets.top + 28 },
+          ]}
           onPress={() => setSearchVisible(false)}
         >
-            <Pressable style={[styles.searchCard, { maxHeight: searchCardMaxHeight }]} onPress={() => {}}>
-                <View style={styles.searchModalHeader}>
-                  <Text style={styles.searchModalTitle}>{t('today.searchTitle')}</Text>
-                </View>
-                <TextInput
-                  style={styles.searchInput}
-                  placeholder={t('today.searchPlaceholder')}
-                  placeholderTextColor={colors.textSecondary}
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  autoFocus
-                />
+          <Pressable
+            style={[styles.searchCard, { maxHeight: searchCardMaxHeight }]}
+            onPress={() => {}}
+          >
+            <View style={styles.searchModalHeader}>
+              <Text style={styles.searchModalTitle}>{t('today.searchTitle')}</Text>
+            </View>
+            <TextInput
+              style={styles.searchInput}
+              placeholder={t('today.searchPlaceholder')}
+              placeholderTextColor={colors.textSecondary}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoFocus
+            />
 
-                <ScrollView
-                  style={styles.searchList}
-                  contentContainerStyle={styles.searchListContent}
-                  keyboardShouldPersistTaps="handled"
-                  keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
-                >
-                  {searchBusy ? <Text style={styles.searchHint}>{t('common.loading')}</Text> : null}
-                  {!searchBusy && searchQuery.trim().length < 2 ? <Text style={styles.searchHint}>{t('today.searchHint')}</Text> : null}
-                  {!searchBusy && searchQuery.trim().length >= 2 && searchResults.length === 0 ? (
-                    <Text style={styles.searchHint}>{t('today.noSearchResults')}</Text>
-                  ) : null}
+            <ScrollView
+              style={styles.searchList}
+              contentContainerStyle={styles.searchListContent}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+            >
+              {searchBusy ? <Text style={styles.searchHint}>{t('common.loading')}</Text> : null}
+              {!searchBusy && searchQuery.trim().length < 2 ? (
+                <Text style={styles.searchHint}>{t('today.searchHint')}</Text>
+              ) : null}
+              {!searchBusy && searchQuery.trim().length >= 2 && searchResults.length === 0 ? (
+                <Text style={styles.searchHint}>{t('today.noSearchResults')}</Text>
+              ) : null}
 
-                  {!searchBusy
-                    ? searchResults.map((result) => (
-                        <Pressable
-                          key={`${result.kind}-${result.dateISO}-${result.label}`}
-                          style={({ pressed }) => [styles.searchResultItem, pressed && styles.pressed]}
-                          onPress={() => openSearchResult(result)}
-                        >
-                          <View style={styles.searchResultTopRow}>
-                            <Text style={styles.searchResultKind}>{searchKindLabel(result.kind)}</Text>
-                            <Text style={styles.searchResultDate}>{formatDisplayDate(result.dateISO, language)}</Text>
-                          </View>
-                          <Text style={styles.searchResultLabel}>{result.label}</Text>
-                        </Pressable>
-                      ))
-                    : null}
-                </ScrollView>
+              {!searchBusy
+                ? searchResults.map((result) => (
+                    <Pressable
+                      key={`${result.kind}-${result.dateISO}-${result.label}`}
+                      style={({ pressed }) => [styles.searchResultItem, pressed && styles.pressed]}
+                      onPress={() => openSearchResult(result)}
+                    >
+                      <View style={styles.searchResultTopRow}>
+                        <Text style={styles.searchResultKind}>{searchKindLabel(result.kind)}</Text>
+                        <Text style={styles.searchResultDate}>
+                          {formatDisplayDate(result.dateISO, language)}
+                        </Text>
+                      </View>
+                      <Text style={styles.searchResultLabel}>{result.label}</Text>
+                    </Pressable>
+                  ))
+                : null}
+            </ScrollView>
 
-                <Pressable style={({ pressed }) => [styles.searchCloseButton, pressed && styles.pressed]} onPress={() => setSearchVisible(false)}>
-                  <Text style={styles.searchCloseButtonText}>{t('today.cancel')}</Text>
-                </Pressable>
+            <Pressable
+              style={({ pressed }) => [styles.searchCloseButton, pressed && styles.pressed]}
+              onPress={() => setSearchVisible(false)}
+            >
+              <Text style={styles.searchCloseButtonText}>{t('today.cancel')}</Text>
             </Pressable>
+          </Pressable>
         </Pressable>
       </Modal>
 

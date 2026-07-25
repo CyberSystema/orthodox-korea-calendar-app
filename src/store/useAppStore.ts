@@ -1,10 +1,7 @@
 import i18n from 'i18next';
 import { create } from 'zustand';
 
-import {
-  hasAdminAuthToken,
-  verifyAdminCloudflareSession,
-} from '../services/api/adminAuth';
+import { hasAdminAuthToken, verifyAdminCloudflareSession } from '../services/api/adminAuth';
 import { canUseEventsApi } from '../services/api/eventsRepository';
 import { secureStorage } from '../services/storage/secureStorage';
 import type { SupportedLanguage } from '../types/language';

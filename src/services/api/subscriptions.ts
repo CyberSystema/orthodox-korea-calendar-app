@@ -44,7 +44,9 @@ async function getCurrentPushToken(): Promise<string> {
   return typeof token.data === 'string' ? token.data : '';
 }
 
-export async function registerCurrentPushSubscription(options?: { force?: boolean }): Promise<boolean> {
+export async function registerCurrentPushSubscription(options?: {
+  force?: boolean;
+}): Promise<boolean> {
   // Push tokens are only available on physical devices, not simulators/emulators
   if (!Device.isDevice) {
     return false;
@@ -76,9 +78,7 @@ export async function registerCurrentPushSubscription(options?: { force?: boolea
   // check (e.g. token-rotation listener). Registration re-runs when the token, the
   // user's language, or the APNs environment changes.
   const alreadyRegistered =
-    storedToken === token &&
-    storedLanguage === language &&
-    storedEnv === environment;
+    storedToken === token && storedLanguage === language && storedEnv === environment;
 
   if (alreadyRegistered && !options?.force) {
     return true;

@@ -33,7 +33,8 @@ const ko: Translations = {
     deleteFailedTitle: '공지를 삭제하지 못했습니다',
   },
   offline: {
-    banner: '오프라인 상태입니다 — 저장된 달력을 표시합니다. 행사 업데이트와 스태프 모드는 다시 연결될 때까지 일시 중지됩니다.',
+    banner:
+      '오프라인 상태입니다 — 저장된 달력을 표시합니다. 행사 업데이트와 스태프 모드는 다시 연결될 때까지 일시 중지됩니다.',
   },
   common: {
     events: '행사',
@@ -142,17 +143,20 @@ const ko: Translations = {
     subtitle: '언어, 알림, 앱 환경설정',
     adminMode: '스태프 모드',
     notifications: '알림',
-    notificationsAutoPrompt: '알림 권한은 첫 실행 시 자동으로 요청됩니다. 거부한 경우 나중에 다시 안내해 드립니다.',
+    notificationsAutoPrompt:
+      '알림 권한은 첫 실행 시 자동으로 요청됩니다. 거부한 경우 나중에 다시 안내해 드립니다.',
     notificationReminderTitle: '알림 켜기',
     notificationReminderBody: '달력 알림을 받으려면 설정에서 알림을 허용해 주세요.',
     notificationReminderOpenSettings: '설정 열기',
     notificationReminderLater: '나중에',
     webAdminSync: '웹 관리자 동기화',
-    apiConfigured: 'API 기본 URL이 설정되었습니다. 관리자 변경 사항이 웹 및 다른 기기와 동기화됩니다.',
+    apiConfigured:
+      'API 기본 URL이 설정되었습니다. 관리자 변경 사항이 웹 및 다른 기기와 동기화됩니다.',
     apiUnavailable: 'API 기본 URL을 사용할 수 없습니다.',
     adminPasscodePlaceholder: '스태프 비밀번호',
     saveAdminPasscode: '스태프 비밀번호 저장',
-    stuffPasscodeStored: '스태프 세션이 활성화되어 안전하게 저장되었습니다. 스태프 모드를 끄면 로그아웃됩니다.',
+    stuffPasscodeStored:
+      '스태프 세션이 활성화되어 안전하게 저장되었습니다. 스태프 모드를 끄면 로그아웃됩니다.',
     sessionExpired: '스태프 세션이 만료되었습니다. 계속하려면 비밀번호를 입력하세요.',
     passcodeCleared: '관리자 비밀번호가 삭제되었습니다.',
     passcodeSaved: '관리자 비밀번호가 검증되어 저장되었습니다.',
@@ -162,7 +166,8 @@ const ko: Translations = {
     passcodeRequired: '스태프 모드를 활성화하려면 스태프 비밀번호를 설정하고 검증하세요.',
     adminEnabled: '스태프 모드가 활성화되고 동기화되었습니다.',
     version: '버전 {{version}}',
-    offlineStaffDisabled: '스태프 모드는 인터넷 연결이 필요합니다. 다시 온라인 상태가 되면 자동으로 재개됩니다.',
+    offlineStaffDisabled:
+      '스태프 모드는 인터넷 연결이 필요합니다. 다시 온라인 상태가 되면 자동으로 재개됩니다.',
   },
   a11y: {
     openSettings: '설정 열기',

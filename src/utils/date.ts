@@ -13,7 +13,11 @@ export function formatDisplayDate(isoDate: string, language: 'en' | 'ko') {
  * both locales are guaranteed regardless of plugin/locale registration order.
  * Falls back to an absolute date once the event is more than ~a week old.
  */
-export function formatRelativeTime(unixSeconds: number, language: 'en' | 'ko', nowMs = Date.now()): string {
+export function formatRelativeTime(
+  unixSeconds: number,
+  language: 'en' | 'ko',
+  nowMs = Date.now(),
+): string {
   const then = unixSeconds * 1000;
   const diffMs = nowMs - then;
   const isKo = language === 'ko';

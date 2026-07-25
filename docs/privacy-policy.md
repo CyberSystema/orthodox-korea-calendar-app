@@ -29,9 +29,11 @@ The Service does **not**:
 We collect only the minimum needed to operate the calendar.
 
 ### 3.1 Calendar data
+
 The liturgical calendar — feasts, fasts, commemorations, and Scripture readings — is **public reference data** hosted in a public repository on **GitHub** (operated by GitHub, Inc.). **Parish events** are delivered from our own backend (hosted on **Cloudflare**). Both are downloaded to your device so you can view the calendar. This data is **public and the same for everyone** — fetching it does not identify you, although the providers that host it receive your device's network request (see [§3.3](#33-technical-request-data)).
 
 ### 3.2 Push-notification token (optional)
+
 If you choose to enable notifications, your device generates a **unique push token** — a device identifier issued by the Apple Push Notification service (APNs) or Firebase Cloud Messaging (FCM) — and sends it to our backend, together with:
 
 - the **platform** (iOS, Android, or web),
@@ -40,6 +42,7 @@ If you choose to enable notifications, your device generates a **unique push tok
 The token is **not linked to your name or identity**. It is used **only** to deliver liturgical reminders and parish announcements. We never use it for advertising. You can stop notifications at any time by disabling them in the app or in your device settings; the token is then removed from our backend.
 
 ### 3.3 Technical request data
+
 To download the calendar and deliver notifications, your device contacts our service providers — **GitHub** (public calendar data), **Cloudflare** (our backend for parish events and notification registration), and **Apple / Google** (push delivery). These providers automatically process standard request information — your **IP address**, the time of the request, and a basic **user-agent** string — in order to:
 
 - deliver the response,
@@ -49,6 +52,7 @@ To download the calendar and deliver notifications, your device contacts our ser
 This information is **not used to identify you** and is **not combined** by us with any other data. Logs held by our backend are automatically purged after a short retention period.
 
 ### 3.4 Local data on your device
+
 The app stores the following **on your device only**:
 
 - your selected language, your notification preferences, and — if you are a staff administrator who manages parish events — an **administrator session token**, all kept in your device's **secure storage** (iOS Keychain / Android Keystore) where the platform supports it;
@@ -57,6 +61,7 @@ The app stores the following **on your device only**:
 This information never leaves your device unless you explicitly act on it — for example, by enabling notifications, or by tapping **"add to calendar,"** which opens the calendar app or service you choose (such as Google or Outlook).
 
 ### 3.5 Service providers
+
 We rely on the following providers purely as technical infrastructure to operate the Service. They act as processors on our behalf or as transport for your requests; we do **not** sell or share data with advertisers or data brokers.
 
 - **Apple** — Apple Push Notification service (notification delivery on iOS).

@@ -124,7 +124,10 @@ export function AnnouncementDetailScreen({ route, navigation }: Props) {
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={[styles.content, { paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.lg }]}
+      contentContainerStyle={[
+        styles.content,
+        { paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.lg },
+      ]}
     >
       {/* ═══ ANNOUNCEMENT CARD ═══ */}
       <View style={styles.card}>
@@ -141,7 +144,9 @@ export function AnnouncementDetailScreen({ route, navigation }: Props) {
           <Text style={styles.timeText}>{formatRelativeTime(announcement.sentAt, language)}</Text>
         </View>
         <Text style={styles.title}>{title}</Text>
-        <Text style={styles.dateText}>{formatDisplayDate(dayjs(announcement.sentAt * 1000).format('YYYY-MM-DD'), language)}</Text>
+        <Text style={styles.dateText}>
+          {formatDisplayDate(dayjs(announcement.sentAt * 1000).format('YYYY-MM-DD'), language)}
+        </Text>
         {body ? <Text style={styles.body}>{body}</Text> : null}
       </View>
 
@@ -178,7 +183,11 @@ export function AnnouncementDetailScreen({ route, navigation }: Props) {
       {/* ═══ STAFF DELETE ═══ */}
       {isStaff ? (
         <Pressable
-          style={({ pressed }) => [styles.deleteButton, pressed && styles.pressed, deleting && styles.deleteButtonDisabled]}
+          style={({ pressed }) => [
+            styles.deleteButton,
+            pressed && styles.pressed,
+            deleting && styles.deleteButtonDisabled,
+          ]}
           onPress={confirmDelete}
           disabled={deleting}
           accessibilityRole="button"

@@ -215,10 +215,7 @@ function transformAppDelegateContents(input) {
 
   // Ensure UIKit is imported (UIWindowScene / UIScene live in UIKit).
   if (!/^import UIKit$/m.test(contents)) {
-    contents = contents.replace(
-      /^(import ReactAppDependencyProvider\n)/m,
-      '$1import UIKit\n',
-    );
+    contents = contents.replace(/^(import ReactAppDependencyProvider\n)/m, '$1import UIKit\n');
   }
 
   // Move RN startup out of didFinishLaunching — the SceneDelegate owns the window.
@@ -241,9 +238,7 @@ function transformAppDelegateContents(input) {
 function withSceneAppDelegate(config) {
   return withAppDelegate(config, (cfg) => {
     if (cfg.modResults.language !== 'swift') {
-      throw new Error(
-        'withIosSceneLifecycle expects a Swift AppDelegate (Expo SDK 56+).',
-      );
+      throw new Error('withIosSceneLifecycle expects a Swift AppDelegate (Expo SDK 56+).');
     }
     cfg.modResults.contents = transformAppDelegateContents(cfg.modResults.contents);
     return cfg;

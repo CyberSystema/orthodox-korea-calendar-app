@@ -58,37 +58,44 @@ export function LiturgicalDayPanel({
     };
   }, [dateISO, language]);
 
-  const displayReadings = useMemo(() =>
-    language === 'ko'
-      ? liturgicalDay?.readingsLocalized?.ko || liturgicalDay?.readings || []
-      : liturgicalDay?.readingsLocalized?.en || liturgicalDay?.readings || [],
-    [language, liturgicalDay]);
+  const displayReadings = useMemo(
+    () =>
+      language === 'ko'
+        ? liturgicalDay?.readingsLocalized?.ko || liturgicalDay?.readings || []
+        : liturgicalDay?.readingsLocalized?.en || liturgicalDay?.readings || [],
+    [language, liturgicalDay],
+  );
 
-  const displayCelebrations = useMemo(() =>
-    language === 'ko'
-      ? liturgicalDay?.celebrationsLocalized?.ko || liturgicalDay?.celebrations || []
-      : liturgicalDay?.celebrationsLocalized?.en || liturgicalDay?.celebrations || [],
-    [language, liturgicalDay]);
+  const displayCelebrations = useMemo(
+    () =>
+      language === 'ko'
+        ? liturgicalDay?.celebrationsLocalized?.ko || liturgicalDay?.celebrations || []
+        : liturgicalDay?.celebrationsLocalized?.en || liturgicalDay?.celebrations || [],
+    [language, liturgicalDay],
+  );
 
-  const displaySaints = useMemo(() =>
-    language === 'ko'
-      ? liturgicalDay?.saintsLocalized?.ko || liturgicalDay?.saints || []
-      : liturgicalDay?.saintsLocalized?.en || liturgicalDay?.saints || [],
-    [language, liturgicalDay]);
+  const displaySaints = useMemo(
+    () =>
+      language === 'ko'
+        ? liturgicalDay?.saintsLocalized?.ko || liturgicalDay?.saints || []
+        : liturgicalDay?.saintsLocalized?.en || liturgicalDay?.saints || [],
+    [language, liturgicalDay],
+  );
 
   const hasFlags = Boolean(
     liturgicalDay &&
-      (liturgicalDay.fast ||
-        liturgicalDay.cheese ||
-        liturgicalDay.fish ||
-        liturgicalDay.presanctified ||
-        liturgicalDay.saintBasil ||
-        liturgicalDay.divineLiturgy)
+    (liturgicalDay.fast ||
+      liturgicalDay.cheese ||
+      liturgicalDay.fish ||
+      liturgicalDay.presanctified ||
+      liturgicalDay.saintBasil ||
+      liturgicalDay.divineLiturgy),
   );
 
-  const highlightDateRing = useMemo(() =>
-    isSunday || [...displayCelebrations, ...displaySaints].some((entry) => entry.highRank),
-    [isSunday, displayCelebrations, displaySaints]);
+  const highlightDateRing = useMemo(
+    () => isSunday || [...displayCelebrations, ...displaySaints].some((entry) => entry.highRank),
+    [isSunday, displayCelebrations, displaySaints],
+  );
 
   const uniqueInfoLines = useMemo(() => {
     const lines: string[] = [];
@@ -111,7 +118,9 @@ export function LiturgicalDayPanel({
     <View style={styles.card}>
       <View style={styles.header}>
         <View style={[styles.ring, highlightDateRing && styles.ringHighlight]}>
-          <Text style={[styles.ringText, highlightDateRing && styles.ringTextHighlight]}>{dayNum}</Text>
+          <Text style={[styles.ringText, highlightDateRing && styles.ringTextHighlight]}>
+            {dayNum}
+          </Text>
         </View>
         <View>
           <Text style={styles.dayName}>{dayName}</Text>
@@ -162,15 +171,29 @@ export function LiturgicalDayPanel({
               <Text
                 style={[
                   styles.celebrationTitle,
-                  item.highRank ? styles.celebTitleHigh : item.celeb ? styles.celebTitleFeast : null,
+                  item.highRank
+                    ? styles.celebTitleHigh
+                    : item.celeb
+                      ? styles.celebTitleFeast
+                      : null,
                 ]}
               >
                 {localized(item.title, language)}
               </Text>
-              {item.readings?.length ? <Text style={styles.celebrationMeta}>{labels.itemReadings}: {item.readings.join(', ')}</Text> : null}
-              {item.tone ? <Text style={styles.celebrationMeta}>{labels.tone} {item.tone}</Text> : null}
+              {item.readings?.length ? (
+                <Text style={styles.celebrationMeta}>
+                  {labels.itemReadings}: {item.readings.join(', ')}
+                </Text>
+              ) : null}
+              {item.tone ? (
+                <Text style={styles.celebrationMeta}>
+                  {labels.tone} {item.tone}
+                </Text>
+              ) : null}
               {item.matinsGospel ? (
-                <Text style={styles.celebrationMeta}>{labels.matins} {item.matinsGospel}</Text>
+                <Text style={styles.celebrationMeta}>
+                  {labels.matins} {item.matinsGospel}
+                </Text>
               ) : null}
             </View>
           ))}
@@ -184,7 +207,9 @@ export function LiturgicalDayPanel({
             <View key={item.id} style={styles.celebrationItem}>
               <Text style={styles.celebrationTitle}>{localized(item.title, language)}</Text>
               {item.readings?.length ? (
-                <Text style={styles.celebrationMeta}>{labels.itemReadings}: {item.readings.join(', ')}</Text>
+                <Text style={styles.celebrationMeta}>
+                  {labels.itemReadings}: {item.readings.join(', ')}
+                </Text>
               ) : null}
             </View>
           ))}
@@ -206,7 +231,11 @@ export function LiturgicalDayPanel({
         <View style={styles.section}>
           <OrnamentTitle text={labels.events} />
           {events.map((event) => (
-            <Pressable key={event.id} style={({ pressed }) => [styles.eventItem, pressed && styles.pressed]} onPress={() => onEventPress(event)}>
+            <Pressable
+              key={event.id}
+              style={({ pressed }) => [styles.eventItem, pressed && styles.pressed]}
+              onPress={() => onEventPress(event)}
+            >
               <Text style={styles.eventTitle}>{localized(event.title, language)}</Text>
               <Text style={styles.eventSummary}>{localized(event.summary, language)}</Text>
               <Text style={styles.eventDate}>{formatDisplayDate(event.dateISO, language)}</Text>

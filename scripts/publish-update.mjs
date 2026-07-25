@@ -86,7 +86,15 @@ console.log(`Channel   : ${channel}`);
 console.log('Inlined env (from eas.json):');
 for (const [k, v] of Object.entries(publicEnv)) console.log(`  ${k}=${v}`);
 
-const easArgs = ['eas', 'update', '--channel', channel, '--environment', profileName, ...passthrough];
+const easArgs = [
+  'eas',
+  'update',
+  '--channel',
+  channel,
+  '--environment',
+  profileName,
+  ...passthrough,
+];
 
 if (dryRun) {
   console.log(`\n[dry-run] would run: npx ${easArgs.join(' ')}`);

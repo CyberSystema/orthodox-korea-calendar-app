@@ -40,7 +40,7 @@ We aim to acknowledge support requests within **two business days**.
 To help us help you faster, please include — where possible — the following information:
 
 - which platform you are using (iOS, Android, or web);
-- your device model and operating-system version (for example, *iPhone 14, iOS 18.2*);
+- your device model and operating-system version (for example, _iPhone 14, iOS 18.2_);
 - the version number of the app (shown at the bottom of the app's **Settings** screen, or on the App Store / Google Play listing);
 - a short description of what you expected to happen, what actually happened, and the steps you took before the problem appeared;
 - a screenshot or a screen recording, if appropriate.

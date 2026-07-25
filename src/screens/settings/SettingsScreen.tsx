@@ -1,5 +1,14 @@
 import { useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import {
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -28,12 +37,8 @@ const STAFF_MODE_KEY = 'auth.staffModeEnabled';
 export function SettingsScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const {
-    adminMode,
-    cloudflareAdminAuthenticated,
-    setAdminMode,
-    setCloudflareAdminAuthenticated,
-  } = useAppStore();
+  const { adminMode, cloudflareAdminAuthenticated, setAdminMode, setCloudflareAdminAuthenticated } =
+    useAppStore();
   const isOnline = useNetworkStore((state) => state.isOnline);
   const [statusText, setStatusText] = useState('');
   const [passcodeDraft, setPasscodeDraft] = useState('');
@@ -151,13 +156,13 @@ export function SettingsScreen() {
   };
 
   return (
-    <KeyboardSafeView
-      style={{ flex: 1 }}
-      keyboardVerticalOffset={insets.top}
-    >
+    <KeyboardSafeView style={{ flex: 1 }} keyboardVerticalOffset={insets.top}>
       <ScrollView
         style={styles.container}
-        contentContainerStyle={[styles.content, { paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.lg }]}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.lg },
+        ]}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
       >
@@ -185,9 +190,7 @@ export function SettingsScreen() {
             <OrnamentTitle text={t('settings.webAdminSync')} />
           </View>
           <Text style={styles.statusText}>
-            {canUseEventsApi()
-              ? t('settings.apiConfigured')
-              : t('settings.apiUnavailable')}
+            {canUseEventsApi() ? t('settings.apiConfigured') : t('settings.apiUnavailable')}
           </Text>
           {needsAuthentication ? (
             <>
@@ -205,7 +208,16 @@ export function SettingsScreen() {
                 autoCorrect={false}
                 editable={isOnline}
               />
-              <Pressable style={({ pressed }) => [styles.buttonOutline, (authBusy || !isOnline) && styles.buttonDisabled, pressed && styles.pressed]} disabled={authBusy || !isOnline} onPress={onSavePasscode} accessibilityRole="button">
+              <Pressable
+                style={({ pressed }) => [
+                  styles.buttonOutline,
+                  (authBusy || !isOnline) && styles.buttonDisabled,
+                  pressed && styles.pressed,
+                ]}
+                disabled={authBusy || !isOnline}
+                onPress={onSavePasscode}
+                accessibilityRole="button"
+              >
                 <Text style={styles.buttonOutlineText}>{t('settings.saveAdminPasscode')}</Text>
               </Pressable>
             </>

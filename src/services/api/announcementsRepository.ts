@@ -70,10 +70,12 @@ export async function fetchAnnouncements(limit = 30, offset = 0): Promise<Announ
 
   try {
     const payload = await backendClient.listAnnouncements({ limit, offset });
-    return (payload.announcements || [])
-      // A broadcast must have a title in at least one language to be meaningful.
-      .map((item) => toAnnouncement(item))
-      .filter((item) => item.title.en.trim().length > 0 || item.title.ko.trim().length > 0);
+    return (
+      (payload.announcements || [])
+        // A broadcast must have a title in at least one language to be meaningful.
+        .map((item) => toAnnouncement(item))
+        .filter((item) => item.title.en.trim().length > 0 || item.title.ko.trim().length > 0)
+    );
   } catch (error) {
     throw new Error(`Failed to load announcements: ${getErrorMessage(error)}`);
   }
