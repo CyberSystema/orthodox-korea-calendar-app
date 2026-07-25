@@ -52,6 +52,7 @@
       "./plugins/withSolidLaunchScreen",
       "./plugins/withIosSceneLifecycle",
       "./plugins/withMinIosDeploymentTarget",
+      "./plugins/withAndroidBuildMemory",
       "expo-localization",
       "expo-secure-store",
       [
