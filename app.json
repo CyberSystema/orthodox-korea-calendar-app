@@ -60,11 +60,11 @@
       [
         "expo-splash-screen",
         {
-          "//": "iOS: NO top-level image — ./plugins/withSolidLaunchScreen (listed first, runs last via withMod LIFO) replaces expo-splash-screen's storyboard with a solid-color UILaunchScreen that references the SplashScreenBackground asset generated from the top-level backgroundColor (#3A0A0A), keeping the launch flash-free. Android: an image IS required — withAndroidSplashStyles ALWAYS writes windowSplashScreenAnimatedIcon=@drawable/splashscreen_logo into the Android 12 splash theme, so with no image the drawable is never generated and the release build fails at processReleaseResources (resource splashscreen_logo not found). The android block supplies the brand mark (the masking-padded adaptive foreground) so the drawable exists; Android 12 always renders a splash icon anyway. This android block does not affect the iOS config.",
+          "//": "Both platforms launch into a BARE solid #3A0A0A (= colors.primaryDeep, the animated ByzantineSplashScreen's opening colour) so the native launch screen blends invisibly into the animation — no logo appears before it. iOS: NO top-level image — ./plugins/withSolidLaunchScreen (listed first, runs last via withMod LIFO) replaces expo-splash-screen's storyboard with a solid-colour UILaunchScreen built from backgroundColor. Android: an image IS still required — withAndroidSplashStyles ALWAYS writes windowSplashScreenAnimatedIcon=@drawable/splashscreen_logo into the Android 12 splash theme, so omitting it means the drawable is never generated and the release build fails at processReleaseResources (resource splashscreen_logo not found). We therefore point it at a FULLY TRANSPARENT png: the drawable exists (build succeeds) but renders nothing, so Android shows only the solid background — matching iOS. Do not swap this back to a logo. This android block does not affect the iOS config.",
           "backgroundColor": "#3A0A0A",
           "android": {
             "backgroundColor": "#3A0A0A",
-            "image": "./assets/android-icon-foreground.png",
+            "image": "./assets/android-icon-empty.png",
             "imageWidth": 200
           }
         }
