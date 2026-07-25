@@ -12,16 +12,27 @@ Stack: Expo SDK 56 / React Native 0.85 / React 19 / TypeScript 6, Zustand (state
 
 ```bash
 npm run typecheck            # tsc --noEmit — the primary validation gate (there is no test suite)
+npm run format               # prettier --write . (single quotes, printWidth 100)
+npm run format:check         # prettier --check . — verify styling
 npm run doctor               # npx expo-doctor — checks SDK/dependency health
 npm start                    # expo start (Metro)
 npm run start:clear          # expo start --clear (reset Metro cache)
 npm run ios / npm run android  # local native run (expo run:*) — triggers a prebuild
 
-# EAS (remote) builds — appVersionSource is "remote", versions auto-increment
-npm run build:ios:preview        # → staging backend
+# Calendar data — single source of truth is public/data/ in the webapp repo
+npm run sync:calendar-data   # regenerate the bundled offline seed from the source of truth
+npm run check:calendar-data  # fail if the seed has drifted (build:* run this first)
+
+# EAS builds — appVersionSource is "local" (version + build come from app.json;
+# NOT auto-incremented — bump ios.buildNumber / android.versionCode by hand)
+npm run build:ios:preview        # → staging backend  (runs check:calendar-data first)
 npm run build:ios:production     # → production backend
 npm run build:android:preview / :production
 npm run submit:ios / submit:android
+
+# OTA updates (JS-only changes, e.g. translations — no store release, no native change)
+npm run update:production -- -m "..."   # publish to the production channel (gated by typecheck)
+npm run update:preview -- -m "..."      # publish to the preview channel
 ```
 
 There is **no test runner configured** — `npm run typecheck` is the validation gate after changes.
@@ -62,7 +73,9 @@ i18next with `en` and `ko` (`src/i18n/locales/`). `src/i18n/index.ts` initialize
 
 ## Config & conventions that bite
 
-- **Environments:** `EXPO_PUBLIC_APP_API_BASE_URL` selects the backend, set per EAS profile in `eas.json` (preview → staging, production → production). `backendClient.ts` falls back to a hardcoded prod URL when unset (and a dev URL under `__DEV__`). `EXPO_PUBLIC_CALENDAR_DATA_BASE_URL` optionally overrides the GitHub data source.
+- **Environments:** `EXPO_PUBLIC_APP_API_BASE_URL` selects the backend, set per EAS profile in `eas.json` (preview → staging, production → production). `backendClient.ts` falls back to a hardcoded prod URL when unset (and a dev URL under `__DEV__`). `EXPO_PUBLIC_CALENDAR_DATA_BASE_URL` optionally overrides the GitHub data source. **Note:** `eas update` does **not** apply eas.json build-profile `env` — publish OTA via `npm run update:*` (`scripts/publish-update.mjs` reads eas.json and inlines the right `EXPO_PUBLIC_*`), never bare `eas update`, or an OTA would fall back to the hardcoded prod URL (a preview update would repoint staging at production).
+- **Calendar data has ONE source of truth: `public/data/` in the webapp repo** (`orthodox-korea-calendar`). That is what GitHub serves at runtime; the app checks it on every startup and migrates changes into its local cache (`webCalendarSource.ts`). The app also bundles an offline first-launch seed under `assets/webapp-source/data/` + `bundledCalendarData.generated.ts` — these are **derived artifacts, never hand-edited**: run `npm run sync:calendar-data` to regenerate them from the source, and `npm run check:calendar-data` (which every `build:*` runs first) fails on drift. Both are gitignored from Prettier so formatting can't diverge them from the source.
+- **Prettier** (`.prettierrc`: single quotes, `printWidth` 100): `npm run format` / `format:check`. `.prettierignore` excludes native/generated output and the bundled calendar data. There is **no ESLint**.
 - **babel.config.js:** do **not** list `react-native-worklets/plugin` (or the old `react-native-reanimated/plugin`) manually — `babel-preset-expo` (SDK 56) auto-injects it for Reanimated 4. Adding it double-applies the worklets transform.
 - **patch-package:** patches in `patches/` auto-apply via the `postinstall` hook. We currently patch **(1)** `expo-modules-jsi` (a C-function-pointer formed from a ternary that newer Swift toolchains reject) and **(2)** `@react-native/gradle-plugin` (RN 0.85 ships **Gradle 9.3.1** but its bundled gradle-plugin pins the `foojay-resolver-convention` toolchain plugin at **0.5.0**, which references `JvmVendorSpec.IBM_SEMERU` — a constant **removed in Gradle 9.0** — so the Android build crashes at settings evaluation with _"JvmVendorSpec does not have member field IBM_SEMERU"_; the patch bumps foojay to **1.0.0**, the first Gradle-9-compatible release. The plugin runs inside an _included build_, so it can't be overridden from `android/settings.gradle` or `expo-build-properties` — patch-package is the only durable fix), and **(3)** `react-native` (iOS: Fabric **recycles** a `secureTextEntry` TextInput after iOS Password AutoFill, and the recycled input comes back **frozen / non-editable** until an app background+foreground cycle — facebook/react-native#53050; the patch adds `+ (BOOL)shouldBeRecycled { return NO; }` to `RCTTextInputComponentView.mm` so TextInputs are recreated, not pooled — this is what fixed the secret-console passcode freeze). After `npm install` patches re-apply automatically; if you edit a node_modules source, regenerate with `npx patch-package <pkg> --include '<file-regex>'` (the `--include` filter is required — the iOS xcframework build script, a stray Android `.gradle/` build dir, and react-native's enormous tree would otherwise pollute the patch).
 - **Local Android builds need a JDK in the 17–21 range — not the newest JDK.** AGP / RN 0.85's Android build fails on JDK 24+ (the `JdkImageTransform` can't process `android-36/core-for-system-modules.jar`, and JDK 24+ native-access restrictions break `react-native-screens`' CMake). Build with e.g. `JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home`. A bare `./gradlew` also needs the SDK location via `ANDROID_HOME` or `android/local.properties` (`sdk.dir=…`); Android Studio and EAS set these automatically, and **EAS uses its own correct JDK**, so this only bites local CLI builds. Note the release build type is **debug-signed by default** (Expo prebuild) — configure a real upload keystore or use EAS before uploading to Play.
