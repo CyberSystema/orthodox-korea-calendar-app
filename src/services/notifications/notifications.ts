@@ -4,12 +4,12 @@ import { Platform } from 'react-native';
 import { secureStorage } from '../storage/secureStorage';
 import type { SupportedLanguage } from '../../types/language';
 
-const NOTIFICATION_DENIED_SUGGESTION_AT_KEY = 'notifications.deniedSuggestionAt';
-const DENIED_SUGGESTION_COOLDOWN_MS = 3 * 24 * 60 * 60 * 1000;
+// Storage key from the old "remind me to open Settings" flow. Purged on launch so a
+// stale value can't linger on devices upgrading from a build that wrote it.
+const LEGACY_DENIED_SUGGESTION_AT_KEY = 'notifications.deniedSuggestionAt';
 
 type LaunchPermissionFlowResult = {
   status: Notifications.PermissionStatus;
-  shouldSuggestOpeningSettings: boolean;
 };
 
 export async function initializeNotifications() {
@@ -48,48 +48,43 @@ export async function requestNotificationPermissions(): Promise<Notifications.Pe
   return requested.status;
 }
 
+/**
+ * Ask for notification permission once, using the SYSTEM dialog — the user grants or
+ * denies right there and we accept the answer.
+ *
+ * Deliberately no follow-up nagging: an earlier flow popped a custom "open Settings"
+ * alert after a denial, which is an extra hop the user never asked for. If permission
+ * was already denied, the OS will not present the dialog again (Android blocks the
+ * re-ask, iOS allows it only once), so there is nothing to do — the app simply works
+ * without notifications until the user enables them in system settings themselves.
+ */
 export async function runLaunchNotificationPermissionFlow(): Promise<LaunchPermissionFlowResult> {
-  const now = Date.now();
+  // One-time cleanup of the retired reminder timestamp.
+  void secureStorage.deleteItem(LEGACY_DENIED_SUGGESTION_AT_KEY).catch(() => {});
+
   const current = await Notifications.getPermissionsAsync();
-
   if (current.status === 'granted') {
-    await secureStorage.deleteItem(NOTIFICATION_DENIED_SUGGESTION_AT_KEY);
-    return { status: current.status, shouldSuggestOpeningSettings: false };
+    return { status: current.status };
   }
 
-  if (current.status === 'undetermined') {
-    const requested = await Notifications.requestPermissionsAsync({
-      ios: {
-        allowAlert: true,
-        allowBadge: true,
-        allowSound: true,
-      },
-    });
-
-    if (requested.status === 'granted') {
-      await secureStorage.deleteItem(NOTIFICATION_DENIED_SUGGESTION_AT_KEY);
-      return { status: requested.status, shouldSuggestOpeningSettings: false };
-    }
-
-    if (requested.status === 'denied') {
-      await secureStorage.setItem(NOTIFICATION_DENIED_SUGGESTION_AT_KEY, String(now));
-      return { status: requested.status, shouldSuggestOpeningSettings: true };
-    }
-
-    return { status: requested.status, shouldSuggestOpeningSettings: false };
+  // Ask whenever the OS still allows a prompt — do NOT gate on 'undetermined'.
+  // On Android 13+ POST_NOTIFICATIONS reports 'denied' (not 'undetermined') before
+  // the user has ever chosen, because areNotificationsEnabled() is simply false, so
+  // an 'undetermined' check would skip the request and no dialog would ever appear.
+  // `canAskAgain` is the reliable signal: false means Android/iOS will no longer
+  // present the dialog, and calling request would be a silent no-op.
+  if (!current.canAskAgain) {
+    return { status: current.status };
   }
 
-  const lastSuggestionAtRaw = await secureStorage.getItem(NOTIFICATION_DENIED_SUGGESTION_AT_KEY);
-  const lastSuggestionAt = Number(lastSuggestionAtRaw);
-  const hasValidTimestamp = Number.isFinite(lastSuggestionAt) && lastSuggestionAt > 0;
-  const shouldSuggest =
-    !hasValidTimestamp || now - lastSuggestionAt >= DENIED_SUGGESTION_COOLDOWN_MS;
-
-  if (shouldSuggest) {
-    await secureStorage.setItem(NOTIFICATION_DENIED_SUGGESTION_AT_KEY, String(now));
-  }
-
-  return { status: current.status, shouldSuggestOpeningSettings: shouldSuggest };
+  const requested = await Notifications.requestPermissionsAsync({
+    ios: {
+      allowAlert: true,
+      allowBadge: true,
+      allowSound: true,
+    },
+  });
+  return { status: requested.status };
 }
 
 export async function scheduleLanguageTargetedLocalNotification(

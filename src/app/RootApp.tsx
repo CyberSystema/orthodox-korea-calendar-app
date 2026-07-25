@@ -2,11 +2,14 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
 import * as Notifications from 'expo-notifications';
 import { NavigationContainer } from '@react-navigation/native';
-import { Alert, Animated, Linking, StyleSheet, View } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 
-import i18n from '../i18n';
+// Side-effect import: `src/i18n/index.ts` runs i18next's .init() and registers the
+// dayjs `ko` locale at module load. This is the app's ONLY importer, so removing it
+// leaves i18n uninitialised and every screen renders raw keys ("nav.today"). Keep it.
+import '../i18n';
 import { syncCalendarDataFromGithub } from '../features/calendar/webCalendarSource';
 import { RootNavigator } from '../navigation/RootNavigator';
 import { useEventsStore } from '../features/events/useEventsStore';
@@ -46,7 +49,6 @@ export function RootApp() {
 
   useEffect(() => {
     let cancelled = false;
-    let deniedSuggestionTimeout: ReturnType<typeof setTimeout> | null = null;
 
     const bootstrap = async () => {
       await initializeNotifications().catch((err) =>
@@ -64,30 +66,9 @@ export function RootApp() {
         .catch((err) => console.warn('[App] announcements hydration failed:', err));
 
       try {
+        // Shows the system permission dialog; the user's answer is final and we do
+        // not follow up with an "open Settings" prompt.
         const flowResult = await runLaunchNotificationPermissionFlow();
-        if (flowResult.shouldSuggestOpeningSettings) {
-          deniedSuggestionTimeout = setTimeout(() => {
-            if (cancelled) {
-              return;
-            }
-
-            Alert.alert(
-              i18n.t('settings.notificationReminderTitle'),
-              i18n.t('settings.notificationReminderBody'),
-              [
-                { text: i18n.t('settings.notificationReminderLater'), style: 'cancel' },
-                {
-                  text: i18n.t('settings.notificationReminderOpenSettings'),
-                  onPress: () => {
-                    void Linking.openSettings().catch((error) => {
-                      console.warn('[Notifications] open settings failed:', error);
-                    });
-                  },
-                },
-              ],
-            );
-          }, 12000);
-        }
 
         if (flowResult.status === 'granted') {
           await registerCurrentPushSubscription().catch((err) =>
@@ -111,9 +92,6 @@ export function RootApp() {
 
     return () => {
       cancelled = true;
-      if (deniedSuggestionTimeout) {
-        clearTimeout(deniedSuggestionTimeout);
-      }
     };
   }, []);
 

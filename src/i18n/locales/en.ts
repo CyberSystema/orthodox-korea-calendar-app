@@ -138,12 +138,7 @@ const en = {
     adminMode: 'Staff Mode',
     notifications: 'Notifications',
     notificationsAutoPrompt:
-      'Notification permission is requested automatically on first launch. If denied, we will remind you later.',
-    notificationReminderTitle: 'Turn On Notifications',
-    notificationReminderBody:
-      'To receive calendar reminders, please enable notifications in Settings.',
-    notificationReminderOpenSettings: 'Open Settings',
-    notificationReminderLater: 'Later',
+      'Notification permission is requested once on first launch. You can change it any time in your device settings.',
     webAdminSync: 'Web Admin Sync',
     apiConfigured: 'API base URL configured. Admin changes sync to web and other devices.',
     apiUnavailable: 'API base URL unavailable.',

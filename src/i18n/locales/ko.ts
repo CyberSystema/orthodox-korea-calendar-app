@@ -144,11 +144,7 @@ const ko: Translations = {
     adminMode: '스태프 모드',
     notifications: '알림',
     notificationsAutoPrompt:
-      '알림 권한은 첫 실행 시 자동으로 요청됩니다. 거부한 경우 나중에 다시 안내해 드립니다.',
-    notificationReminderTitle: '알림 켜기',
-    notificationReminderBody: '달력 알림을 받으려면 설정에서 알림을 허용해 주세요.',
-    notificationReminderOpenSettings: '설정 열기',
-    notificationReminderLater: '나중에',
+      '알림 권한은 첫 실행 시 한 번 요청됩니다. 기기 설정에서 언제든지 변경할 수 있습니다.',
     webAdminSync: '웹 관리자 동기화',
     apiConfigured:
       'API 기본 URL이 설정되었습니다. 관리자 변경 사항이 웹 및 다른 기기와 동기화됩니다.',
