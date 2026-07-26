@@ -8,6 +8,7 @@ import { colors, shadows } from '../../theme/colors';
 import { radii, spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import { formatDisplayDate } from '../../utils/date';
+import { getDayEmphasis } from '../../features/calendar/dayEmphasis';
 import { LiturgicalFlagsRow } from './LiturgicalFlagsRow';
 import { OrnamentTitle } from './OrnamentTitle';
 
@@ -93,22 +94,15 @@ export function LiturgicalDayPanel({
       liturgicalDay.divineLiturgy),
   );
 
-  /**
-   * How the date circle is filled:
-   *   'crimson' — Sundays, high-rank days, and Saturdays that carry a celebration
-   *               (`"celeb": true` in the calendar JSON).
-   *   'blue'    — every other Saturday.
-   *   'none'    — ordinary weekdays keep the crimson outline.
-   * A filled circle always pairs with a white day number.
-   */
-  const dateRingFill = useMemo<'crimson' | 'blue' | 'none'>(() => {
+  // Shared colour code (see dayEmphasis.ts). A filled circle always pairs with a
+  // white day number; 'none' keeps the crimson outline.
+  const dateRingFill = useMemo(() => {
     const entries = [...displayCelebrations, ...displaySaints];
-    const isHighRank = entries.some((entry) => entry.highRank);
-    const hasCelebration = entries.some((entry) => entry.celeb);
-
-    if (isSunday || isHighRank || (isSaturday && hasCelebration)) return 'crimson';
-    if (isSaturday) return 'blue';
-    return 'none';
+    return getDayEmphasis({
+      dayOfWeek: isSunday ? 0 : isSaturday ? 6 : 1,
+      hasHighRank: entries.some((entry) => entry.highRank),
+      hasCelebration: entries.some((entry) => entry.celeb),
+    });
   }, [isSunday, isSaturday, displayCelebrations, displaySaints]);
 
   const isDateRingFilled = dateRingFill !== 'none';

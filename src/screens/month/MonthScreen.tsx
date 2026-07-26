@@ -38,6 +38,7 @@ import {
   type LiturgicalSearchResult,
 } from '../../features/calendar/calendarService';
 import { useCalendarDataVersion } from '../../features/calendar/useCalendarDataVersion';
+import { getDayEmphasis, type DayEmphasis } from '../../features/calendar/dayEmphasis';
 import {
   localized,
   type EventRecurrence,
@@ -224,6 +225,8 @@ export function MonthScreen({ navigation, route }: Props) {
     hasFeast: boolean;
     hasFast: boolean;
     hasLiturgy: boolean;
+    /** Shared Sunday-red / Saturday-blue colour code — see dayEmphasis.ts. */
+    emphasis: DayEmphasis;
   };
 
   const cellDataMap = useMemo(() => {
@@ -234,9 +237,11 @@ export function MonthScreen({ navigation, route }: Props) {
       const dateISO = todayCursor.date(day).format('YYYY-MM-DD');
       const eventCount = monthEventCounts.get(dateISO) || 0;
       const dayData = getLiturgicalDayByDate(dateISO);
-      const isSunday = todayCursor.date(day).day() === 0;
+      const dayOfWeek = todayCursor.date(day).day();
+      const isSunday = dayOfWeek === 0;
       const hasHighRank = Boolean(dayData?.celebrations?.some((entry) => entry.highRank));
       const hasFeast = Boolean(dayData?.celebrations?.some((entry) => entry.celeb));
+      const emphasis = getDayEmphasis({ dayOfWeek, hasHighRank, hasCelebration: hasFeast });
       const hasFast = Boolean(dayData?.fast);
       const hasLiturgy = Boolean(
         dayData?.divineLiturgy || dayData?.saintBasil || dayData?.presanctified,
@@ -250,6 +255,7 @@ export function MonthScreen({ navigation, route }: Props) {
         hasFeast,
         hasFast,
         hasLiturgy,
+        emphasis,
       });
     }
     return map;
@@ -559,7 +565,8 @@ export function MonthScreen({ navigation, route }: Props) {
                   <Text
                     style={[
                       styles.cellDay,
-                      (cd.isSunday || cd.hasHighRank) && styles.cellDayHigh,
+                      cd.emphasis === 'crimson' && styles.cellDayHigh,
+                      cd.emphasis === 'blue' && styles.cellDaySaturday,
                       isSelected && styles.cellDaySelected,
                     ]}
                   >
@@ -1175,6 +1182,11 @@ const styles = StyleSheet.create({
   },
   cellDayHigh: {
     color: colors.danger,
+    fontFamily: typography.family.heading,
+    fontWeight: typography.weight.bold,
+  },
+  cellDaySaturday: {
+    color: colors.saturday,
     fontFamily: typography.family.heading,
     fontWeight: typography.weight.bold,
   },
