@@ -2,7 +2,7 @@
  * How a date should be emphasised in the UI — the single source of truth for the
  * "Sunday is red, Saturday is blue" colour code.
  *
- *   'crimson' — Sundays, high-rank commemorations, and Saturdays that carry a
+ *   'crimson' — Sundays, high-rank commemorations, and ANY day carrying a
  *               celebration (`"celeb": true` in the calendar JSON, which marks the
  *               national holidays). Rendered as the filled crimson date circle and
  *               the crimson day number.
@@ -24,9 +24,9 @@ export function getDayEmphasis(input: {
   const isSunday = dayOfWeek === 0;
   const isSaturday = dayOfWeek === 6;
 
-  // Crimson wins: a Saturday that is also a high-rank day or a celebration is not
-  // demoted to blue.
-  if (isSunday || hasHighRank || (isSaturday && hasCelebration)) return 'crimson';
+  // Crimson wins over blue: a celebration or high-rank commemoration marks the day
+  // crimson whatever weekday it falls on, so a Saturday carrying one is not demoted.
+  if (isSunday || hasHighRank || hasCelebration) return 'crimson';
   if (isSaturday) return 'blue';
   return 'none';
 }

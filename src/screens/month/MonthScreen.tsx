@@ -1186,7 +1186,7 @@ const styles = StyleSheet.create({
     fontWeight: typography.weight.bold,
   },
   cellDaySaturday: {
-    color: colors.saturday,
+    color: colors.blue,
     fontFamily: typography.family.heading,
     fontWeight: typography.weight.bold,
   },

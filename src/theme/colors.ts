@@ -43,9 +43,12 @@ export const colors = {
 
   // ── Semantic ──
   danger: '#8C1B1B', // same as crimson
-  /** Saturday emphasis — the blue counterpart to Sunday's crimson date circle.
-   *  Same blue as the presanctified/event pips, so the palette stays coherent. */
-  saturday: '#3060B8',
+  /** Blue accent — the counterpart to Sunday's crimson. Marks Saturday date
+   *  emphasis and celebration (`"celeb": true`) entries. Same blue as the
+   *  presanctified/event pips, so the palette stays coherent. */
+  blue: '#3060B8',
+  /** Faint wash of `blue`, for celebration entry containers. */
+  blueTint: 'rgba(48,96,184,0.09)',
 
   // ── Pip / Indicator Colors (from web DayCell) ──
   pipFast: '#6D3CAD', // purple — fasting

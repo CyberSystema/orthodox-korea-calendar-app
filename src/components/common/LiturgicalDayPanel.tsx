@@ -308,8 +308,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.crimson,
   },
   ringSaturday: {
-    backgroundColor: colors.saturday,
-    borderColor: colors.saturday,
+    backgroundColor: colors.blue,
+    borderColor: colors.blue,
   },
   ringTextHighlight: {
     color: colors.surfaceWhite,
@@ -361,16 +361,18 @@ const styles = StyleSheet.create({
     borderLeftColor: colors.crimson,
     backgroundColor: colors.crimsonTint,
   },
+  // Celebration ("celeb": true) entries — blue container, italic title. Scoped to
+  // the entry itself; the surrounding day keeps its own emphasis.
   celebItemFeast: {
-    borderLeftColor: colors.accent,
-    backgroundColor: colors.accentGlow,
+    borderLeftColor: colors.blue,
+    backgroundColor: colors.blueTint,
   },
   celebTitleHigh: {
     color: colors.crimson,
     fontWeight: typography.weight.semibold,
   },
   celebTitleFeast: {
-    color: colors.textSoft,
+    color: colors.blue,
     fontStyle: 'italic',
   },
   celebrationMeta: {
