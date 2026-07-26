@@ -47,11 +47,12 @@ export function LiturgicalDayPanel({
   labels,
   onEventPress,
 }: Props) {
-  const { isSunday, dayNum, dayName, monthYear } = useMemo(() => {
+  const { isSunday, isSaturday, dayNum, dayName, monthYear } = useMemo(() => {
     const d = new Date(`${dateISO}T00:00:00`);
     const locale = language === 'ko' ? 'ko' : 'en';
     return {
       isSunday: d.getDay() === 0,
+      isSaturday: d.getDay() === 6,
       dayNum: d.getDate(),
       dayName: d.toLocaleDateString(locale, { weekday: 'long' }),
       monthYear: d.toLocaleDateString(locale, { month: 'long', year: 'numeric' }),
@@ -92,10 +93,25 @@ export function LiturgicalDayPanel({
       liturgicalDay.divineLiturgy),
   );
 
-  const highlightDateRing = useMemo(
-    () => isSunday || [...displayCelebrations, ...displaySaints].some((entry) => entry.highRank),
-    [isSunday, displayCelebrations, displaySaints],
-  );
+  /**
+   * How the date circle is filled:
+   *   'crimson' — Sundays, high-rank days, and Saturdays that carry a celebration
+   *               (`"celeb": true` in the calendar JSON).
+   *   'blue'    — every other Saturday.
+   *   'none'    — ordinary weekdays keep the crimson outline.
+   * A filled circle always pairs with a white day number.
+   */
+  const dateRingFill = useMemo<'crimson' | 'blue' | 'none'>(() => {
+    const entries = [...displayCelebrations, ...displaySaints];
+    const isHighRank = entries.some((entry) => entry.highRank);
+    const hasCelebration = entries.some((entry) => entry.celeb);
+
+    if (isSunday || isHighRank || (isSaturday && hasCelebration)) return 'crimson';
+    if (isSaturday) return 'blue';
+    return 'none';
+  }, [isSunday, isSaturday, displayCelebrations, displaySaints]);
+
+  const isDateRingFilled = dateRingFill !== 'none';
 
   const uniqueInfoLines = useMemo(() => {
     const lines: string[] = [];
@@ -117,8 +133,14 @@ export function LiturgicalDayPanel({
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <View style={[styles.ring, highlightDateRing && styles.ringHighlight]}>
-          <Text style={[styles.ringText, highlightDateRing && styles.ringTextHighlight]}>
+        <View
+          style={[
+            styles.ring,
+            dateRingFill === 'crimson' && styles.ringHighlight,
+            dateRingFill === 'blue' && styles.ringSaturday,
+          ]}
+        >
+          <Text style={[styles.ringText, isDateRingFilled && styles.ringTextHighlight]}>
             {dayNum}
           </Text>
         </View>
@@ -290,6 +312,10 @@ const styles = StyleSheet.create({
   },
   ringHighlight: {
     backgroundColor: colors.crimson,
+  },
+  ringSaturday: {
+    backgroundColor: colors.saturday,
+    borderColor: colors.saturday,
   },
   ringTextHighlight: {
     color: colors.surfaceWhite,
