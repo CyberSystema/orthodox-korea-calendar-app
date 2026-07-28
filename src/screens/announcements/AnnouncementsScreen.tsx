@@ -10,6 +10,8 @@ import ReanimatedSwipeable, {
 import { StatusBar } from 'expo-status-bar';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { useTabContentBottomPadding } from '../../hooks/useTabContentBottomPadding';
 import Svg, { Path } from 'react-native-svg';
 
 import { ByzantineKnot } from '../../components/common/ByzantineKnot';
@@ -52,6 +54,7 @@ function pickLocalized(text: LocalizedText, language: 'en' | 'ko'): string {
 export function AnnouncementsScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const tabBottomPadding = useTabContentBottomPadding();
   const language = useAppStore((state) => state.language);
   const isStaff = useAppStore((state) => state.adminMode && state.cloudflareAdminAuthenticated);
 
@@ -207,13 +210,11 @@ export function AnnouncementsScreen({ navigation }: Props) {
         data={announcements}
         keyExtractor={(item) => String(item.id)}
         renderItem={renderItem}
-        // See TodayScreen: the tab bar already reserves the bottom inset, so this
-        // is plain breathing room rather than insets.bottom counted twice. It also
-        // un-biases the centred empty state, which was sitting high for the same
-        // reason.
+        // See TodayScreen: the native toolbar does not take layout space, so
+        // this screen reserves it itself. See useTabContentBottomPadding.
         contentContainerStyle={[
           styles.listContent,
-          { paddingBottom: spacing.xl },
+          { paddingBottom: tabBottomPadding },
           showEmpty && styles.listContentEmpty,
         ]}
         refreshControl={

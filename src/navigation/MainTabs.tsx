@@ -1,8 +1,7 @@
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { createNativeBottomTabNavigator } from '@react-navigation/bottom-tabs/unstable';
+import type { NativeBottomTabIcon } from '@react-navigation/bottom-tabs/unstable';
+import { Image, Platform } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
 import { AnnouncementsScreen } from '../screens/announcements/AnnouncementsScreen';
 import { MonthScreen } from '../screens/month/MonthScreen';
@@ -11,200 +10,244 @@ import {
   countUnread,
   useAnnouncementsStore,
 } from '../features/announcements/useAnnouncementsStore';
-import { useTextScale } from '../hooks/useTextScale';
-import { useNetworkStore } from '../store/useNetworkStore';
+import { useAppStore } from '../store/useAppStore';
+import { useDayOfMonth } from '../hooks/useDayOfMonth';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import type { MainTabsParamList } from './types';
 
-const Tab = createBottomTabNavigator<MainTabsParamList>();
+/**
+ * The bottom toolbar is the PLATFORM'S OWN — a real `UITabBarController` on iOS
+ * (so it picks up iOS 26+ Liquid Glass automatically) and a Material
+ * `BottomNavigationView` on Android. Everything above it is still the app's own
+ * manuscript chrome: each screen draws its branded ORTHODOX KOREA header, which
+ * is why `headerShown` is false here.
+ *
+ * This replaced a hand-drawn JS tab bar whose vertical geometry had to be
+ * derived by measurement (a trimmed iOS inset, a bar that grew by only the
+ * label's line-box gain). None of that applies now — the platform owns the
+ * bar's height, its safe-area handling and its font scaling — but the trade is
+ * that a native bar no longer takes layout space away from the screen. See
+ * `useTabContentBottomPadding` for what every tab screen must now reserve.
+ *
+ * Icons must be given PER PLATFORM: `tabBarIcon` takes a data object, never a
+ * component, and react-navigation maps an `sfSymbol` icon to `undefined` on
+ * Android — so an SF-Symbol-only config renders NOTHING there. iOS gets symbols
+ * for free; Android gets bitmaps from `npm run sync:tab-icons`.
+ */
+const Tab = createNativeBottomTabNavigator<MainTabsParamList>();
 
-/** Icon + label band, above the safe-area inset. See the geometry note in MainTabs. */
-const TAB_BAR_CONTENT_HEIGHT = 58;
-/** How much of iOS's home-indicator inset the bar does NOT reserve. */
-const IOS_INSET_TRIM = 10;
-/** Ceiling on how far the tab labels follow the text-size setting. */
-const LABEL_SCALE_CAP = 1.5;
+/**
+ * '1.circle' … '31.circle' — SF Symbols' own date-in-a-circle, which is how the
+ * app's date-ring motif survives into a native bar. Spelled out rather than
+ * built with a template string so the SFSymbol literal union still typechecks.
+ */
+const TODAY_DATE_SYMBOLS = [
+  '1.circle',
+  '2.circle',
+  '3.circle',
+  '4.circle',
+  '5.circle',
+  '6.circle',
+  '7.circle',
+  '8.circle',
+  '9.circle',
+  '10.circle',
+  '11.circle',
+  '12.circle',
+  '13.circle',
+  '14.circle',
+  '15.circle',
+  '16.circle',
+  '17.circle',
+  '18.circle',
+  '19.circle',
+  '20.circle',
+  '21.circle',
+  '22.circle',
+  '23.circle',
+  '24.circle',
+  '25.circle',
+  '26.circle',
+  '27.circle',
+  '28.circle',
+  '29.circle',
+  '30.circle',
+  '31.circle',
+] as const;
 
-function TodayIcon({ color, size }: { color: string; size: number }) {
-  const day = new Date().getDate();
-  return (
-    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      <Svg width={size} height={size} viewBox="0 0 24 24">
-        <Circle cx={12} cy={12} r={10} stroke={color} strokeWidth={1.8} fill="none" />
-        <Circle cx={12} cy={12} r={8} stroke={color} strokeWidth={0.5} fill="none" opacity={0.3} />
-      </Svg>
-      <Text
-        // The number is part of the icon: it is sized from the icon's own `size`
-        // and must stay inside the drawn ring, so it does not follow font scale.
-        allowFontScaling={false}
-        style={{
-          position: 'absolute',
-          fontFamily: typography.family.heading,
-          fontSize: size * 0.42,
-          fontWeight: '700',
-          color,
-          lineHeight: size * 0.5,
-        }}
-      >
-        {day}
-      </Text>
-    </View>
-  );
-}
+const isIOS = Platform.OS === 'ios';
 
-function BellIcon({ color, size }: { color: string; size: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M12 3c-3.31 0-6 2.69-6 6v3.5l-1.5 3h15l-1.5-3V9c0-3.31-2.69-6-6-6z"
-        stroke={color}
-        strokeWidth={1.8}
-        strokeLinejoin="round"
-      />
-      <Path d="M9.5 18a2.5 2.5 0 0 0 5 0" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
-    </Svg>
-  );
-}
+/**
+ * ANDROID ICONS — passed as a DRAWABLE NAME, not as a require().
+ *
+ * The obvious `source: require('../../assets/tab-icons/today.png')` does not
+ * work in a release build. Verified on device: `Image.resolveAssetSource()`
+ * returns `{"__packager_asset":true,"width":72,"height":72,"uri":"","scale":1}`
+ * — an EMPTY uri. react-native-screens then asks its ResourceIdHelper for that
+ * empty name, whose `if (name.isEmpty()) return -1` guard is only checked
+ * against `!= 0` by the caller, so it builds `android.resource://<pkg>/-1` and
+ * logs "[RNScreens] Error loading image". The tabs render with labels and no
+ * icons.
+ *
+ * The React Native asset pipeline still COPIES these files into the Android
+ * drawable folders (android/app/build/generated/res/react/release/drawable-mdpi/
+ * assets_tabicons_*.png) as long as something require()s them — hence the
+ * require lists below, which exist purely to keep them in the bundle. Handing
+ * the tab bar the drawable name instead sends RNScreens down its
+ * `getIdentifier(name, "drawable", packageName)` path, which resolves.
+ *
+ * The name is derived by the asset pipeline from the file's path:
+ * `assets/tab-icons/today.png` → `assets_tabicons_today`. MOVING OR RENAMING
+ * THESE FILES CHANGES THE NAME — regenerate with `npm run sync:tab-icons` and
+ * update the strings here together.
+ */
+/** One per day of the month — Android's answer to SF Symbols' '1.circle'…'31.circle'. */
+const ANDROID_TODAY_ASSETS = [
+  require('../../assets/tab-icons/today01.png'),
+  require('../../assets/tab-icons/today02.png'),
+  require('../../assets/tab-icons/today03.png'),
+  require('../../assets/tab-icons/today04.png'),
+  require('../../assets/tab-icons/today05.png'),
+  require('../../assets/tab-icons/today06.png'),
+  require('../../assets/tab-icons/today07.png'),
+  require('../../assets/tab-icons/today08.png'),
+  require('../../assets/tab-icons/today09.png'),
+  require('../../assets/tab-icons/today10.png'),
+  require('../../assets/tab-icons/today11.png'),
+  require('../../assets/tab-icons/today12.png'),
+  require('../../assets/tab-icons/today13.png'),
+  require('../../assets/tab-icons/today14.png'),
+  require('../../assets/tab-icons/today15.png'),
+  require('../../assets/tab-icons/today16.png'),
+  require('../../assets/tab-icons/today17.png'),
+  require('../../assets/tab-icons/today18.png'),
+  require('../../assets/tab-icons/today19.png'),
+  require('../../assets/tab-icons/today20.png'),
+  require('../../assets/tab-icons/today21.png'),
+  require('../../assets/tab-icons/today22.png'),
+  require('../../assets/tab-icons/today23.png'),
+  require('../../assets/tab-icons/today24.png'),
+  require('../../assets/tab-icons/today25.png'),
+  require('../../assets/tab-icons/today26.png'),
+  require('../../assets/tab-icons/today27.png'),
+  require('../../assets/tab-icons/today28.png'),
+  require('../../assets/tab-icons/today29.png'),
+  require('../../assets/tab-icons/today30.png'),
+  require('../../assets/tab-icons/today31.png'),
+];
 
-function CalendarIcon({ color, size }: { color: string; size: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24">
-      <Rect
-        x={3}
-        y={4}
-        width={18}
-        height={18}
-        rx={2}
-        stroke={color}
-        strokeWidth={1.8}
-        fill="none"
-      />
-      <Path d="M3 9 H21" stroke={color} strokeWidth={1.5} />
-      <Path d="M8 2 V6" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
-      <Path d="M16 2 V6" stroke={color} strokeWidth={1.8} strokeLinecap="round" />
-      {/* Grid dots */}
-      <Circle cx={8} cy={14} r={1.2} fill={color} />
-      <Circle cx={12} cy={14} r={1.2} fill={color} />
-      <Circle cx={16} cy={14} r={1.2} fill={color} />
-      <Circle cx={8} cy={18} r={1.2} fill={color} />
-      <Circle cx={12} cy={18} r={1.2} fill={color} />
-    </Svg>
-  );
-}
+const ANDROID_ICON_ASSETS = {
+  month: require('../../assets/tab-icons/month.png'),
+  news: require('../../assets/tab-icons/news.png'),
+};
+
+/**
+ * Dev and release resolve assets differently, and only one of the two paths
+ * works in each:
+ *   release — the asset is a drawable, and resolveAssetSource returns an EMPTY
+ *             uri, so we must pass the drawable name.
+ *   dev     — Metro serves the asset over HTTP and NO drawable is written to
+ *             res/, so the drawable name would not resolve; the http uri does.
+ *
+ * OTA CAVEAT: because release resolves these from the APK's drawable folders,
+ * CHANGING THE ANDROID TAB ICONS NEEDS A NATIVE BUILD — an `eas update` ships
+ * new JS and assets but cannot add a drawable to an already-installed APK, so a
+ * renamed or newly-added icon would resolve to nothing on existing installs.
+ */
+const androidIcon = (drawableName: string, asset: number): NativeBottomTabIcon => {
+  if (__DEV__) {
+    const resolved = Image.resolveAssetSource(asset);
+    if (resolved?.uri) {
+      return { type: 'image', source: { uri: resolved.uri } };
+    }
+  }
+  return { type: 'image', source: { uri: `assets_tabicons_${drawableName}` } };
+};
+
+const todayIcon = (day: number): NativeBottomTabIcon => {
+  return isIOS
+    ? { type: 'sfSymbol', name: TODAY_DATE_SYMBOLS[day - 1] }
+    : androidIcon(`today${String(day).padStart(2, '0')}`, ANDROID_TODAY_ASSETS[day - 1]);
+};
+
+const monthIcon = (): NativeBottomTabIcon =>
+  isIOS
+    ? { type: 'sfSymbol', name: 'square.grid.3x3' }
+    : androidIcon('month', ANDROID_ICON_ASSETS.month);
+
+const newsIcon = (): NativeBottomTabIcon =>
+  isIOS ? { type: 'sfSymbol', name: 'bell' } : androidIcon('news', ANDROID_ICON_ASSETS.news);
 
 export function MainTabs() {
   const { t } = useTranslation();
-  const insets = useSafeAreaInsets();
+  // The native tab bar has no `tabBarAllowFontScaling`, so whatever size we pass
+  // is scaled AGAIN by the OS. Use the app-only multiplier here or the OS scale
+  // is applied twice and the 1.5 cap stops meaning anything.
+  const appFontScale = useAppStore((state) => state.fontScale);
+  // The Today icon IS the date, so it has to survive midnight.
+  const dayOfMonth = useDayOfMonth();
   const unreadCount = useAnnouncementsStore((state) =>
     countUnread(state.announcements, state.lastSeenId),
   );
-  // React Navigation renders the tab labels itself, so our ScaledText wrapper
-  // never sees them — the label size is applied here instead.
-  const textScale = useTextScale();
-  const labelFontSize = typography.size.xxs * Math.min(textScale, LABEL_SCALE_CAP);
-
-  // Tab items are TOP-aligned inside the bar (react-navigation gives them
-  // `justifyContent: 'flex-start'` plus their own 5pt bottom padding), so ALL
-  // leftover height falls below the labels and pushes them away from the screen
-  // edge. Two consequences drive the numbers below.
-  //
-  // 1. Reserving iOS's full 34pt home-indicator inset under a content band that
-  //    already ends in that 5pt padding put our labels 10pt higher than Apple's
-  //    own tab bars — measured on the same device: stock iOS leaves the label's
-  //    last ink ~33pt above the screen edge, ours sat at ~43pt. Trimming the
-  //    reserved inset slides the whole band down without touching its internal
-  //    geometry, so nothing can start clipping. Android reserves its inset in
-  //    full — its bar already sits correctly.
-  //
-  // 2. The bar must grow with the text size or a large label is clipped, but it
-  //    must grow by ONLY what the label gained: scaling the whole band turned the
-  //    surplus into slack under the labels and floated them back up (at XXXL they
-  //    drifted 13pt). 1.35 over-estimates the line box slightly, which errs
-  //    towards a hair more room rather than a clipped descender.
-  //
-  // 3. While the offline banner is up it renders BELOW the whole navigator and
-  //    absorbs the safe area itself, so the tab bar is no longer at the screen
-  //    edge — reserving anything there would be pure dead space, floating the
-  //    labels up exactly as in (1).
-  const isOnline = useNetworkStore((state) => state.isOnline);
-  const bottomInset = isOnline
-    ? Math.max(insets.bottom - (Platform.OS === 'ios' ? IOS_INSET_TRIM : 0), 0)
-    : 0;
-  const labelGrowth = Math.ceil((labelFontSize - typography.size.xxs) * 1.35);
 
   return (
     <Tab.Navigator
       initialRouteName="Today"
       screenOptions={{
+        // Each tab screen draws its own branded ORTHODOX KOREA header, which is
+        // also what carries the Settings entry. Only the toolbar is native.
         headerShown: false,
-        tabBarStyle: [
-          styles.tabBar,
-          {
-            height: TAB_BAR_CONTENT_HEIGHT + labelGrowth + bottomInset,
-            paddingBottom: bottomInset,
-          },
-        ],
         tabBarActiveTintColor: colors.tabActive,
-        tabBarInactiveTintColor: colors.tabInactive,
-        tabBarLabelStyle: [styles.tabLabel, { fontSize: labelFontSize }],
-        // The size above already accounts for the OS scale (useTextScale), so
-        // letting RN multiply it again would compound — and uncapped.
-        tabBarAllowFontScaling: false,
+        // app.json ships supportsTablet, and iPadOS 18+ renders a
+        // UITabBarController as a TOP bar unless the mode is pinned. Every
+        // bottom-inset assumption in this app expects the bar at the bottom.
+        tabBarControllerMode: 'tabBar',
+        // Android only — on iOS the option IS honoured, but the system grey is
+        // what a UIKit tab bar should use, so it is left alone there.
+        tabBarInactiveTintColor: isIOS ? undefined : colors.tabInactive,
+        // NOTE: `tabBarActiveIndicatorColor` is deliberately not set —
+        // @react-navigation/bottom-tabs discards it through an
+        // operator-precedence bug and always draws the Android pill as the
+        // active tint at 10% alpha. Setting it here would be a lie.
+        // Only fontFamily/fontSize/fontWeight/fontStyle/color are honoured here,
+        // which is enough to keep the serif voice in the labels.
+        tabBarLabelStyle: {
+          fontFamily: typography.family.heading,
+          fontSize: typography.size.xxs * Math.min(appFontScale, 1.5),
+        },
+        tabBarBadgeStyle: { backgroundColor: colors.crimson, color: colors.surfaceWhite },
       }}
     >
       <Tab.Screen
         name="Today"
         component={TodayScreen}
         options={{
+          title: t('nav.today'),
           tabBarLabel: t('nav.today'),
-          tabBarIcon: ({ color, size }) => <TodayIcon color={color} size={size} />,
+          tabBarIcon: todayIcon(dayOfMonth),
         }}
       />
       <Tab.Screen
         name="Month"
         component={MonthScreen}
         options={{
+          title: t('nav.month'),
           tabBarLabel: t('nav.month'),
-          tabBarIcon: ({ color, size }) => <CalendarIcon color={color} size={size} />,
+          tabBarIcon: monthIcon(),
         }}
       />
       <Tab.Screen
         name="Announcements"
         component={AnnouncementsScreen}
         options={{
+          title: t('announcements.title'),
           tabBarLabel: t('nav.announcements'),
-          tabBarIcon: ({ color, size }) => <BellIcon color={color} size={size} />,
+          tabBarIcon: newsIcon(),
           // Cap the badge display so a large backlog stays legible.
           tabBarBadge: unreadCount > 0 ? (unreadCount > 99 ? '99+' : unreadCount) : undefined,
-          tabBarBadgeStyle: styles.tabBadge,
         }}
       />
     </Tab.Navigator>
   );
 }
-
-const styles = StyleSheet.create({
-  tabBar: {
-    backgroundColor: colors.surface,
-    borderTopWidth: 2,
-    borderTopColor: colors.accent,
-    paddingTop: 4,
-    shadowColor: '#1A1008',
-    shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  tabLabel: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.xxs,
-    fontWeight: '600',
-  },
-  tabBadge: {
-    backgroundColor: colors.crimson,
-    color: colors.surfaceWhite,
-    fontFamily: typography.family.body,
-    fontSize: typography.size.xxs,
-  },
-});

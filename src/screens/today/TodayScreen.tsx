@@ -17,6 +17,7 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useKeyboardHeight } from '../../hooks/useKeyboardHeight';
+import { useTabContentBottomPadding } from '../../hooks/useTabContentBottomPadding';
 import { SECRET_MENU_ENABLED } from '../../config/features';
 import { useTranslation } from 'react-i18next';
 import Svg, { Circle, Path } from 'react-native-svg';
@@ -68,6 +69,7 @@ function SearchSvgIcon({ size = 20, color = colors.brandText }: { size?: number;
 export function TodayScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const tabBottomPadding = useTabContentBottomPadding();
   const keyboardHeight = useKeyboardHeight();
   // The search modal is top-anchored at (insets.top + 28) — a comfortable gap below the
   // notch — and capped to the band above the keyboard, so the WHOLE card is always on
@@ -316,10 +318,11 @@ export function TodayScreen({ navigation }: Props) {
 
       <ScrollView
         style={styles.scrollArea}
-        // Plain breathing room, NOT insets.bottom: the tab bar is opaque and takes
-        // real layout space, so it has already reserved the whole home-indicator
-        // inset below this list. Adding it here again just left dead space.
-        contentContainerStyle={[styles.content, { paddingBottom: spacing.xl }]}
+        // The toolbar is the platform's own and does NOT take layout space away
+        // from this screen — on iOS 26+ it is a floating capsule that content
+        // scrolls under. Reserve it explicitly or the last row is stranded
+        // behind the glass. See useTabContentBottomPadding.
+        contentContainerStyle={[styles.content, { paddingBottom: tabBottomPadding }]}
       >
         {/* ═══ ACTION PILLS ═══ */}
         <View style={styles.actionRow}>

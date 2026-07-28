@@ -18,6 +18,7 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useKeyboardHeight } from '../../hooks/useKeyboardHeight';
+import { useTabContentBottomPadding } from '../../hooks/useTabContentBottomPadding';
 import { SECRET_MENU_ENABLED } from '../../config/features';
 import { useTranslation } from 'react-i18next';
 import Svg, { Circle, Path } from 'react-native-svg';
@@ -100,6 +101,7 @@ function createMonthCells(cursor: dayjs.Dayjs): Array<number | null> {
 export function MonthScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const tabBottomPadding = useTabContentBottomPadding();
   const keyboardHeight = useKeyboardHeight();
   // The search modal is top-anchored at (insets.top + 28) — a comfortable gap below the
   // notch — and capped to the band above the keyboard, so the WHOLE card is always on
@@ -496,9 +498,9 @@ export function MonthScreen({ navigation, route }: Props) {
 
       <ScrollView
         style={styles.scrollArea}
-        // See TodayScreen: the tab bar already reserves the bottom inset, so this
-        // is plain breathing room rather than insets.bottom counted twice.
-        contentContainerStyle={[styles.content, { paddingBottom: spacing.xl }]}
+        // See TodayScreen: the native toolbar does not take layout space, so
+        // this screen reserves it itself. See useTabContentBottomPadding.
+        contentContainerStyle={[styles.content, { paddingBottom: tabBottomPadding }]}
       >
         {/* ═══ MONTH NAVIGATOR ═══ */}
         <View style={styles.monthNav}>
