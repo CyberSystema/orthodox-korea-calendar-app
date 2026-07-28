@@ -1,5 +1,5 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
@@ -12,11 +12,19 @@ import {
   useAnnouncementsStore,
 } from '../features/announcements/useAnnouncementsStore';
 import { useTextScale } from '../hooks/useTextScale';
+import { useNetworkStore } from '../store/useNetworkStore';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import type { MainTabsParamList } from './types';
 
 const Tab = createBottomTabNavigator<MainTabsParamList>();
+
+/** Icon + label band, above the safe-area inset. See the geometry note in MainTabs. */
+const TAB_BAR_CONTENT_HEIGHT = 58;
+/** How much of iOS's home-indicator inset the bar does NOT reserve. */
+const IOS_INSET_TRIM = 10;
+/** Ceiling on how far the tab labels follow the text-size setting. */
+const LABEL_SCALE_CAP = 1.5;
 
 function TodayIcon({ color, size }: { color: string; size: number }) {
   const day = new Date().getDate();
@@ -92,10 +100,38 @@ export function MainTabs() {
     countUnread(state.announcements, state.lastSeenId),
   );
   // React Navigation renders the tab labels itself, so our ScaledText wrapper
-  // never sees them — the label size is applied here instead. The bar is a
-  // fixed-height box around them, so it has to grow too or the label is clipped;
-  // capped at 1.3 so a very large setting doesn't eat the screen.
+  // never sees them — the label size is applied here instead.
   const textScale = useTextScale();
+  const labelFontSize = typography.size.xxs * Math.min(textScale, LABEL_SCALE_CAP);
+
+  // Tab items are TOP-aligned inside the bar (react-navigation gives them
+  // `justifyContent: 'flex-start'` plus their own 5pt bottom padding), so ALL
+  // leftover height falls below the labels and pushes them away from the screen
+  // edge. Two consequences drive the numbers below.
+  //
+  // 1. Reserving iOS's full 34pt home-indicator inset under a content band that
+  //    already ends in that 5pt padding put our labels 10pt higher than Apple's
+  //    own tab bars — measured on the same device: stock iOS leaves the label's
+  //    last ink ~33pt above the screen edge, ours sat at ~43pt. Trimming the
+  //    reserved inset slides the whole band down without touching its internal
+  //    geometry, so nothing can start clipping. Android reserves its inset in
+  //    full — its bar already sits correctly.
+  //
+  // 2. The bar must grow with the text size or a large label is clipped, but it
+  //    must grow by ONLY what the label gained: scaling the whole band turned the
+  //    surplus into slack under the labels and floated them back up (at XXXL they
+  //    drifted 13pt). 1.35 over-estimates the line box slightly, which errs
+  //    towards a hair more room rather than a clipped descender.
+  //
+  // 3. While the offline banner is up it renders BELOW the whole navigator and
+  //    absorbs the safe area itself, so the tab bar is no longer at the screen
+  //    edge — reserving anything there would be pure dead space, floating the
+  //    labels up exactly as in (1).
+  const isOnline = useNetworkStore((state) => state.isOnline);
+  const bottomInset = isOnline
+    ? Math.max(insets.bottom - (Platform.OS === 'ios' ? IOS_INSET_TRIM : 0), 0)
+    : 0;
+  const labelGrowth = Math.ceil((labelFontSize - typography.size.xxs) * 1.35);
 
   return (
     <Tab.Navigator
@@ -105,16 +141,13 @@ export function MainTabs() {
         tabBarStyle: [
           styles.tabBar,
           {
-            height: Math.round(58 * Math.min(textScale, 1.3)) + insets.bottom,
-            paddingBottom: insets.bottom,
+            height: TAB_BAR_CONTENT_HEIGHT + labelGrowth + bottomInset,
+            paddingBottom: bottomInset,
           },
         ],
         tabBarActiveTintColor: colors.tabActive,
         tabBarInactiveTintColor: colors.tabInactive,
-        tabBarLabelStyle: [
-          styles.tabLabel,
-          { fontSize: typography.size.xxs * Math.min(textScale, 1.5) },
-        ],
+        tabBarLabelStyle: [styles.tabLabel, { fontSize: labelFontSize }],
         // The size above already accounts for the OS scale (useTextScale), so
         // letting RN multiply it again would compound — and uncapped.
         tabBarAllowFontScaling: false,

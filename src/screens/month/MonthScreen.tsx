@@ -496,10 +496,9 @@ export function MonthScreen({ navigation, route }: Props) {
 
       <ScrollView
         style={styles.scrollArea}
-        contentContainerStyle={[
-          styles.content,
-          { paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.lg },
-        ]}
+        // See TodayScreen: the tab bar already reserves the bottom inset, so this
+        // is plain breathing room rather than insets.bottom counted twice.
+        contentContainerStyle={[styles.content, { paddingBottom: spacing.xl }]}
       >
         {/* ═══ MONTH NAVIGATOR ═══ */}
         <View style={styles.monthNav}>

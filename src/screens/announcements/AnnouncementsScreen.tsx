@@ -207,9 +207,13 @@ export function AnnouncementsScreen({ navigation }: Props) {
         data={announcements}
         keyExtractor={(item) => String(item.id)}
         renderItem={renderItem}
+        // See TodayScreen: the tab bar already reserves the bottom inset, so this
+        // is plain breathing room rather than insets.bottom counted twice. It also
+        // un-biases the centred empty state, which was sitting high for the same
+        // reason.
         contentContainerStyle={[
           styles.listContent,
-          { paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.lg },
+          { paddingBottom: spacing.xl },
           showEmpty && styles.listContentEmpty,
         ]}
         refreshControl={

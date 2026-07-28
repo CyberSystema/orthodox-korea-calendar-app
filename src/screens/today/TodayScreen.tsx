@@ -316,10 +316,10 @@ export function TodayScreen({ navigation }: Props) {
 
       <ScrollView
         style={styles.scrollArea}
-        contentContainerStyle={[
-          styles.content,
-          { paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.lg },
-        ]}
+        // Plain breathing room, NOT insets.bottom: the tab bar is opaque and takes
+        // real layout space, so it has already reserved the whole home-indicator
+        // inset below this list. Adding it here again just left dead space.
+        contentContainerStyle={[styles.content, { paddingBottom: spacing.xl }]}
       >
         {/* ═══ ACTION PILLS ═══ */}
         <View style={styles.actionRow}>
