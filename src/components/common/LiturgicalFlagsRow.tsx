@@ -1,9 +1,10 @@
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 
 import { colors } from '../../theme/colors';
 import { radii, spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import type { LiturgicalDay } from '../../features/calendar/types';
+import { Text } from './ScaledText';
 
 type Props = {
   day: LiturgicalDay;
@@ -100,15 +101,19 @@ const styles = StyleSheet.create({
     borderRadius: radii.full,
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.sm,
+    // Keep a long label inside the card instead of widening the wrap row.
+    maxWidth: '100%',
   },
   badgeText: {
     color: colors.textBody,
     fontFamily: typography.family.body,
     fontSize: typography.size.xxs,
+    flexShrink: 1,
   },
   badgeImage: {
     width: 22,
     height: 22,
     borderRadius: 11,
+    flexShrink: 0,
   },
 });

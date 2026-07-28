@@ -6,6 +6,7 @@ import { EventDetailScreen } from '../screens/event/EventDetailScreen';
 import { SecretMenuScreen } from '../screens/secret/SecretMenuScreen';
 import { SECRET_MENU_ENABLED } from '../config/features';
 import { SettingsScreen } from '../screens/settings/SettingsScreen';
+import { useTextScale } from '../hooks/useTextScale';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { MainTabs } from './MainTabs';
@@ -15,6 +16,9 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function RootNavigator() {
   const { t } = useTranslation();
+  // Native-stack draws its header title natively, outside our ScaledText — size
+  // it here so it follows the reader's setting like the rest of the app.
+  const textScale = useTextScale();
 
   return (
     <Stack.Navigator
@@ -23,7 +27,7 @@ export function RootNavigator() {
         headerStyle: { backgroundColor: colors.primaryDeep },
         headerTitleStyle: {
           fontFamily: typography.family.heading,
-          fontSize: typography.size.lg,
+          fontSize: typography.size.lg * Math.min(textScale, 1.4),
           color: colors.brandText,
         },
         headerTintColor: colors.brandText,

@@ -1,21 +1,14 @@
 import { useEffect, useState } from 'react';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import dayjs from 'dayjs';
-import {
-  ActivityIndicator,
-  Linking,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { ByzantineKnot } from '../../components/common/ByzantineKnot';
 import { OrnamentTitle } from '../../components/common/OrnamentTitle';
+import { Text } from '../../components/common/ScaledText';
 import { getEventById } from '../../features/calendar/calendarService';
 import { localized } from '../../features/calendar/types';
 import type { RootStackParamList } from '../../navigation/types';
@@ -361,11 +354,17 @@ const styles = StyleSheet.create({
     fontFamily: typography.family.body,
     fontSize: typography.size.sm,
     color: colors.textSecondary,
+    flexShrink: 0,
   },
   metaValue: {
     fontFamily: typography.family.heading,
     fontSize: typography.size.sm,
     color: colors.textPrimary,
+    // The value is the long half (a full formatted date) — wrap it, don't let
+    // it run past the card edge.
+    flexShrink: 1,
+    textAlign: 'right',
+    paddingLeft: spacing.sm,
   },
   draftBadge: {
     borderWidth: 1,

@@ -1,8 +1,9 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
+import { Text } from './ScaledText';
 
 type Props = {
   text: string;
@@ -44,5 +45,8 @@ const styles = StyleSheet.create({
     color: colors.accent,
     letterSpacing: 0.8,
     textTransform: 'uppercase',
+    // Sits between two flex:1 rules — let it wrap rather than squeeze them out.
+    flexShrink: 1,
+    textAlign: 'center',
   },
 });

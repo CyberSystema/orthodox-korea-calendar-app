@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
+import { useTextScale } from '../../hooks/useTextScale';
 import type { SupportedLanguage } from '../../types/language';
 import type { LiturgicalDay, LiturgicalEvent } from '../../features/calendar/types';
 import { localized } from '../../features/calendar/types';
@@ -11,6 +12,7 @@ import { formatDisplayDate } from '../../utils/date';
 import { getDayEmphasis } from '../../features/calendar/dayEmphasis';
 import { LiturgicalFlagsRow } from './LiturgicalFlagsRow';
 import { OrnamentTitle } from './OrnamentTitle';
+import { Text } from './ScaledText';
 
 type Props = {
   language: SupportedLanguage;
@@ -116,6 +118,12 @@ export function LiturgicalDayPanel({
     return Array.from(new Set(lines));
   }, [displayCelebrations, displaySaints, labels.tone, labels.matins]);
 
+  // The date circle is a fixed box around scaling type, so it has to grow with
+  // it — otherwise the day number is vertically shaved off at a large font size
+  // (a filled, border-radiused View clips its children on Android).
+  const textScale = useTextScale();
+  const ringSize = Math.round(RING_BASE_SIZE * textScale);
+
   const isEmptyDay =
     !hasFlags &&
     displayReadings.length === 0 &&
@@ -130,6 +138,7 @@ export function LiturgicalDayPanel({
         <View
           style={[
             styles.ring,
+            { width: ringSize, height: ringSize, borderRadius: ringSize / 2 },
             dateRingFill === 'crimson' && styles.ringHighlight,
             dateRingFill === 'blue' && styles.ringSaturday,
           ]}
@@ -138,7 +147,7 @@ export function LiturgicalDayPanel({
             {dayNum}
           </Text>
         </View>
-        <View>
+        <View style={styles.headerText}>
           <Text style={styles.dayName}>{dayName}</Text>
           <Text style={styles.monthYear}>{monthYear}</Text>
         </View>
@@ -165,9 +174,13 @@ export function LiturgicalDayPanel({
           <OrnamentTitle text={labels.readings} />
           <View style={styles.readingRow}>
             {displayReadings.map((reading) => (
-              <Text key={reading} style={styles.readingTag}>
-                {reading}
-              </Text>
+              // The pill is a View wrapping a plain Text. A <Text> that carries its
+              // own padding/border under-reports its height to Android's flex layout,
+              // so a long reading (or a raised OS font scale) made the pill spill over
+              // the next section's header. A View measures its text child correctly.
+              <View key={reading} style={styles.readingTag}>
+                <Text style={styles.readingTagText}>{reading}</Text>
+              </View>
             ))}
           </View>
         </View>
@@ -269,6 +282,9 @@ export function LiturgicalDayPanel({
   );
 }
 
+/** Diameter of the date circle at a 1.0 text scale; grows with the text. */
+const RING_BASE_SIZE = 56;
+
 const styles = StyleSheet.create({
   card: {
     borderWidth: 1,
@@ -290,14 +306,18 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.borderLight,
     paddingBottom: spacing.sm,
   },
+  // Size (width/height/borderRadius) is applied inline from the text scale.
   ring: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
     borderWidth: 2.5,
     borderColor: colors.crimson,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
+  },
+  // Without the shrink this bare View sizes to the day name's full width and
+  // runs past the card's rounded edge once the type grows.
+  headerText: {
+    flexShrink: 1,
   },
   ringText: {
     fontFamily: typography.family.heading,
@@ -332,14 +352,21 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: spacing.xs,
   },
+  // Container carries the pill chrome; the Text inside carries only type. Keeping
+  // padding/border off the Text is what stops it overflowing its row (see render).
   readingTag: {
     borderRadius: radii.full,
     borderWidth: 1,
     borderColor: colors.accent,
     backgroundColor: colors.accentGlow,
-    color: colors.textBody,
     paddingVertical: 4,
     paddingHorizontal: spacing.sm,
+    // Never let one long reading push the row wider than the card.
+    flexShrink: 1,
+    maxWidth: '100%',
+  },
+  readingTagText: {
+    color: colors.textBody,
     fontFamily: typography.family.body,
     fontSize: typography.size.sm,
   },

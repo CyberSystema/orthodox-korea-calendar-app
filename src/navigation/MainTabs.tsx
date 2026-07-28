@@ -11,6 +11,7 @@ import {
   countUnread,
   useAnnouncementsStore,
 } from '../features/announcements/useAnnouncementsStore';
+import { useTextScale } from '../hooks/useTextScale';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import type { MainTabsParamList } from './types';
@@ -26,6 +27,9 @@ function TodayIcon({ color, size }: { color: string; size: number }) {
         <Circle cx={12} cy={12} r={8} stroke={color} strokeWidth={0.5} fill="none" opacity={0.3} />
       </Svg>
       <Text
+        // The number is part of the icon: it is sized from the icon's own `size`
+        // and must stay inside the drawn ring, so it does not follow font scale.
+        allowFontScaling={false}
         style={{
           position: 'absolute',
           fontFamily: typography.family.heading,
@@ -87,6 +91,11 @@ export function MainTabs() {
   const unreadCount = useAnnouncementsStore((state) =>
     countUnread(state.announcements, state.lastSeenId),
   );
+  // React Navigation renders the tab labels itself, so our ScaledText wrapper
+  // never sees them — the label size is applied here instead. The bar is a
+  // fixed-height box around them, so it has to grow too or the label is clipped;
+  // capped at 1.3 so a very large setting doesn't eat the screen.
+  const textScale = useTextScale();
 
   return (
     <Tab.Navigator
@@ -96,13 +105,19 @@ export function MainTabs() {
         tabBarStyle: [
           styles.tabBar,
           {
-            height: 58 + insets.bottom,
+            height: Math.round(58 * Math.min(textScale, 1.3)) + insets.bottom,
             paddingBottom: insets.bottom,
           },
         ],
         tabBarActiveTintColor: colors.tabActive,
         tabBarInactiveTintColor: colors.tabInactive,
-        tabBarLabelStyle: styles.tabLabel,
+        tabBarLabelStyle: [
+          styles.tabLabel,
+          { fontSize: typography.size.xxs * Math.min(textScale, 1.5) },
+        ],
+        // The size above already accounts for the OS scale (useTextScale), so
+        // letting RN multiply it again would compound — and uncapped.
+        tabBarAllowFontScaling: false,
       }}
     >
       <Tab.Screen

@@ -136,6 +136,14 @@ const en = {
     title: 'Settings',
     subtitle: 'Language, notifications, and app preferences',
     adminMode: 'Staff Mode',
+    fontSize: 'Text Size',
+    fontSizeNormal: 'Normal',
+    fontSizeLarge: 'Large',
+    fontSizeLarger: 'Larger',
+    fontSizeLargest: 'Largest',
+    fontSizePreview: 'Sunday of the Holy Fathers — Tone 6',
+    fontSizeHint:
+      'This adds to your device text size, so the app can go larger than the system on its own.',
     notifications: 'Notifications',
     notificationsAutoPrompt:
       'Notification permission is requested once on first launch. You can change it any time in your device settings.',

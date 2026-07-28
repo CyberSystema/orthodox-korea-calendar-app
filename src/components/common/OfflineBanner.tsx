@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
@@ -6,6 +6,7 @@ import { useNetworkStore } from '../../store/useNetworkStore';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
+import { Text } from './ScaledText';
 
 // A persistent bottom banner shown only while the device is offline. It explains
 // that the calendar is being served from the on-device cache and that online-only

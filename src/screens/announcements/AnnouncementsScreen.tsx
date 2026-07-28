@@ -3,7 +3,7 @@ import type { CompositeScreenProps } from '@react-navigation/native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useState } from 'react';
-import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import ReanimatedSwipeable, {
   type SwipeableMethods,
 } from 'react-native-gesture-handler/ReanimatedSwipeable';
@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
 import { ByzantineKnot } from '../../components/common/ByzantineKnot';
+import { Text } from '../../components/common/ScaledText';
 import { useAnnouncementsStore } from '../../features/announcements/useAnnouncementsStore';
 import type { Announcement } from '../../services/api/announcementsRepository';
 import type { LocalizedText } from '../../features/calendar/types';
@@ -282,6 +283,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     textAlign: 'center',
     paddingHorizontal: spacing.sm,
+    // Sits between two fixed ornaments — wrap rather than push them off-row.
+    flexShrink: 1,
   },
   headerGoldLine: {
     height: 2,

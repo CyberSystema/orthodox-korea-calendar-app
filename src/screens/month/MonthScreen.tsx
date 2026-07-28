@@ -13,8 +13,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   View,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
@@ -29,6 +27,7 @@ import { ByzantineKnot } from '../../components/common/ByzantineKnot';
 import { KeyboardSafeView } from '../../components/common/KeyboardSafeView';
 import { LiturgicalDayPanel } from '../../components/common/LiturgicalDayPanel';
 import { PromptModal } from '../../components/common/PromptModal';
+import { Text, TextInput } from '../../components/common/ScaledText';
 import {
   ensureLiturgicalYear,
   getEventOccurrenceCountsForMonth,
@@ -470,6 +469,7 @@ export function MonthScreen({ navigation, route }: Props) {
             <View style={styles.headerLine} />
             <ByzantineKnot size={14} color={colors.accentBright} />
             <Pressable
+              style={styles.headerBrandPress}
               onPress={handleBrandTap}
               hitSlop={4}
               accessibilityRole="header"
@@ -528,7 +528,10 @@ export function MonthScreen({ navigation, route }: Props) {
         <View style={styles.gridCard}>
           <View style={styles.weekHeaderRow}>
             {weekLabels.map((header: string) => (
-              <Text key={header} style={styles.weekHeaderText}>
+              // Three-letter abbreviations in 1/7th of the width: keep them on
+              // one line at any font scale rather than letting them wrap and
+              // desynchronise the header row from the grid below.
+              <Text key={header} style={styles.weekHeaderText} numberOfLines={1}>
                 {header}
               </Text>
             ))}
@@ -563,6 +566,7 @@ export function MonthScreen({ navigation, route }: Props) {
                   ]}
                 >
                   <Text
+                    numberOfLines={1}
                     style={[
                       styles.cellDay,
                       cd.emphasis === 'crimson' && styles.cellDayHigh,
@@ -677,7 +681,7 @@ export function MonthScreen({ navigation, route }: Props) {
 
             {selectedEvents.map((event) => (
               <View key={event.id} style={styles.adminRow}>
-                <Text style={styles.adminRowTitle} numberOfLines={1}>
+                <Text style={styles.adminRowTitle} numberOfLines={2}>
                   {localized(event.title, language)}
                 </Text>
                 <Text style={styles.adminRowMeta}>
@@ -750,7 +754,11 @@ export function MonthScreen({ navigation, route }: Props) {
                           accessibilityRole="button"
                           accessibilityLabel={`${t('today.yearLabel')} ${t('a11y.decreaseValue')}`}
                         >
-                          <Text style={styles.datePickerArrowText}>‹</Text>
+                          {/* Chevron glyphs are icons pinned to a 28pt box, not
+                              readable content — they must not scale. */}
+                          <Text allowFontScaling={false} style={styles.datePickerArrowText}>
+                            ‹
+                          </Text>
                         </Pressable>
                         <Text style={styles.datePickerValue}>{formDateYear}</Text>
                         <Pressable
@@ -760,7 +768,9 @@ export function MonthScreen({ navigation, route }: Props) {
                           accessibilityRole="button"
                           accessibilityLabel={`${t('today.yearLabel')} ${t('a11y.increaseValue')}`}
                         >
-                          <Text style={styles.datePickerArrowText}>›</Text>
+                          <Text allowFontScaling={false} style={styles.datePickerArrowText}>
+                            ›
+                          </Text>
                         </Pressable>
                       </View>
                     </View>
@@ -775,7 +785,11 @@ export function MonthScreen({ navigation, route }: Props) {
                           accessibilityRole="button"
                           accessibilityLabel={`${t('today.monthLabel')} ${t('a11y.decreaseValue')}`}
                         >
-                          <Text style={styles.datePickerArrowText}>‹</Text>
+                          {/* Chevron glyphs are icons pinned to a 28pt box, not
+                              readable content — they must not scale. */}
+                          <Text allowFontScaling={false} style={styles.datePickerArrowText}>
+                            ‹
+                          </Text>
                         </Pressable>
                         <Text style={styles.datePickerValue}>
                           {String(formDateMonth).padStart(2, '0')}
@@ -787,7 +801,9 @@ export function MonthScreen({ navigation, route }: Props) {
                           accessibilityRole="button"
                           accessibilityLabel={`${t('today.monthLabel')} ${t('a11y.increaseValue')}`}
                         >
-                          <Text style={styles.datePickerArrowText}>›</Text>
+                          <Text allowFontScaling={false} style={styles.datePickerArrowText}>
+                            ›
+                          </Text>
                         </Pressable>
                       </View>
                     </View>
@@ -802,7 +818,11 @@ export function MonthScreen({ navigation, route }: Props) {
                           accessibilityRole="button"
                           accessibilityLabel={`${t('today.dayLabel')} ${t('a11y.decreaseValue')}`}
                         >
-                          <Text style={styles.datePickerArrowText}>‹</Text>
+                          {/* Chevron glyphs are icons pinned to a 28pt box, not
+                              readable content — they must not scale. */}
+                          <Text allowFontScaling={false} style={styles.datePickerArrowText}>
+                            ‹
+                          </Text>
                         </Pressable>
                         <Text style={styles.datePickerValue}>
                           {String(formDateDay).padStart(2, '0')}
@@ -814,7 +834,9 @@ export function MonthScreen({ navigation, route }: Props) {
                           accessibilityRole="button"
                           accessibilityLabel={`${t('today.dayLabel')} ${t('a11y.increaseValue')}`}
                         >
-                          <Text style={styles.datePickerArrowText}>›</Text>
+                          <Text allowFontScaling={false} style={styles.datePickerArrowText}>
+                            ›
+                          </Text>
                         </Pressable>
                       </View>
                     </View>
@@ -904,7 +926,11 @@ export function MonthScreen({ navigation, route }: Props) {
                 onPress={() => setFormNotify((prev) => !prev)}
               >
                 <View style={[styles.checkboxBox, formNotify && styles.checkboxBoxActive]}>
-                  {formNotify ? <Text style={styles.checkboxTick}>✓</Text> : null}
+                  {formNotify ? (
+                    <Text allowFontScaling={false} style={styles.checkboxTick}>
+                      ✓
+                    </Text>
+                  ) : null}
                 </View>
                 <Text style={styles.checkboxText}>
                   {t(editingId ? 'month.sendNotificationOnEdit' : 'month.sendNotification')}
@@ -1073,6 +1099,11 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: colors.accentLine,
   },
+  // See the twin comment in TodayScreen: the Pressable must shrink too, or the
+  // Text's own flexShrink is inert and the search button is pushed off-screen.
+  headerBrandPress: {
+    flexShrink: 1,
+  },
   headerBrand: {
     color: colors.brandText,
     fontFamily: typography.family.heading,
@@ -1109,6 +1140,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceWhite,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   monthLabel: {
     flex: 1,
@@ -1238,6 +1270,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accentGlow,
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.md,
+    flexShrink: 0,
   },
   selectionTodayButtonText: {
     fontFamily: typography.family.body,
@@ -1404,6 +1437,7 @@ const styles = StyleSheet.create({
     fontFamily: typography.family.body,
     fontSize: typography.size.sm,
     color: colors.textBody,
+    flexShrink: 1,
   },
   datePickerTriggerIcon: {
     fontSize: 16,
@@ -1426,6 +1460,7 @@ const styles = StyleSheet.create({
   },
   datePickerSegment: {
     alignItems: 'center',
+    flexShrink: 1,
   },
   datePickerStepper: {
     flexDirection: 'row',
@@ -1447,6 +1482,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primaryDeep,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   datePickerArrowText: {
     color: colors.brandText,
@@ -1459,6 +1495,7 @@ const styles = StyleSheet.create({
     color: colors.textBody,
     textAlign: 'center',
     paddingHorizontal: 2,
+    flexShrink: 1,
   },
   datePickerDone: {
     marginTop: spacing.sm,
@@ -1518,6 +1555,7 @@ const styles = StyleSheet.create({
   checkboxBox: {
     width: 18,
     height: 18,
+    flexShrink: 0,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radii.sm,
@@ -1538,6 +1576,7 @@ const styles = StyleSheet.create({
     fontFamily: typography.family.body,
     fontSize: typography.size.sm,
     color: colors.textBody,
+    flexShrink: 1,
   },
   editorActions: {
     flexDirection: 'row',
@@ -1641,11 +1680,14 @@ const styles = StyleSheet.create({
     color: colors.accent,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    flexShrink: 0,
   },
   searchResultDate: {
     fontFamily: typography.family.body,
     fontSize: typography.size.xxs,
     color: colors.textSecondary,
+    flexShrink: 1,
+    textAlign: 'right',
   },
   searchResultLabel: {
     fontFamily: typography.family.heading,

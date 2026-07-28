@@ -1,20 +1,12 @@
 import { useState } from 'react';
-import {
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { KeyboardSafeView } from '../../components/common/KeyboardSafeView';
 import { OrnamentTitle } from '../../components/common/OrnamentTitle';
+import { Text } from '../../components/common/ScaledText';
 import {
   type AdminLoginResult,
   loginStaffThroughCloudflare,
@@ -27,6 +19,7 @@ import { getAppVersionLabel } from '../../utils/appVersion';
 import { useAppStore } from '../../store/useAppStore';
 import { useNetworkStore } from '../../store/useNetworkStore';
 import { colors } from '../../theme/colors';
+import { FONT_SCALE_STEPS, type FontScale } from '../../theme/fontScale';
 import { radii, spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 
@@ -34,11 +27,26 @@ import { typography } from '../../theme/typography';
 // session token (stored by the SDK) is what authenticates requests.
 const STAFF_MODE_KEY = 'auth.staffModeEnabled';
 
+// One label per step. Typed as a total Record so adding a step to
+// FONT_SCALE_STEPS fails typecheck here until it gets a label.
+const FONT_SCALE_LABEL_KEYS: Record<FontScale, string> = {
+  1: 'settings.fontSizeNormal',
+  1.15: 'settings.fontSizeLarge',
+  1.3: 'settings.fontSizeLarger',
+  1.5: 'settings.fontSizeLargest',
+};
+
 export function SettingsScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const { adminMode, cloudflareAdminAuthenticated, setAdminMode, setCloudflareAdminAuthenticated } =
-    useAppStore();
+  const {
+    adminMode,
+    cloudflareAdminAuthenticated,
+    fontScale,
+    setAdminMode,
+    setCloudflareAdminAuthenticated,
+    setFontScale,
+  } = useAppStore();
   const isOnline = useNetworkStore((state) => state.isOnline);
   const [statusText, setStatusText] = useState('');
   const [passcodeDraft, setPasscodeDraft] = useState('');
@@ -167,6 +175,43 @@ export function SettingsScreen() {
         keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
       >
         <StatusBar style="light" />
+        {/* ═══ TEXT SIZE ═══ */}
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <OrnamentTitle text={t('settings.fontSize')} />
+          </View>
+          <View style={styles.fontScaleRow}>
+            {FONT_SCALE_STEPS.map((step) => {
+              const selected = fontScale === step;
+              return (
+                <Pressable
+                  key={step}
+                  style={({ pressed }) => [
+                    styles.fontScalePill,
+                    selected && styles.fontScalePillActive,
+                    pressed && styles.pressed,
+                  ]}
+                  onPress={() => setFontScale(step)}
+                  hitSlop={8}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={t(FONT_SCALE_LABEL_KEYS[step])}
+                >
+                  <Text
+                    style={[styles.fontScalePillText, selected && styles.fontScalePillTextActive]}
+                  >
+                    {t(FONT_SCALE_LABEL_KEYS[step])}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          {/* The preview is the whole screen: every label above re-renders at the
+              chosen size the moment a pill is tapped. */}
+          <Text style={styles.fontScalePreview}>{t('settings.fontSizePreview')}</Text>
+          <Text style={styles.statusText}>{t('settings.fontSizeHint')}</Text>
+        </View>
+
         {/* ═══ ADMIN MODE TOGGLE ═══ */}
         <View style={styles.rowCard}>
           <Text style={styles.rowTitle}>{t('settings.adminMode')}</Text>
@@ -271,6 +316,48 @@ const styles = StyleSheet.create({
     fontFamily: typography.family.heading,
     fontSize: typography.size.md,
     color: colors.textPrimary,
+    // Wrap next to the fixed-size Switch instead of pushing it off the card.
+    flexShrink: 1,
+  },
+
+  // ─── Text size ─────────────────────────────────────────────────────────────
+  fontScaleRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+  },
+  fontScalePill: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.full,
+    backgroundColor: colors.surfaceWhite,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    flexShrink: 1,
+  },
+  fontScalePillActive: {
+    borderColor: colors.accent,
+    backgroundColor: colors.accentGlow,
+  },
+  fontScalePillText: {
+    fontFamily: typography.family.body,
+    fontSize: typography.size.sm,
+    color: colors.primary,
+  },
+  fontScalePillTextActive: {
+    color: colors.primaryDeep,
+    fontWeight: typography.weight.semibold,
+  },
+  fontScalePreview: {
+    fontFamily: typography.family.heading,
+    fontSize: typography.size.md,
+    color: colors.textBody,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.accent,
+    backgroundColor: colors.surfaceWhite,
+    borderRadius: radii.sm,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
   },
 
   // ─── Settings card ─────────────────────────────────────────────────────────

@@ -142,6 +142,14 @@ const ko: Translations = {
     title: '설정',
     subtitle: '언어, 알림, 앱 환경설정',
     adminMode: '스태프 모드',
+    fontSize: '글자 크기',
+    fontSizeNormal: '보통',
+    fontSizeLarge: '크게',
+    fontSizeLarger: '더 크게',
+    fontSizeLargest: '가장 크게',
+    fontSizePreview: '거룩한 교부들의 주일 — 제6조',
+    fontSizeHint:
+      '기기의 글자 크기 설정에 더해서 적용되므로, 앱 글자를 시스템 설정보다 더 크게 볼 수 있습니다.',
     notifications: '알림',
     notificationsAutoPrompt:
       '알림 권한은 첫 실행 시 한 번 요청됩니다. 기기 설정에서 언제든지 변경할 수 있습니다.',

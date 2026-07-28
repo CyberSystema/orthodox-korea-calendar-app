@@ -12,8 +12,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   View,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
@@ -27,6 +25,7 @@ import { ByzantineArrow } from '../../components/common/ByzantineArrow';
 import { ByzantineKnot } from '../../components/common/ByzantineKnot';
 import { LiturgicalDayPanel } from '../../components/common/LiturgicalDayPanel';
 import { PromptModal } from '../../components/common/PromptModal';
+import { Text, TextInput } from '../../components/common/ScaledText';
 import {
   ensureLiturgicalYear,
   getEventsByDate,
@@ -290,6 +289,7 @@ export function TodayScreen({ navigation }: Props) {
             <View style={styles.headerLine} />
             <ByzantineKnot size={14} color={colors.accentBright} />
             <Pressable
+              style={styles.headerBrandPress}
               onPress={handleBrandTap}
               hitSlop={4}
               accessibilityRole="header"
@@ -685,6 +685,12 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: colors.accentLine,
   },
+  // The Pressable needs the shrink too: a View defaults to flexShrink 0, so it
+  // would size to the title's full width and the Text's own flexShrink would
+  // never engage — pushing the search button off the row at a raised font scale.
+  headerBrandPress: {
+    flexShrink: 1,
+  },
   headerBrand: {
     color: colors.brandText,
     fontFamily: typography.family.heading,
@@ -766,6 +772,8 @@ const styles = StyleSheet.create({
     borderColor: colors.borderLight,
     borderRadius: radii.full,
     backgroundColor: colors.surfaceWhite,
+    // Hold their size while the date grows; the date wraps instead (below).
+    flexShrink: 0,
   },
   dayNavDate: {
     fontFamily: typography.family.heading,
@@ -773,6 +781,10 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     textAlign: 'center',
     paddingHorizontal: spacing.sm,
+    // Long weekday/month names ("Wednesday, September 30, 2026") at a raised
+    // font scale used to push the arrows out of the rounded container and get
+    // them clipped. RN defaults flexShrink to 0, so this has to be explicit.
+    flexShrink: 1,
   },
 
   // ─── Warning text ──────────────────────────────────────────────────────────
@@ -875,11 +887,15 @@ const styles = StyleSheet.create({
     color: colors.accent,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    flexShrink: 0,
   },
   searchResultDate: {
     fontFamily: typography.family.body,
     fontSize: typography.size.xs,
     color: colors.textSecondary,
+    // The full "dddd, MMMM D, YYYY" string is the long half of this row.
+    flexShrink: 1,
+    textAlign: 'right',
   },
   searchResultLabel: {
     fontFamily: typography.family.heading,
@@ -933,13 +949,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.surface,
+    flexShrink: 0,
   },
   pickerValue: {
     fontFamily: typography.family.heading,
     fontSize: typography.size.lg,
     color: colors.primary,
-    minWidth: 90,
     textAlign: 'center',
+    // A long month name ("September") at a raised font scale would otherwise
+    // push the increment arrow outside the modal card, which clips it away.
+    flex: 1,
+    flexShrink: 1,
   },
 
   // ─── Modal action row ──────────────────────────────────────────────────────
