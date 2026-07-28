@@ -39,7 +39,6 @@
       ],
       "permissions": ["POST_NOTIFICATIONS"],
       "adaptiveIcon": {
-        "//": "Matches the iOS icon exactly. Android shows only the central 72dp of a 108dp layer, so the artwork can't be dropped in unchanged — it would render 1.5x zoomed. scripts/sync-android-icon.mjs derives android-icon-background.png from assets/icon.png (the source of truth): the full iOS design scaled to that visible 66.7% with its gradient bled outward. All artwork lives in the background layer and the foreground is intentionally empty, so a launcher's parallax can't split the design in two. Run `npm run sync:android-icon` after changing assets/icon.png.",
         "backgroundColor": "#5C1414",
         "backgroundImage": "./assets/android-icon-background.png",
         "foregroundImage": "./assets/android-icon-empty.png",
@@ -56,8 +55,10 @@
       "./plugins/withMinIosDeploymentTarget",
       "./plugins/withAndroidBuildMemory",
       "./plugins/withFastSplashExit",
+      "expo-font",
       "expo-localization",
       "expo-secure-store",
+      "expo-status-bar",
       [
         "expo-splash-screen",
         {
