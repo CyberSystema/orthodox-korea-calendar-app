@@ -13,6 +13,7 @@ import { getDayEmphasis } from '../../features/calendar/dayEmphasis';
 import { LiturgicalFlagsRow } from './LiturgicalFlagsRow';
 import { OrnamentTitle } from './OrnamentTitle';
 import { Text } from './ScaledText';
+import { SelectableText } from './SelectableText';
 
 type Props = {
   language: SupportedLanguage;
@@ -179,7 +180,7 @@ export function LiturgicalDayPanel({
               // so a long reading (or a raised OS font scale) made the pill spill over
               // the next section's header. A View measures its text child correctly.
               <View key={reading} style={styles.readingTag}>
-                <Text style={styles.readingTagText}>{reading}</Text>
+                <SelectableText style={styles.readingTagText}>{reading}</SelectableText>
               </View>
             ))}
           </View>
@@ -197,7 +198,7 @@ export function LiturgicalDayPanel({
                 item.highRank ? styles.celebItemHigh : item.celeb ? styles.celebItemFeast : null,
               ]}
             >
-              <Text
+              <SelectableText
                 style={[
                   styles.celebrationTitle,
                   item.highRank
@@ -208,21 +209,21 @@ export function LiturgicalDayPanel({
                 ]}
               >
                 {localized(item.title, language)}
-              </Text>
+              </SelectableText>
               {item.readings?.length ? (
-                <Text style={styles.celebrationMeta}>
+                <SelectableText style={styles.celebrationMeta}>
                   {labels.itemReadings}: {item.readings.join(', ')}
-                </Text>
+                </SelectableText>
               ) : null}
               {item.tone ? (
-                <Text style={styles.celebrationMeta}>
+                <SelectableText style={styles.celebrationMeta}>
                   {labels.tone} {item.tone}
-                </Text>
+                </SelectableText>
               ) : null}
               {item.matinsGospel ? (
-                <Text style={styles.celebrationMeta}>
+                <SelectableText style={styles.celebrationMeta}>
                   {labels.matins} {item.matinsGospel}
-                </Text>
+                </SelectableText>
               ) : null}
             </View>
           ))}
@@ -234,11 +235,13 @@ export function LiturgicalDayPanel({
           <OrnamentTitle text={labels.saints} />
           {displaySaints.map((item) => (
             <View key={item.id} style={styles.celebrationItem}>
-              <Text style={styles.celebrationTitle}>{localized(item.title, language)}</Text>
+              <SelectableText style={styles.celebrationTitle}>
+                {localized(item.title, language)}
+              </SelectableText>
               {item.readings?.length ? (
-                <Text style={styles.celebrationMeta}>
+                <SelectableText style={styles.celebrationMeta}>
                   {labels.itemReadings}: {item.readings.join(', ')}
-                </Text>
+                </SelectableText>
               ) : null}
             </View>
           ))}
@@ -249,9 +252,9 @@ export function LiturgicalDayPanel({
         <View style={styles.section}>
           <OrnamentTitle text={labels.otherInfo} />
           {uniqueInfoLines.map((item) => (
-            <Text key={item} style={styles.celebrationMeta}>
+            <SelectableText key={item} style={styles.celebrationMeta}>
               - {item}
-            </Text>
+            </SelectableText>
           ))}
         </View>
       ) : null}
