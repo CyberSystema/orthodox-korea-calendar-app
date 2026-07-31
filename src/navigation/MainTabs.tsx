@@ -14,14 +14,20 @@ import { useAppStore } from '../store/useAppStore';
 import { useDayOfMonth } from '../hooks/useDayOfMonth';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
+import { BRAND_TITLE, USES_NATIVE_HEADER } from './nativeHeader';
 import type { MainTabsParamList } from './types';
 
 /**
  * The bottom toolbar is the PLATFORM'S OWN — a real `UITabBarController` on iOS
  * (so it picks up iOS 26+ Liquid Glass automatically) and a Material
- * `BottomNavigationView` on Android. Everything above it is still the app's own
- * manuscript chrome: each screen draws its branded ORTHODOX KOREA header, which
- * is why `headerShown` is false here.
+ * `BottomNavigationView` on Android. On iPhone and Android everything above it
+ * is still the app's own manuscript chrome: each screen draws its branded
+ * ORTHODOX KOREA header, which is why `headerShown` is false there.
+ *
+ * iPAD IS THE EXCEPTION. iPadOS 18+ puts a UITabBarController's bar at the TOP,
+ * where it would overlap that branded band, so iPad shows the platform's header
+ * instead and the screens skip their own — see `USES_NATIVE_HEADER` in
+ * `./nativeHeader`.
  *
  * This replaced a hand-drawn JS tab bar whose vertical geometry had to be
  * derived by measurement (a trimmed iOS inset, a bar that grew by only the
@@ -195,13 +201,27 @@ export function MainTabs() {
     <Tab.Navigator
       initialRouteName="Today"
       screenOptions={{
-        // Each tab screen draws its own branded ORTHODOX KOREA header, which is
-        // also what carries the Settings entry. Only the toolbar is native.
-        headerShown: false,
+        // iPhone/Android: each tab screen draws its own branded ORTHODOX KOREA
+        // header, which also carries the Settings entry, and only the toolbar is
+        // native. iPad: the tab bar sits at the top and would collide with that
+        // band, so the platform's header takes over instead — see
+        // USES_NATIVE_HEADER above. The screens set their own headerLeft /
+        // headerRight, so the button handlers stay local to them.
+        headerShown: USES_NATIVE_HEADER,
+        headerTitleAlign: 'center',
+        headerStyle: { backgroundColor: colors.primaryDeep },
+        headerTintColor: colors.brandText,
+        headerShadowVisible: false,
+        headerTitleStyle: {
+          fontFamily: typography.family.heading,
+          fontSize: typography.size.lg * Math.min(appFontScale, 1.4),
+          color: colors.brandText,
+        },
         tabBarActiveTintColor: colors.tabActive,
-        // app.json ships supportsTablet, and iPadOS 18+ renders a
-        // UITabBarController as a TOP bar unless the mode is pinned. Every
-        // bottom-inset assumption in this app expects the bar at the bottom.
+        // iPadOS 18+ renders a UITabBarController's bar at the TOP, and no mode
+        // changes that: 'tabSidebar' only adds a sidebar-toggle button beside the
+        // same top pill (verified on the iPad Pro 11" simulator, iPadOS 27).
+        // On iPad that bar therefore overlaps each screen's branded header.
         tabBarControllerMode: 'tabBar',
         // Android only — on iOS the option IS honoured, but the system grey is
         // what a UIKit tab bar should use, so it is left alone there.
@@ -224,6 +244,7 @@ export function MainTabs() {
         component={TodayScreen}
         options={{
           title: t('nav.today'),
+          headerTitle: BRAND_TITLE,
           tabBarLabel: t('nav.today'),
           tabBarIcon: todayIcon(dayOfMonth),
         }}
@@ -233,6 +254,7 @@ export function MainTabs() {
         component={MonthScreen}
         options={{
           title: t('nav.month'),
+          headerTitle: BRAND_TITLE,
           tabBarLabel: t('nav.month'),
           tabBarIcon: monthIcon(),
         }}
@@ -242,6 +264,9 @@ export function MainTabs() {
         component={AnnouncementsScreen}
         options={{
           title: t('announcements.title'),
+          // Matches what this screen's own band shows on iPhone: the section
+          // name, not the brand.
+          headerTitle: t('announcements.title'),
           tabBarLabel: t('nav.announcements'),
           tabBarIcon: newsIcon(),
           // Cap the badge display so a large backlog stays legible.

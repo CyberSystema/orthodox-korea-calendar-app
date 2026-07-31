@@ -2,7 +2,7 @@ import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import dayjs from 'dayjs';
-import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, useCallback } from 'react';
 import {
   Alert,
   Dimensions,
@@ -18,6 +18,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useKeyboardHeight } from '../../hooks/useKeyboardHeight';
 import { useTabContentBottomPadding } from '../../hooks/useTabContentBottomPadding';
+import { BRAND_TITLE, USES_NATIVE_HEADER } from '../../navigation/nativeHeader';
 import { SECRET_MENU_ENABLED } from '../../config/features';
 import { useTranslation } from 'react-i18next';
 import Svg, { Circle, Path } from 'react-native-svg';
@@ -208,11 +209,50 @@ export function TodayScreen({ navigation }: Props) {
     setActiveDateISO(todayISO);
   };
 
-  const openSearch = () => {
+  const openSearch = useCallback(() => {
     setSearchVisible(true);
     setSearchQuery('');
     setSearchResults([]);
-  };
+  }, []);
+
+  // iPad only: the platform's header stands in for the branded band, so give it
+  // this screen's chrome. Done here rather than in MainTabs so the handlers —
+  // including the secret-menu tap counter on the brand — stay local.
+  useLayoutEffect(() => {
+    if (!USES_NATIVE_HEADER) return;
+    navigation.setOptions({
+      headerLeft: () => (
+        <Pressable
+          onPress={() => navigation.navigate('Settings')}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={t('a11y.openSettings')}
+        >
+          <MenuIcon size={22} color={colors.brandText} />
+        </Pressable>
+      ),
+      headerRight: () => (
+        <Pressable
+          onPress={openSearch}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={t('a11y.search')}
+        >
+          <SearchSvgIcon size={22} color={colors.brandText} />
+        </Pressable>
+      ),
+      headerTitle: () => (
+        <Pressable
+          onPress={handleBrandTap}
+          hitSlop={4}
+          accessibilityRole="header"
+          accessibilityLabel={t('a11y.brandTitle')}
+        >
+          <Text style={styles.nativeHeaderTitle}>{BRAND_TITLE}</Text>
+        </Pressable>
+      ),
+    });
+  }, [navigation, t, openSearch, handleBrandTap]);
 
   const openDatePicker = () => {
     const active = dayjs(activeDateISO);
@@ -274,47 +314,51 @@ export function TodayScreen({ navigation }: Props) {
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      {/* ═══ BRANDED HEADER (fixed) ═══ */}
-      <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        <View style={styles.headerRow}>
-          <Pressable
-            style={({ pressed }) => [styles.headerIconButton, pressed && styles.pressed]}
-            onPress={() => navigation.navigate('Settings')}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel={t('a11y.openSettings')}
-          >
-            <MenuIcon size={20} color={colors.brandText} />
-          </Pressable>
-
-          <View style={styles.headerCenter}>
-            <View style={styles.headerLine} />
-            <ByzantineKnot size={14} color={colors.accentBright} />
+      {/* ═══ BRANDED HEADER (fixed) ═══
+          Skipped on iPad, where the platform's own header carries the title and
+          these buttons instead — see USES_NATIVE_HEADER. */}
+      {USES_NATIVE_HEADER ? null : (
+        <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+          <View style={styles.headerRow}>
             <Pressable
-              style={styles.headerBrandPress}
-              onPress={handleBrandTap}
-              hitSlop={4}
-              accessibilityRole="header"
-              accessibilityLabel={t('a11y.brandTitle')}
+              style={({ pressed }) => [styles.headerIconButton, pressed && styles.pressed]}
+              onPress={() => navigation.navigate('Settings')}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={t('a11y.openSettings')}
             >
-              <Text style={styles.headerBrand}>ORTHODOX KOREA</Text>
+              <MenuIcon size={20} color={colors.brandText} />
             </Pressable>
-            <ByzantineKnot size={14} color={colors.accentBright} />
-            <View style={styles.headerLine} />
-          </View>
 
-          <Pressable
-            style={({ pressed }) => [styles.headerIconButton, pressed && styles.pressed]}
-            onPress={openSearch}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel={t('a11y.search')}
-          >
-            <SearchSvgIcon size={20} color={colors.brandText} />
-          </Pressable>
+            <View style={styles.headerCenter}>
+              <View style={styles.headerLine} />
+              <ByzantineKnot size={14} color={colors.accentBright} />
+              <Pressable
+                style={styles.headerBrandPress}
+                onPress={handleBrandTap}
+                hitSlop={4}
+                accessibilityRole="header"
+                accessibilityLabel={t('a11y.brandTitle')}
+              >
+                <Text style={styles.headerBrand}>ORTHODOX KOREA</Text>
+              </Pressable>
+              <ByzantineKnot size={14} color={colors.accentBright} />
+              <View style={styles.headerLine} />
+            </View>
+
+            <Pressable
+              style={({ pressed }) => [styles.headerIconButton, pressed && styles.pressed]}
+              onPress={openSearch}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={t('a11y.search')}
+            >
+              <SearchSvgIcon size={20} color={colors.brandText} />
+            </Pressable>
+          </View>
+          <View style={styles.headerGoldLine} />
         </View>
-        <View style={styles.headerGoldLine} />
-      </View>
+      )}
 
       <ScrollView
         style={styles.scrollArea}
@@ -701,6 +745,12 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
     textAlign: 'center',
     flexShrink: 1,
+  },
+  nativeHeaderTitle: {
+    fontFamily: typography.family.heading,
+    fontSize: typography.size.lg,
+    color: colors.brandText,
+    letterSpacing: 1,
   },
   headerGoldLine: {
     height: 2,

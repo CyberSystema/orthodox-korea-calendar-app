@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTabContentBottomPadding } from '../../hooks/useTabContentBottomPadding';
+import { USES_NATIVE_HEADER } from '../../navigation/nativeHeader';
 import Svg, { Path } from 'react-native-svg';
 
 import { ByzantineKnot } from '../../components/common/ByzantineKnot';
@@ -194,17 +195,20 @@ export function AnnouncementsScreen({ navigation }: Props) {
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      {/* ═══ BRANDED HEADER ═══ */}
-      <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        <View style={styles.headerRow}>
-          <View style={styles.headerLine} />
-          <ByzantineKnot size={14} color={colors.accentBright} />
-          <Text style={styles.headerBrand}>{t('announcements.title')}</Text>
-          <ByzantineKnot size={14} color={colors.accentBright} />
-          <View style={styles.headerLine} />
+      {/* ═══ BRANDED HEADER ═══
+          Skipped on iPad, where the platform's header shows this same title. */}
+      {USES_NATIVE_HEADER ? null : (
+        <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+          <View style={styles.headerRow}>
+            <View style={styles.headerLine} />
+            <ByzantineKnot size={14} color={colors.accentBright} />
+            <Text style={styles.headerBrand}>{t('announcements.title')}</Text>
+            <ByzantineKnot size={14} color={colors.accentBright} />
+            <View style={styles.headerLine} />
+          </View>
+          <View style={styles.headerGoldLine} />
         </View>
-        <View style={styles.headerGoldLine} />
-      </View>
+      )}
 
       <FlatList
         data={announcements}
