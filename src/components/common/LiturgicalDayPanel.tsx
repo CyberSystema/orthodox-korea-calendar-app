@@ -14,6 +14,7 @@ import { LiturgicalFlagsRow } from './LiturgicalFlagsRow';
 import { OrnamentTitle } from './OrnamentTitle';
 import { Text } from './ScaledText';
 import { SelectableText } from './SelectableText';
+import { IlluminatedDay } from './IlluminatedDay';
 
 type Props = {
   language: SupportedLanguage;
@@ -53,6 +54,22 @@ export function LiturgicalDayPanel({
 }: Props) {
   const th = useTheme();
   const styles = useThemedStyles(makeStyles);
+
+  // The Illuminated direction is a DIFFERENT COMPOSITION, not this layout
+  // restyled — hero numeral, ruled sections, no card. Branch wholesale rather
+  // than smuggling two designs through one tree of conditionals.
+  if (th.direction === 'illuminated') {
+    return (
+      <IlluminatedDay
+        language={language}
+        dateISO={dateISO}
+        liturgicalDay={liturgicalDay}
+        events={events}
+        labels={labels}
+        onEventPress={onEventPress}
+      />
+    );
+  }
   const { isSunday, isSaturday, dayNum, dayName, monthYear } = useMemo(() => {
     const d = new Date(`${dateISO}T00:00:00`);
     const locale = language === 'ko' ? 'ko' : 'en';
