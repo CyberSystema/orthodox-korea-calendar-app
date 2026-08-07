@@ -11,5 +11,8 @@ export type RootStackParamList = {
   EventDetail: { eventId: string; dateISO?: string };
   AnnouncementDetail: { announcement: Announcement };
   Settings: undefined;
+  Staff: undefined;
+  /** Owner sideloads only — the route is not registered in store builds. */
+  Diagnostics: undefined;
   SecretMenu: undefined;
 };

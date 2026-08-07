@@ -62,7 +62,6 @@ const ko: Translations = {
   },
   today: {
     title: '정교회 한국 달력',
-    subtitle: '일일 전례 안내',
     goEvent: '첫 행사 열기',
     goSettings: '설정 열기',
     goToday: '오늘로 돌아가기',
@@ -153,12 +152,12 @@ const ko: Translations = {
     launchScreen: '시작 화면',
     launchScreenHint: '앱을 열었을 때 처음 보이는 화면을 선택하세요. 다음에 열 때부터 적용됩니다.',
     notifications: '알림',
-    notificationsAutoPrompt:
-      '알림 권한은 첫 실행 시 한 번 요청됩니다. 기기 설정에서 언제든지 변경할 수 있습니다.',
-    webAdminSync: '웹 관리자 동기화',
-    apiConfigured:
-      'API 기본 URL이 설정되었습니다. 관리자 변경 사항이 웹 및 다른 기기와 동기화됩니다.',
-    apiUnavailable: 'API 기본 URL을 사용할 수 없습니다.',
+    notificationsHint: '축일과 일정 알림은 기기 설정에서 켜거나 끌 수 있습니다.',
+    staffEntry: '교구 담당자',
+    staffIntro:
+      '행사를 추가하거나 수정하는 교구 담당자를 위한 기능입니다. 담당자 암호가 필요합니다.',
+    staffUnavailable: '지금은 담당자 로그인을 사용할 수 없습니다. 잠시 후 다시 시도해 주세요.',
+    diagnosticsEntry: '진단 정보',
     adminPasscodePlaceholder: '스태프 비밀번호',
     saveAdminPasscode: '스태프 비밀번호 저장',
     stuffPasscodeStored:

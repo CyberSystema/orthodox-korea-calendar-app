@@ -4,8 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { AnnouncementDetailScreen } from '../screens/announcements/AnnouncementDetailScreen';
 import { EventDetailScreen } from '../screens/event/EventDetailScreen';
 import { SecretMenuScreen } from '../screens/secret/SecretMenuScreen';
-import { SECRET_MENU_ENABLED } from '../config/features';
+import { DIAGNOSTICS_ENABLED, SECRET_MENU_ENABLED } from '../config/features';
 import { SettingsScreen } from '../screens/settings/SettingsScreen';
+import { StaffScreen } from '../screens/settings/StaffScreen';
+import { DiagnosticsScreen } from '../screens/settings/DiagnosticsScreen';
 import { useTextScale } from '../hooks/useTextScale';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
@@ -58,6 +60,19 @@ export function RootNavigator() {
         component={SettingsScreen}
         options={{ title: t('nav.settings') }}
       />
+      <Stack.Screen
+        name="Staff"
+        component={StaffScreen}
+        options={{ title: t('settings.staffEntry') }}
+      />
+      {/* Owner-only: like the console, this route does not exist in store builds. */}
+      {DIAGNOSTICS_ENABLED ? (
+        <Stack.Screen
+          name="Diagnostics"
+          component={DiagnosticsScreen}
+          options={{ title: t('settings.diagnosticsEntry') }}
+        />
+      ) : null}
       {/* Owner-only secret console: registered ONLY in local sideloads, never in
           EAS/store builds (Apple 2.3.1: no hidden features in the shipped app). */}
       {SECRET_MENU_ENABLED ? (

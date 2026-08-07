@@ -1,32 +1,23 @@
-import { useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import Svg, { Path } from 'react-native-svg';
 
-import { KeyboardSafeView } from '../../components/common/KeyboardSafeView';
 import { OrnamentTitle } from '../../components/common/OrnamentTitle';
 import { Text } from '../../components/common/ScaledText';
-import {
-  type AdminLoginResult,
-  loginStaffThroughCloudflare,
-  logoutAdminThroughCloudflare,
-  verifyAdminCloudflareSession,
-} from '../../services/api/adminAuth';
-import { canUseEventsApi } from '../../services/api/eventsRepository';
-import { secureStorage } from '../../services/storage/secureStorage';
+import { DIAGNOSTICS_ENABLED } from '../../config/features';
 import { getAppVersionLabel } from '../../utils/appVersion';
 import { useAppStore } from '../../store/useAppStore';
-import { useNetworkStore } from '../../store/useNetworkStore';
 import { colors } from '../../theme/colors';
 import { FONT_SCALE_STEPS, type FontScale } from '../../theme/fontScale';
 import { LAUNCH_SCREENS, LAUNCH_SCREEN_LABEL_KEYS } from '../../navigation/launchScreen';
 import { radii, spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
+import type { RootStackParamList } from '../../navigation/types';
 
-// We persist only that staff mode is enabled — never the raw passcode. The
-// session token (stored by the SDK) is what authenticates requests.
-const STAFF_MODE_KEY = 'auth.staffModeEnabled';
+type Props = NativeStackScreenProps<RootStackParamList, 'Settings'>;
 
 // One label per step. Typed as a total Record so adding a step to
 // FONT_SCALE_STEPS fails typecheck here until it gets a label.
@@ -37,291 +28,156 @@ const FONT_SCALE_LABEL_KEYS: Record<FontScale, string> = {
   1.5: 'settings.fontSizeLargest',
 };
 
-export function SettingsScreen() {
+function ChevronRight() {
+  return (
+    <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M9 5l7 7-7 7"
+        stroke={colors.textFaint}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+/**
+ * The reader's own preferences — and NOTHING else.
+ *
+ * This screen is what a parishioner sees, so it deliberately contains no backend
+ * state, no sync status, no build metadata and no passcode field. Staff sign-in
+ * moved to its own screen behind one quiet row; the owner's diagnostics are
+ * behind `DIAGNOSTICS_ENABLED`, so that row does not exist in a store build at
+ * all.
+ *
+ * Layout rule: one idea per card, `spacing.xl` between cards, and hint text only
+ * where it prevents a real question. The screen should feel unhurried rather than
+ * complete — anything that is merely informative belongs in Diagnostics.
+ */
+export function SettingsScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const {
-    adminMode,
-    cloudflareAdminAuthenticated,
-    fontScale,
-    launchScreen,
-    setLaunchScreen,
-    setAdminMode,
-    setCloudflareAdminAuthenticated,
-    setFontScale,
-  } = useAppStore();
-  const isOnline = useNetworkStore((state) => state.isOnline);
-  const [statusText, setStatusText] = useState('');
-  const [passcodeDraft, setPasscodeDraft] = useState('');
-  const [authBusy, setAuthBusy] = useState(false);
+  const { fontScale, setFontScale, launchScreen, setLaunchScreen } = useAppStore();
 
-  // The passcode field is shown whenever the user is not actively authenticated:
-  // either staff mode is off, or it's on but the session has expired.
-  const needsAuthentication = !adminMode || !cloudflareAdminAuthenticated;
-
-  // App version for the footer — read from the app config (app.json is the source of
-  // truth under local versioning) so it tracks the release version even in sideloads,
-  // where a stale generated native project can report an old version. See appVersion.ts.
   const versionLabel = getAppVersionLabel();
 
-  const getLoginFailureMessage = (result: AdminLoginResult) => {
-    if (result.ok) {
-      return '';
-    }
-
-    if (result.code === 'RATE_LIMITED') {
-      if (typeof result.retryAfter === 'number' && result.retryAfter > 0) {
-        return t('settings.passcodeRateLimitedWithRetry', { seconds: result.retryAfter });
-      }
-      return t('settings.passcodeRateLimited');
-    }
-
-    if (result.code === 'UNAUTHORIZED') {
-      return t('settings.passcodeFailed');
-    }
-
-    return result.message || t('settings.passcodeFailed');
-  };
-
-  // Authenticate with the entered passcode and enable staff mode. Only the
-  // resulting session token is persisted (by the SDK) — never the passcode.
-  const onSavePasscode = async () => {
-    if (authBusy) return;
-
-    setAuthBusy(true);
-    try {
-      if (!passcodeDraft.trim()) {
-        setStatusText(t('settings.passcodeRequired'));
-        return;
-      }
-
-      if (!canUseEventsApi()) {
-        setStatusText(t('settings.apiUnavailable'));
-        return;
-      }
-
-      const result = await loginStaffThroughCloudflare(passcodeDraft.trim());
-      if (result.ok) {
-        await secureStorage.setItem(STAFF_MODE_KEY, '1');
-        setPasscodeDraft('');
-        setCloudflareAdminAuthenticated(true);
-        setAdminMode(true);
-        setStatusText(t('settings.passcodeSaved'));
-        return;
-      }
-
-      setCloudflareAdminAuthenticated(false);
-      setStatusText(getLoginFailureMessage(result));
-    } finally {
-      setAuthBusy(false);
-    }
-  };
-
-  const onToggleAdminMode = async (value: boolean) => {
-    if (authBusy) return;
-
-    setAuthBusy(true);
-    try {
-      if (!value) {
-        // Disable staff mode: clear the flag and sign the session out.
-        await secureStorage.deleteItem(STAFF_MODE_KEY);
-        setPasscodeDraft('');
-        setAdminMode(false);
-        await logoutAdminThroughCloudflare();
-        setCloudflareAdminAuthenticated(false);
-        setStatusText(t('settings.passcodeCleared'));
-        return;
-      }
-
-      if (!canUseEventsApi()) {
-        setStatusText(t('settings.apiUnavailable'));
-        return;
-      }
-
-      // Turning staff mode on: reuse a still-valid session if one exists,
-      // otherwise authenticate with the entered passcode. We never read a stored
-      // passcode because we no longer keep one.
-      const existingSessionOk = await verifyAdminCloudflareSession();
-      if (!existingSessionOk) {
-        const passcode = passcodeDraft.trim();
-        if (!passcode) {
-          setStatusText(t('settings.passcodeRequired'));
-          return;
-        }
-        const loginResult = await loginStaffThroughCloudflare(passcode);
-        if (!loginResult.ok) {
-          setCloudflareAdminAuthenticated(false);
-          setStatusText(getLoginFailureMessage(loginResult));
-          return;
-        }
-        setPasscodeDraft('');
-      }
-
-      await secureStorage.setItem(STAFF_MODE_KEY, '1');
-      setCloudflareAdminAuthenticated(true);
-      setAdminMode(true);
-      setStatusText(t('settings.adminEnabled'));
-    } finally {
-      setAuthBusy(false);
-    }
-  };
-
   return (
-    <KeyboardSafeView style={{ flex: 1 }} keyboardVerticalOffset={insets.top}>
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={[
-          styles.content,
-          { paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.lg },
-        ]}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
-      >
-        <StatusBar style="light" />
-        {/* ═══ TEXT SIZE ═══ */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <OrnamentTitle text={t('settings.fontSize')} />
-          </View>
-          <View style={styles.fontScaleRow}>
-            {FONT_SCALE_STEPS.map((step) => {
-              const selected = fontScale === step;
-              return (
-                <Pressable
-                  key={step}
-                  style={({ pressed }) => [
-                    styles.fontScalePill,
-                    selected && styles.fontScalePillActive,
-                    pressed && styles.pressed,
-                  ]}
-                  onPress={() => setFontScale(step)}
-                  hitSlop={8}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected }}
-                  accessibilityLabel={t(FONT_SCALE_LABEL_KEYS[step])}
-                >
-                  <Text
-                    style={[styles.fontScalePillText, selected && styles.fontScalePillTextActive]}
-                  >
-                    {t(FONT_SCALE_LABEL_KEYS[step])}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-          {/* The preview is the whole screen: every label above re-renders at the
-              chosen size the moment a pill is tapped. */}
-          <Text style={styles.fontScalePreview}>{t('settings.fontSizePreview')}</Text>
-          <Text style={styles.statusText}>{t('settings.fontSizeHint')}</Text>
-        </View>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={[
+        styles.content,
+        { paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.xl },
+      ]}
+    >
+      <StatusBar style="light" />
 
-        {/* ═══ LAUNCH SCREEN ═══ */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <OrnamentTitle text={t('settings.launchScreen')} />
-          </View>
-          <View style={styles.fontScaleRow}>
-            {LAUNCH_SCREENS.map((screen) => {
-              const selected = launchScreen === screen;
-              return (
-                <Pressable
-                  key={screen}
-                  style={({ pressed }) => [
-                    styles.fontScalePill,
-                    selected && styles.fontScalePillActive,
-                    pressed && styles.pressed,
-                  ]}
-                  onPress={() => setLaunchScreen(screen)}
-                  hitSlop={8}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected }}
-                  accessibilityLabel={t(LAUNCH_SCREEN_LABEL_KEYS[screen])}
-                >
-                  <Text
-                    style={[styles.fontScalePillText, selected && styles.fontScalePillTextActive]}
-                  >
-                    {t(LAUNCH_SCREEN_LABEL_KEYS[screen])}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-          <Text style={styles.statusText}>{t('settings.launchScreenHint')}</Text>
-        </View>
-
-        {/* ═══ ADMIN MODE TOGGLE ═══ */}
-        <View style={styles.rowCard}>
-          <Text style={styles.rowTitle}>{t('settings.adminMode')}</Text>
-          <Switch
-            value={adminMode}
-            disabled={authBusy || !isOnline}
-            accessibilityLabel={t('settings.adminMode')}
-            onValueChange={(value) => void onToggleAdminMode(value)}
-            trackColor={{ false: colors.backgroundWarm, true: colors.accentDim }}
-            thumbColor={adminMode ? colors.accent : colors.textFaint}
-          />
-        </View>
-
-        {!isOnline ? (
-          <Text style={styles.statusText}>{t('settings.offlineStaffDisabled')}</Text>
-        ) : null}
-
-        {/* ═══ WEB ADMIN SYNC ═══ */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <OrnamentTitle text={t('settings.webAdminSync')} />
-          </View>
-          <Text style={styles.statusText}>
-            {canUseEventsApi() ? t('settings.apiConfigured') : t('settings.apiUnavailable')}
-          </Text>
-          {needsAuthentication ? (
-            <>
-              {adminMode && !cloudflareAdminAuthenticated ? (
-                <Text style={styles.statusText}>{t('settings.sessionExpired')}</Text>
-              ) : null}
-              <TextInput
-                secureTextEntry
-                value={passcodeDraft}
-                onChangeText={setPasscodeDraft}
-                placeholder={t('settings.adminPasscodePlaceholder')}
-                placeholderTextColor={colors.textSecondary}
-                style={styles.input}
-                autoCapitalize="none"
-                autoCorrect={false}
-                editable={isOnline}
-              />
+      {/* ═══ TEXT SIZE ═══ */}
+      <View style={styles.card}>
+        <OrnamentTitle text={t('settings.fontSize')} />
+        <View style={styles.pillRow}>
+          {FONT_SCALE_STEPS.map((step) => {
+            const selected = fontScale === step;
+            return (
               <Pressable
+                key={step}
                 style={({ pressed }) => [
-                  styles.buttonOutline,
-                  (authBusy || !isOnline) && styles.buttonDisabled,
+                  styles.pill,
+                  selected && styles.pillActive,
                   pressed && styles.pressed,
                 ]}
-                disabled={authBusy || !isOnline}
-                onPress={onSavePasscode}
-                accessibilityRole="button"
+                onPress={() => setFontScale(step)}
+                hitSlop={8}
+                accessibilityRole="radio"
+                accessibilityState={{ selected }}
+                accessibilityLabel={t(FONT_SCALE_LABEL_KEYS[step])}
               >
-                <Text style={styles.buttonOutlineText}>{t('settings.saveAdminPasscode')}</Text>
+                <Text style={[styles.pillText, selected && styles.pillTextActive]}>
+                  {t(FONT_SCALE_LABEL_KEYS[step])}
+                </Text>
               </Pressable>
-            </>
-          ) : (
-            <Text style={styles.statusText}>{t('settings.stuffPasscodeStored')}</Text>
-          )}
+            );
+          })}
         </View>
+        {/* The preview is really the whole screen — every label re-renders at the
+            chosen size the moment a pill is tapped — but a sample line makes the
+            effect obvious without scrolling. */}
+        <Text style={styles.preview}>{t('settings.fontSizePreview')}</Text>
+      </View>
 
-        {/* ═══ NOTIFICATIONS ═══ */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <OrnamentTitle text={t('settings.notifications')} />
-          </View>
-          <Text style={styles.statusText}>{t('settings.notificationsAutoPrompt')}</Text>
+      {/* ═══ LAUNCH SCREEN ═══ */}
+      <View style={styles.card}>
+        <OrnamentTitle text={t('settings.launchScreen')} />
+        <View style={styles.pillRow}>
+          {LAUNCH_SCREENS.map((screen) => {
+            const selected = launchScreen === screen;
+            return (
+              <Pressable
+                key={screen}
+                style={({ pressed }) => [
+                  styles.pill,
+                  selected && styles.pillActive,
+                  pressed && styles.pressed,
+                ]}
+                onPress={() => setLaunchScreen(screen)}
+                hitSlop={8}
+                accessibilityRole="radio"
+                accessibilityState={{ selected }}
+                accessibilityLabel={t(LAUNCH_SCREEN_LABEL_KEYS[screen])}
+              >
+                <Text style={[styles.pillText, selected && styles.pillTextActive]}>
+                  {t(LAUNCH_SCREEN_LABEL_KEYS[screen])}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
+      </View>
 
-        {/* ═══ APP VERSION ═══ */}
-        {versionLabel ? (
-          <Text style={styles.versionText}>{t('settings.version', { version: versionLabel })}</Text>
+      {/* ═══ NOTIFICATIONS ═══ */}
+      <View style={styles.card}>
+        <OrnamentTitle text={t('settings.notifications')} />
+        <Text style={styles.hint}>{t('settings.notificationsHint')}</Text>
+      </View>
+
+      {/* ═══ QUIET ENTRIES ═══
+          "Parish staff" is the only door to event editing in a store build. It is
+          a plain word rather than a hidden gesture so staff can find it without
+          being told a trick, and it says nothing that would puzzle a reader who
+          opens it out of curiosity. Diagnostics is owner-only and simply absent
+          from store builds. */}
+      <View style={styles.linkGroup}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.linkRow,
+            // In a store build this is the ONLY row, so it must not draw a
+            // divider under itself.
+            !DIAGNOSTICS_ENABLED && styles.linkRowLast,
+            pressed && styles.pressed,
+          ]}
+          onPress={() => navigation.navigate('Staff')}
+          accessibilityRole="button"
+        >
+          <Text style={styles.linkText}>{t('settings.staffEntry')}</Text>
+          <ChevronRight />
+        </Pressable>
+
+        {DIAGNOSTICS_ENABLED ? (
+          <Pressable
+            style={({ pressed }) => [styles.linkRow, styles.linkRowLast, pressed && styles.pressed]}
+            onPress={() => navigation.navigate('Diagnostics')}
+            accessibilityRole="button"
+          >
+            <Text style={styles.linkText}>{t('settings.diagnosticsEntry')}</Text>
+            <ChevronRight />
+          </Pressable>
         ) : null}
-      </ScrollView>
-    </KeyboardSafeView>
+      </View>
+
+      {versionLabel ? (
+        <Text style={styles.versionText}>{t('settings.version', { version: versionLabel })}</Text>
+      ) : null}
+    </ScrollView>
   );
 }
 
@@ -332,38 +188,27 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing.lg,
-    gap: spacing.md,
+    // The whole point of this screen is that it breathes: cards are separated by
+    // a full 24pt, not the 12pt used inside them.
+    gap: spacing.xl,
   },
-  pressed: {
-    opacity: 0.7,
-  },
+  pressed: { opacity: 0.7 },
 
-  // ─── Toggle row ────────────────────────────────────────────────────────────
-  rowCard: {
+  card: {
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,
     borderRadius: radii.lg,
     padding: spacing.lg,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  rowTitle: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.md,
-    color: colors.textPrimary,
-    // Wrap next to the fixed-size Switch instead of pushing it off the card.
-    flexShrink: 1,
+    gap: spacing.md,
   },
 
-  // ─── Text size ─────────────────────────────────────────────────────────────
-  fontScaleRow: {
+  pillRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.xs,
+    gap: spacing.sm,
   },
-  fontScalePill: {
+  pill: {
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radii.full,
@@ -372,20 +217,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     flexShrink: 1,
   },
-  fontScalePillActive: {
+  pillActive: {
     borderColor: colors.accent,
     backgroundColor: colors.accentGlow,
   },
-  fontScalePillText: {
+  pillText: {
     fontFamily: typography.family.body,
     fontSize: typography.size.sm,
     color: colors.primary,
   },
-  fontScalePillTextActive: {
+  pillTextActive: {
     color: colors.primaryDeep,
     fontWeight: typography.weight.semibold,
   },
-  fontScalePreview: {
+  preview: {
     fontFamily: typography.family.heading,
     fontSize: typography.size.md,
     color: colors.textBody,
@@ -394,67 +239,46 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceWhite,
     borderRadius: radii.sm,
     paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.md,
+  },
+  hint: {
+    fontFamily: typography.family.body,
+    fontSize: typography.size.sm,
+    color: colors.textSecondary,
+    lineHeight: typography.size.sm * 1.5,
   },
 
-  // ─── Settings card ─────────────────────────────────────────────────────────
-  card: {
+  linkGroup: {
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,
     borderRadius: radii.lg,
-    padding: spacing.md,
-    gap: spacing.sm,
+    overflow: 'hidden',
   },
-  cardHeader: {
-    paddingBottom: spacing.xs,
+  linkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
   },
-
-  // ─── Buttons ───────────────────────────────────────────────────────────────
-  buttonOutline: {
-    borderWidth: 1,
-    borderColor: colors.primary,
-    borderRadius: radii.md,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
+  linkRowLast: {
+    borderBottomWidth: 0,
   },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  buttonOutlineText: {
-    textAlign: 'center',
-    color: colors.primary,
-    fontFamily: typography.family.body,
+  linkText: {
+    flexShrink: 1,
+    fontFamily: typography.family.heading,
     fontSize: typography.size.md,
+    color: colors.textPrimary,
   },
 
-  // ─── Input ─────────────────────────────────────────────────────────────────
-  input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    fontFamily: typography.family.body,
-    fontSize: typography.size.md,
-    color: colors.textBody,
-    backgroundColor: colors.surfaceWhite,
-  },
-
-  // ─── Status ────────────────────────────────────────────────────────────────
-  statusText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: colors.textSecondary,
-    lineHeight: 20,
-  },
-
-  // ─── Version footer ────────────────────────────────────────────────────────
   versionText: {
     fontFamily: typography.family.body,
     fontSize: typography.size.sm,
     color: colors.textFaint,
     textAlign: 'center',
-    marginTop: spacing.sm,
   },
 });

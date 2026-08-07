@@ -15,3 +15,19 @@
  *   (`.env.local` is gitignored, so it never reaches an EAS/cloud build.)
  */
 export const SECRET_MENU_ENABLED = process.env.EXPO_PUBLIC_ENABLE_SECRET_MENU === 'true';
+
+/**
+ * True only in the owner's local sideloads — the same switch as the console
+ * above, named for the broader thing it now gates.
+ *
+ * THE PRODUCT RULE: the store app is for parishioners and must show them nothing
+ * technical — no backend URLs, no sync state, no build metadata. The owner's
+ * sideload is the opposite: it should surface as much as possible about what the
+ * app is doing, for debugging. Anything that answers "what is the app doing right
+ * now" belongs behind this flag.
+ *
+ * Because `EXPO_PUBLIC_*` is inlined at build time this folds to a literal, so a
+ * store build does not merely hide these screens — their code is dead and the
+ * routes are never registered.
+ */
+export const DIAGNOSTICS_ENABLED = SECRET_MENU_ENABLED;

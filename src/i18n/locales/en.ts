@@ -56,7 +56,6 @@ const en = {
   },
   today: {
     title: 'Orthodox Korea Calendar',
-    subtitle: 'Daily liturgical guide',
     goEvent: 'Open First Event',
     goSettings: 'Open Settings',
     goToday: 'Go back to today',
@@ -134,7 +133,7 @@ const en = {
   },
   settings: {
     title: 'Settings',
-    subtitle: 'Language, notifications, and app preferences',
+    subtitle: 'Your reading preferences',
     adminMode: 'Staff Mode',
     fontSize: 'Text Size',
     fontSizeNormal: 'Normal',
@@ -147,11 +146,11 @@ const en = {
     launchScreen: 'Launch Screen',
     launchScreenHint: 'Choose the screen the app opens on. Takes effect next time you open it.',
     notifications: 'Notifications',
-    notificationsAutoPrompt:
-      'Notification permission is requested once on first launch. You can change it any time in your device settings.',
-    webAdminSync: 'Web Admin Sync',
-    apiConfigured: 'API base URL configured. Admin changes sync to web and other devices.',
-    apiUnavailable: 'API base URL unavailable.',
+    notificationsHint: 'Feast and event reminders can be turned on or off in your device settings.',
+    staffEntry: 'Parish staff',
+    staffIntro: 'For parish staff who add and edit events. You will need the staff passcode.',
+    staffUnavailable: 'Staff sign-in is unavailable right now. Please try again later.',
+    diagnosticsEntry: 'Diagnostics',
     adminPasscodePlaceholder: 'Staff Passcode',
     saveAdminPasscode: 'Save Staff Passcode',
     stuffPasscodeStored:
