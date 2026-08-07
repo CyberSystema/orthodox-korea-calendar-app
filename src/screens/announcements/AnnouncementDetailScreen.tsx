@@ -15,7 +15,7 @@ import { fetchRemoteEventById } from '../../services/api/eventsRepository';
 import { useAnnouncementsStore } from '../../features/announcements/useAnnouncementsStore';
 import type { LiturgicalEvent, LocalizedText } from '../../features/calendar/types';
 import { useAppStore } from '../../store/useAppStore';
-import { colors } from '../../theme/colors';
+import { useTheme, useThemedStyles, type ResolvedTheme } from '../../theme/useTheme';
 import { radii, spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import { formatDisplayDate, formatRelativeTime } from '../../utils/date';
@@ -41,6 +41,7 @@ function resolveEventRef(eventId: string): { parentId: string; occurrenceDate?: 
 }
 
 export function AnnouncementDetailScreen({ route, navigation }: Props) {
+  const styles = useThemedStyles(makeStyles);
   const { announcement } = route.params;
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -203,150 +204,151 @@ export function AnnouncementDetailScreen({ route, navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    padding: spacing.lg,
-    gap: spacing.md,
-  },
-  pressed: {
-    opacity: 0.7,
-  },
+const makeStyles = (th: ResolvedTheme) =>
+  ({
+    container: {
+      flex: 1,
+      backgroundColor: th.background,
+    },
+    content: {
+      padding: spacing.lg,
+      gap: spacing.md,
+    },
+    pressed: {
+      opacity: 0.7,
+    },
 
-  card: {
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    borderRadius: radii.lg,
-    backgroundColor: colors.surfaceWhite,
-    padding: spacing.lg,
-    gap: spacing.sm,
-  },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-  },
-  audienceChip: {
-    borderWidth: 1,
-    borderColor: colors.accentDim,
-    borderRadius: radii.full,
-    backgroundColor: colors.accentGlow,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-  },
-  audienceChipText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.xxs,
-    color: colors.primary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  noticeChip: {
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    borderRadius: radii.full,
-    backgroundColor: colors.surface,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-  },
-  noticeChipText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.xxs,
-    color: colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  timeText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.xs,
-    color: colors.textSecondary,
-  },
-  title: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.xl,
-    color: colors.textPrimary,
-    lineHeight: typography.size.xl * 1.3,
-  },
-  dateText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.xs,
-    color: colors.textFaint,
-  },
-  body: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.md,
-    color: colors.textBody,
-    lineHeight: typography.size.md * 1.55,
-    marginTop: spacing.xs,
-  },
+    card: {
+      borderWidth: 1,
+      borderColor: th.borderLight,
+      borderRadius: radii.lg,
+      backgroundColor: th.surfaceWhite,
+      padding: spacing.lg,
+      gap: spacing.sm,
+    },
+    topRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: spacing.sm,
+    },
+    audienceChip: {
+      borderWidth: 1,
+      borderColor: th.accentDim,
+      borderRadius: radii.full,
+      backgroundColor: th.accentGlow,
+      paddingHorizontal: spacing.sm,
+      paddingVertical: 2,
+    },
+    audienceChipText: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.xxs,
+      color: th.primary,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    noticeChip: {
+      borderWidth: 1,
+      borderColor: th.borderLight,
+      borderRadius: radii.full,
+      backgroundColor: th.surface,
+      paddingHorizontal: spacing.sm,
+      paddingVertical: 2,
+    },
+    noticeChipText: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.xxs,
+      color: th.textSecondary,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    timeText: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.xs,
+      color: th.textSecondary,
+    },
+    title: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.xl,
+      color: th.textPrimary,
+      lineHeight: typography.size.xl * 1.3,
+    },
+    dateText: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.xs,
+      color: th.textFaint,
+    },
+    body: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.md,
+      color: th.textBody,
+      lineHeight: typography.size.md * 1.55,
+      marginTop: spacing.xs,
+    },
 
-  section: {
-    gap: spacing.sm,
-  },
-  sectionLabel: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.xxs,
-    color: colors.accent,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginLeft: spacing.xs,
-  },
-  linkedDate: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.sm,
-    color: colors.textSoft,
-    marginLeft: spacing.xs,
-  },
-  eventCard: {
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    borderRadius: radii.md,
-    backgroundColor: colors.surfaceWhite,
-    padding: spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-  },
-  eventTitle: {
-    flex: 1,
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.md,
-    color: colors.textPrimary,
-  },
-  eventOpen: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: colors.primary,
-    fontWeight: typography.weight.semibold,
-  },
-  mutedText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: colors.textFaint,
-    marginLeft: spacing.xs,
-  },
+    section: {
+      gap: spacing.sm,
+    },
+    sectionLabel: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.xxs,
+      color: th.accent,
+      textTransform: 'uppercase',
+      letterSpacing: 0.8,
+      marginLeft: spacing.xs,
+    },
+    linkedDate: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.sm,
+      color: th.textSoft,
+      marginLeft: spacing.xs,
+    },
+    eventCard: {
+      borderWidth: 1,
+      borderColor: th.borderLight,
+      borderRadius: radii.md,
+      backgroundColor: th.surfaceWhite,
+      padding: spacing.md,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: spacing.sm,
+    },
+    eventTitle: {
+      flex: 1,
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.md,
+      color: th.textPrimary,
+    },
+    eventOpen: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: th.primary,
+      fontWeight: typography.weight.semibold,
+    },
+    mutedText: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: th.textFaint,
+      marginLeft: spacing.xs,
+    },
 
-  deleteButton: {
-    marginTop: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.danger,
-    borderRadius: radii.full,
-    backgroundColor: colors.crimsonTint,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-  },
-  deleteButtonDisabled: {
-    opacity: 0.5,
-  },
-  deleteButtonText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: colors.danger,
-    fontWeight: typography.weight.bold,
-  },
-});
+    deleteButton: {
+      marginTop: spacing.sm,
+      borderWidth: 1,
+      borderColor: th.danger,
+      borderRadius: radii.full,
+      backgroundColor: th.crimsonTint,
+      paddingVertical: spacing.md,
+      alignItems: 'center',
+    },
+    deleteButtonDisabled: {
+      opacity: 0.5,
+    },
+    deleteButtonText: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: th.danger,
+      fontWeight: typography.weight.bold,
+    },
+  }) as const;

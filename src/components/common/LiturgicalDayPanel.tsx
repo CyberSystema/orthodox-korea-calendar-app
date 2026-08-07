@@ -5,7 +5,7 @@ import { useTextScale } from '../../hooks/useTextScale';
 import type { SupportedLanguage } from '../../types/language';
 import type { LiturgicalDay, LiturgicalEvent } from '../../features/calendar/types';
 import { localized } from '../../features/calendar/types';
-import { colors, shadows } from '../../theme/colors';
+import { useTheme, useThemedStyles, type ResolvedTheme } from '../../theme/useTheme';
 import { radii, spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import { formatDisplayDate } from '../../utils/date';
@@ -51,6 +51,7 @@ export function LiturgicalDayPanel({
   labels,
   onEventPress,
 }: Props) {
+  const styles = useThemedStyles(makeStyles);
   const { isSunday, isSaturday, dayNum, dayName, monthYear } = useMemo(() => {
     const d = new Date(`${dateISO}T00:00:00`);
     const locale = language === 'ko' ? 'ko' : 'en';
@@ -288,159 +289,160 @@ export function LiturgicalDayPanel({
 /** Diameter of the date circle at a 1.0 text scale; grows with the text. */
 const RING_BASE_SIZE = 56;
 
-const styles = StyleSheet.create({
-  card: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.lg,
-    backgroundColor: colors.surface,
-    padding: spacing.md,
-    gap: spacing.md,
-    ...shadows.warm,
-  },
-  pressed: {
-    opacity: 0.7,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
-    paddingBottom: spacing.sm,
-  },
-  // Size (width/height/borderRadius) is applied inline from the text scale.
-  ring: {
-    borderWidth: 2.5,
-    borderColor: colors.crimson,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  // Without the shrink this bare View sizes to the day name's full width and
-  // runs past the card's rounded edge once the type grows.
-  headerText: {
-    flexShrink: 1,
-  },
-  ringText: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.xl,
-    color: colors.crimson,
-  },
-  ringHighlight: {
-    backgroundColor: colors.crimson,
-  },
-  ringSaturday: {
-    backgroundColor: colors.blue,
-    borderColor: colors.blue,
-  },
-  ringTextHighlight: {
-    color: colors.surfaceWhite,
-  },
-  dayName: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.lg,
-    color: colors.primary,
-  },
-  monthYear: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: colors.textSecondary,
-  },
-  section: {
-    gap: spacing.sm,
-  },
-  readingRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-  },
-  // Container carries the pill chrome; the Text inside carries only type. Keeping
-  // padding/border off the Text is what stops it overflowing its row (see render).
-  readingTag: {
-    borderRadius: radii.full,
-    borderWidth: 1,
-    borderColor: colors.accent,
-    backgroundColor: colors.accentGlow,
-    paddingVertical: 4,
-    paddingHorizontal: spacing.sm,
-    // Never let one long reading push the row wider than the card.
-    flexShrink: 1,
-    maxWidth: '100%',
-  },
-  readingTagText: {
-    color: colors.textBody,
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-  },
-  celebrationItem: {
-    borderLeftWidth: 3,
-    borderLeftColor: colors.border,
-    backgroundColor: colors.surfaceWhite,
-    borderRadius: radii.sm,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    gap: 2,
-  },
-  celebrationTitle: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.md,
-    color: colors.textBody,
-  },
-  celebItemHigh: {
-    borderLeftColor: colors.crimson,
-    backgroundColor: colors.crimsonTint,
-  },
-  // Celebration ("celeb": true) entries — blue container, italic title. Scoped to
-  // the entry itself; the surrounding day keeps its own emphasis.
-  celebItemFeast: {
-    borderLeftColor: colors.blue,
-    backgroundColor: colors.blueTint,
-  },
-  celebTitleHigh: {
-    color: colors.crimson,
-    fontWeight: typography.weight.semibold,
-  },
-  celebTitleFeast: {
-    color: colors.blue,
-    fontStyle: 'italic',
-  },
-  celebrationMeta: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: colors.textSecondary,
-  },
-  eventItem: {
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    borderLeftWidth: 3,
-    borderLeftColor: colors.accent,
-    borderRadius: radii.md,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    backgroundColor: colors.surfaceWhite,
-    gap: spacing.xs,
-  },
-  eventTitle: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.md,
-    color: colors.primary,
-  },
-  eventSummary: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: colors.textBody,
-  },
-  eventDate: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.xs,
-    color: colors.textSecondary,
-  },
-  emptyText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    paddingVertical: spacing.sm,
-  },
-});
+const makeStyles = (th: ResolvedTheme) =>
+  ({
+    card: {
+      borderWidth: 1,
+      borderColor: th.border,
+      borderRadius: radii.lg,
+      backgroundColor: th.surface,
+      padding: spacing.md,
+      gap: spacing.md,
+      ...th.shadows.warm,
+    },
+    pressed: {
+      opacity: 0.7,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: th.borderLight,
+      paddingBottom: spacing.sm,
+    },
+    // Size (width/height/borderRadius) is applied inline from the text scale.
+    ring: {
+      borderWidth: 2.5,
+      borderColor: th.crimson,
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0,
+    },
+    // Without the shrink this bare View sizes to the day name's full width and
+    // runs past the card's rounded edge once the type grows.
+    headerText: {
+      flexShrink: 1,
+    },
+    ringText: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.xl,
+      color: th.crimson,
+    },
+    ringHighlight: {
+      backgroundColor: th.crimson,
+    },
+    ringSaturday: {
+      backgroundColor: th.blue,
+      borderColor: th.blue,
+    },
+    ringTextHighlight: {
+      color: th.surfaceWhite,
+    },
+    dayName: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.lg,
+      color: th.primary,
+    },
+    monthYear: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: th.textSecondary,
+    },
+    section: {
+      gap: spacing.sm,
+    },
+    readingRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.xs,
+    },
+    // Container carries the pill chrome; the Text inside carries only type. Keeping
+    // padding/border off the Text is what stops it overflowing its row (see render).
+    readingTag: {
+      borderRadius: radii.full,
+      borderWidth: 1,
+      borderColor: th.accent,
+      backgroundColor: th.accentGlow,
+      paddingVertical: 4,
+      paddingHorizontal: spacing.sm,
+      // Never let one long reading push the row wider than the card.
+      flexShrink: 1,
+      maxWidth: '100%',
+    },
+    readingTagText: {
+      color: th.textBody,
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+    },
+    celebrationItem: {
+      borderLeftWidth: 3,
+      borderLeftColor: th.border,
+      backgroundColor: th.surfaceWhite,
+      borderRadius: radii.sm,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.sm,
+      gap: 2,
+    },
+    celebrationTitle: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.md,
+      color: th.textBody,
+    },
+    celebItemHigh: {
+      borderLeftColor: th.crimson,
+      backgroundColor: th.crimsonTint,
+    },
+    // Celebration ("celeb": true) entries — blue container, italic title. Scoped to
+    // the entry itself; the surrounding day keeps its own emphasis.
+    celebItemFeast: {
+      borderLeftColor: th.blue,
+      backgroundColor: th.blueTint,
+    },
+    celebTitleHigh: {
+      color: th.crimson,
+      fontWeight: typography.weight.semibold,
+    },
+    celebTitleFeast: {
+      color: th.blue,
+      fontStyle: 'italic',
+    },
+    celebrationMeta: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: th.textSecondary,
+    },
+    eventItem: {
+      borderWidth: 1,
+      borderColor: th.borderLight,
+      borderLeftWidth: 3,
+      borderLeftColor: th.accent,
+      borderRadius: radii.md,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.sm,
+      backgroundColor: th.surfaceWhite,
+      gap: spacing.xs,
+    },
+    eventTitle: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.md,
+      color: th.primary,
+    },
+    eventSummary: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: th.textBody,
+    },
+    eventDate: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.xs,
+      color: th.textSecondary,
+    },
+    emptyText: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: th.textSecondary,
+      textAlign: 'center',
+      paddingVertical: spacing.sm,
+    },
+  }) as const;

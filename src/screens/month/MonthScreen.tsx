@@ -50,7 +50,7 @@ import type { MainTabsParamList, RootStackParamList } from '../../navigation/typ
 import { loginAdminThroughCloudflare } from '../../services/api/adminAuth';
 import { useAppStore } from '../../store/useAppStore';
 import { useNetworkStore } from '../../store/useNetworkStore';
-import { colors } from '../../theme/colors';
+import { useTheme, useThemedStyles, type ResolvedTheme } from '../../theme/useTheme';
 import { radii, spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import { formatDisplayDate } from '../../utils/date';
@@ -60,7 +60,9 @@ type Props = CompositeScreenProps<
   NativeStackScreenProps<RootStackParamList>
 >;
 
-function MenuIcon({ size = 20, color = colors.brandText }: { size?: number; color?: string }) {
+function MenuIcon({ size = 20, color }: { size?: number; color?: string }) {
+  const th = useTheme();
+  color = color ?? th.brandText;
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M4 7h16M4 12h16M4 17h16" stroke={color} strokeWidth={2} strokeLinecap="round" />
@@ -68,7 +70,9 @@ function MenuIcon({ size = 20, color = colors.brandText }: { size?: number; colo
   );
 }
 
-function SearchSvgIcon({ size = 20, color = colors.brandText }: { size?: number; color?: string }) {
+function SearchSvgIcon({ size = 20, color }: { size?: number; color?: string }) {
+  const th = useTheme();
+  color = color ?? th.brandText;
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx={11} cy={11} r={7} stroke={color} strokeWidth={2} />
@@ -100,6 +104,8 @@ function createMonthCells(cursor: dayjs.Dayjs): Array<number | null> {
 }
 
 export function MonthScreen({ navigation, route }: Props) {
+  const th = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const tabBottomPadding = useTabContentBottomPadding();
@@ -341,7 +347,7 @@ export function MonthScreen({ navigation, route }: Props) {
           accessibilityRole="button"
           accessibilityLabel={t('a11y.openSettings')}
         >
-          <MenuIcon size={22} color={colors.brandText} />
+          <MenuIcon size={22} color={th.brandText} />
         </Pressable>
       ),
       headerRight: () => (
@@ -351,7 +357,7 @@ export function MonthScreen({ navigation, route }: Props) {
           accessibilityRole="button"
           accessibilityLabel={t('a11y.search')}
         >
-          <SearchSvgIcon size={22} color={colors.brandText} />
+          <SearchSvgIcon size={22} color={th.brandText} />
         </Pressable>
       ),
       headerTitle: () => (
@@ -504,12 +510,12 @@ export function MonthScreen({ navigation, route }: Props) {
               accessibilityRole="button"
               accessibilityLabel={t('a11y.openSettings')}
             >
-              <MenuIcon size={20} color={colors.brandText} />
+              <MenuIcon size={20} color={th.brandText} />
             </Pressable>
 
             <View style={styles.headerCenter}>
               <View style={styles.headerLine} />
-              <ByzantineKnot size={14} color={colors.accentBright} />
+              <ByzantineKnot size={14} color={th.accentBright} />
               <Pressable
                 style={styles.headerBrandPress}
                 onPress={handleBrandTap}
@@ -519,7 +525,7 @@ export function MonthScreen({ navigation, route }: Props) {
               >
                 <Text style={styles.headerBrand}>ORTHODOX KOREA</Text>
               </Pressable>
-              <ByzantineKnot size={14} color={colors.accentBright} />
+              <ByzantineKnot size={14} color={th.accentBright} />
               <View style={styles.headerLine} />
             </View>
 
@@ -530,7 +536,7 @@ export function MonthScreen({ navigation, route }: Props) {
               accessibilityRole="button"
               accessibilityLabel={t('a11y.search')}
             >
-              <SearchSvgIcon size={20} color={colors.brandText} />
+              <SearchSvgIcon size={20} color={th.brandText} />
             </Pressable>
           </View>
           <View style={styles.headerGoldLine} />
@@ -552,7 +558,7 @@ export function MonthScreen({ navigation, route }: Props) {
             accessibilityRole="button"
             accessibilityLabel={t('a11y.previousMonth')}
           >
-            <ByzantineArrow direction="left" size={20} color={colors.accent} />
+            <ByzantineArrow direction="left" size={20} color={th.accent} />
           </Pressable>
           <Text style={styles.monthLabel}>{cursor.locale(language).format('MMMM YYYY')}</Text>
           <Pressable
@@ -562,7 +568,7 @@ export function MonthScreen({ navigation, route }: Props) {
             accessibilityRole="button"
             accessibilityLabel={t('a11y.nextMonth')}
           >
-            <ByzantineArrow direction="right" size={20} color={colors.accent} />
+            <ByzantineArrow direction="right" size={20} color={th.accent} />
           </Pressable>
         </View>
 
@@ -624,7 +630,7 @@ export function MonthScreen({ navigation, route }: Props) {
                       <View
                         style={[
                           styles.pip,
-                          { backgroundColor: isSelected ? colors.accentPale : colors.pipFast },
+                          { backgroundColor: isSelected ? th.accentPale : th.pipFast },
                         ]}
                       />
                     ) : null}
@@ -632,7 +638,7 @@ export function MonthScreen({ navigation, route }: Props) {
                       <View
                         style={[
                           styles.pip,
-                          { backgroundColor: isSelected ? colors.accentPale : colors.pipLiturgy },
+                          { backgroundColor: isSelected ? th.accentPale : th.pipLiturgy },
                         ]}
                       />
                     ) : null}
@@ -640,7 +646,7 @@ export function MonthScreen({ navigation, route }: Props) {
                       <View
                         style={[
                           styles.pip,
-                          { backgroundColor: isSelected ? colors.accentPale : colors.pipEvent },
+                          { backgroundColor: isSelected ? th.accentPale : th.pipEvent },
                         ]}
                       />
                     ) : null}
@@ -897,28 +903,28 @@ export function MonthScreen({ navigation, route }: Props) {
                 onChangeText={setTitleEn}
                 placeholder={t('month.titleEnPlaceholder')}
                 style={styles.input}
-                placeholderTextColor={colors.textSecondary}
+                placeholderTextColor={th.textSecondary}
               />
               <TextInput
                 value={titleKo}
                 onChangeText={setTitleKo}
                 placeholder={t('month.titleKoPlaceholder')}
                 style={styles.input}
-                placeholderTextColor={colors.textSecondary}
+                placeholderTextColor={th.textSecondary}
               />
               <TextInput
                 value={summaryEn}
                 onChangeText={setSummaryEn}
                 placeholder={t('month.summaryEnPlaceholder')}
                 style={styles.input}
-                placeholderTextColor={colors.textSecondary}
+                placeholderTextColor={th.textSecondary}
               />
               <TextInput
                 value={summaryKo}
                 onChangeText={setSummaryKo}
                 placeholder={t('month.summaryKoPlaceholder')}
                 style={styles.input}
-                placeholderTextColor={colors.textSecondary}
+                placeholderTextColor={th.textSecondary}
               />
               <TextInput
                 value={detailsEn}
@@ -926,7 +932,7 @@ export function MonthScreen({ navigation, route }: Props) {
                 placeholder={t('month.detailsEnPlaceholder')}
                 style={[styles.input, styles.inputMultiline]}
                 multiline
-                placeholderTextColor={colors.textSecondary}
+                placeholderTextColor={th.textSecondary}
               />
               <TextInput
                 value={detailsKo}
@@ -934,7 +940,7 @@ export function MonthScreen({ navigation, route }: Props) {
                 placeholder={t('month.detailsKoPlaceholder')}
                 style={[styles.input, styles.inputMultiline]}
                 multiline
-                placeholderTextColor={colors.textSecondary}
+                placeholderTextColor={th.textSecondary}
               />
 
               <Text style={styles.formLabel}>{t('month.recurrence.title')}</Text>
@@ -1023,7 +1029,7 @@ export function MonthScreen({ navigation, route }: Props) {
             <TextInput
               style={styles.searchInput}
               placeholder={t('today.searchPlaceholder')}
-              placeholderTextColor={colors.textSecondary}
+              placeholderTextColor={th.textSecondary}
               value={searchQuery}
               onChangeText={setSearchQuery}
               autoCapitalize="none"
@@ -1095,663 +1101,664 @@ export function MonthScreen({ navigation, route }: Props) {
 // the card and clipped the close button).
 const WINDOW_HEIGHT = Dimensions.get('window').height;
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  scrollArea: {
-    flex: 1,
-  },
-  content: {
-    gap: spacing.md,
-  },
-  pressed: {
-    opacity: 0.7,
-  },
+const makeStyles = (th: ResolvedTheme) =>
+  ({
+    container: {
+      flex: 1,
+      backgroundColor: th.background,
+    },
+    scrollArea: {
+      flex: 1,
+    },
+    content: {
+      gap: spacing.md,
+    },
+    pressed: {
+      opacity: 0.7,
+    },
 
-  // ─── Header ────────────────────────────────────────────────────────────────
-  header: {
-    backgroundColor: colors.primaryDeep,
-    paddingBottom: 0,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.sm,
-    gap: spacing.sm,
-  },
-  headerIconButton: {
-    width: 36,
-    height: 36,
-    borderRadius: radii.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.accentSubtle,
-  },
-  headerCenter: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  headerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.accentLine,
-  },
-  // See the twin comment in TodayScreen: the Pressable must shrink too, or the
-  // Text's own flexShrink is inert and the search button is pushed off-screen.
-  headerBrandPress: {
-    flexShrink: 1,
-  },
-  headerBrand: {
-    color: colors.brandText,
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.xs,
-    letterSpacing: 1.2,
-    textAlign: 'center',
-    flexShrink: 1,
-  },
-  nativeHeaderTitle: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.lg,
-    color: colors.brandText,
-    letterSpacing: 1,
-  },
-  headerGoldLine: {
-    height: 2,
-    backgroundColor: colors.accent,
-    opacity: 0.7,
-  },
+    // ─── Header ────────────────────────────────────────────────────────────────
+    header: {
+      backgroundColor: th.primaryDeep,
+      paddingBottom: 0,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: spacing.md,
+      paddingBottom: spacing.sm,
+      gap: spacing.sm,
+    },
+    headerIconButton: {
+      width: 36,
+      height: 36,
+      borderRadius: radii.full,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: th.accentSubtle,
+    },
+    headerCenter: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.xs,
+    },
+    headerLine: {
+      flex: 1,
+      height: 1,
+      backgroundColor: th.accentLine,
+    },
+    // See the twin comment in TodayScreen: the Pressable must shrink too, or the
+    // Text's own flexShrink is inert and the search button is pushed off-screen.
+    headerBrandPress: {
+      flexShrink: 1,
+    },
+    headerBrand: {
+      color: th.brandText,
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.xs,
+      letterSpacing: 1.2,
+      textAlign: 'center',
+      flexShrink: 1,
+    },
+    nativeHeaderTitle: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.lg,
+      color: th.brandText,
+      letterSpacing: 1,
+    },
+    headerGoldLine: {
+      height: 2,
+      backgroundColor: th.accent,
+      opacity: 0.7,
+    },
 
-  // ─── Month navigator ───────────────────────────────────────────────────────
-  monthNav: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.full,
-    backgroundColor: colors.surface,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    marginHorizontal: spacing.lg,
-    marginTop: spacing.md,
-  },
-  monthArrowButton: {
-    width: 36,
-    height: 36,
-    borderRadius: radii.full,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surfaceWhite,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  monthLabel: {
-    flex: 1,
-    textAlign: 'center',
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.lg,
-    color: colors.textPrimary,
-  },
+    // ─── Month navigator ───────────────────────────────────────────────────────
+    monthNav: {
+      borderWidth: 1,
+      borderColor: th.border,
+      borderRadius: radii.full,
+      backgroundColor: th.surface,
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: spacing.sm,
+      paddingVertical: spacing.xs,
+      marginHorizontal: spacing.lg,
+      marginTop: spacing.md,
+    },
+    monthArrowButton: {
+      width: 36,
+      height: 36,
+      borderRadius: radii.full,
+      borderWidth: 1,
+      borderColor: th.border,
+      backgroundColor: th.surfaceWhite,
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0,
+    },
+    monthLabel: {
+      flex: 1,
+      textAlign: 'center',
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.lg,
+      color: th.textPrimary,
+    },
 
-  // ─── Grid card ─────────────────────────────────────────────────────────────
-  gridCard: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.lg,
-    backgroundColor: colors.surface,
-    overflow: 'hidden',
-    marginHorizontal: spacing.lg,
-  },
-  weekHeaderRow: {
-    flexDirection: 'row',
-    backgroundColor: colors.primaryDeep,
-    borderBottomWidth: 2,
-    borderBottomColor: colors.accent,
-  },
-  weekHeaderText: {
-    flex: 1,
-    textAlign: 'center',
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.xs,
-    color: colors.brandText,
-    paddingVertical: spacing.sm,
-    letterSpacing: 0.3,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  cell: {
-    width: '14.2857%',
-    minHeight: 56,
-    borderWidth: 0.5,
-    borderColor: colors.borderLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.surfaceWhite,
-    paddingVertical: 4,
-    gap: 2,
-  },
-  emptyCell: {
-    backgroundColor: colors.surface,
-  },
-  cellHigh: {
-    backgroundColor: colors.crimsonTint,
-  },
-  cellFeast: {
-    backgroundColor: colors.accentGlow,
-  },
-  cellToday: {
-    borderColor: colors.accent,
-    borderWidth: 2,
-  },
-  cellSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primaryDeep,
-    borderWidth: 1.5,
-  },
-  cellDay: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: colors.textPrimary,
-  },
-  cellDayHigh: {
-    color: colors.danger,
-    fontFamily: typography.family.heading,
-    fontWeight: typography.weight.bold,
-  },
-  cellDaySaturday: {
-    color: colors.blue,
-    fontFamily: typography.family.heading,
-    fontWeight: typography.weight.bold,
-  },
-  cellDaySelected: {
-    color: colors.surfaceWhite,
-    fontFamily: typography.family.heading,
-    fontWeight: typography.weight.bold,
-  },
-  cellPipRow: {
-    flexDirection: 'row',
-    gap: 3,
-    height: 6,
-    alignItems: 'center',
-  },
-  pip: {
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-  },
+    // ─── Grid card ─────────────────────────────────────────────────────────────
+    gridCard: {
+      borderWidth: 1,
+      borderColor: th.border,
+      borderRadius: radii.lg,
+      backgroundColor: th.surface,
+      overflow: 'hidden',
+      marginHorizontal: spacing.lg,
+    },
+    weekHeaderRow: {
+      flexDirection: 'row',
+      backgroundColor: th.primaryDeep,
+      borderBottomWidth: 2,
+      borderBottomColor: th.accent,
+    },
+    weekHeaderText: {
+      flex: 1,
+      textAlign: 'center',
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.xs,
+      color: th.brandText,
+      paddingVertical: spacing.sm,
+      letterSpacing: 0.3,
+    },
+    grid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+    },
+    cell: {
+      width: '14.2857%',
+      minHeight: 56,
+      borderWidth: 0.5,
+      borderColor: th.borderLight,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: th.surfaceWhite,
+      paddingVertical: 4,
+      gap: 2,
+    },
+    emptyCell: {
+      backgroundColor: th.surface,
+    },
+    cellHigh: {
+      backgroundColor: th.crimsonTint,
+    },
+    cellFeast: {
+      backgroundColor: th.accentGlow,
+    },
+    cellToday: {
+      borderColor: th.accent,
+      borderWidth: 2,
+    },
+    cellSelected: {
+      backgroundColor: th.fillStrong,
+      borderColor: th.primaryDeep,
+      borderWidth: 1.5,
+    },
+    cellDay: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: th.textPrimary,
+    },
+    cellDayHigh: {
+      color: th.danger,
+      fontFamily: typography.family.heading,
+      fontWeight: typography.weight.bold,
+    },
+    cellDaySaturday: {
+      color: th.blue,
+      fontFamily: typography.family.heading,
+      fontWeight: typography.weight.bold,
+    },
+    cellDaySelected: {
+      color: th.surfaceWhite,
+      fontFamily: typography.family.heading,
+      fontWeight: typography.weight.bold,
+    },
+    cellPipRow: {
+      flexDirection: 'row',
+      gap: 3,
+      height: 6,
+      alignItems: 'center',
+    },
+    pip: {
+      width: 5,
+      height: 5,
+      borderRadius: 3,
+    },
 
-  // ─── Selection bar ─────────────────────────────────────────────────────────
-  selectionBar: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    backgroundColor: colors.surfaceWhite,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    marginHorizontal: spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.md,
-  },
-  selectionBarToday: {
-    borderColor: colors.accent,
-    backgroundColor: colors.accentGlow,
-  },
-  selectionDate: {
-    flex: 1,
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.md,
-    color: colors.primary,
-  },
-  selectionTodayButton: {
-    borderWidth: 1,
-    borderColor: colors.accent,
-    borderRadius: radii.full,
-    backgroundColor: colors.accentGlow,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.md,
-    flexShrink: 0,
-  },
-  selectionTodayButtonText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.xs,
-    color: colors.primaryDeep,
-    fontWeight: typography.weight.semibold,
-  },
+    // ─── Selection bar ─────────────────────────────────────────────────────────
+    selectionBar: {
+      borderWidth: 1,
+      borderColor: th.border,
+      borderRadius: radii.md,
+      backgroundColor: th.surfaceWhite,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.md,
+      marginHorizontal: spacing.lg,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: spacing.md,
+    },
+    selectionBarToday: {
+      borderColor: th.accent,
+      backgroundColor: th.accentGlow,
+    },
+    selectionDate: {
+      flex: 1,
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.md,
+      color: th.primary,
+    },
+    selectionTodayButton: {
+      borderWidth: 1,
+      borderColor: th.accent,
+      borderRadius: radii.full,
+      backgroundColor: th.accentGlow,
+      paddingVertical: spacing.xs,
+      paddingHorizontal: spacing.md,
+      flexShrink: 0,
+    },
+    selectionTodayButtonText: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.xs,
+      color: th.onAccent,
+      fontWeight: typography.weight.semibold,
+    },
 
-  warningText: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    marginHorizontal: spacing.lg,
-    backgroundColor: colors.surfaceWhite,
-    fontFamily: typography.family.body,
-    color: colors.textSecondary,
-    fontSize: typography.size.sm,
-    textAlign: 'center',
-  },
+    warningText: {
+      borderWidth: 1,
+      borderColor: th.border,
+      borderRadius: radii.md,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.md,
+      marginHorizontal: spacing.lg,
+      backgroundColor: th.surfaceWhite,
+      fontFamily: typography.family.body,
+      color: th.textSecondary,
+      fontSize: typography.size.sm,
+      textAlign: 'center',
+    },
 
-  manuscriptFrame: {
-    marginHorizontal: spacing.lg,
-  },
+    manuscriptFrame: {
+      marginHorizontal: spacing.lg,
+    },
 
-  // ─── Admin section ─────────────────────────────────────────────────────────
-  adminCard: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    backgroundColor: colors.surface,
-    padding: spacing.md,
-    gap: spacing.sm,
-    marginHorizontal: spacing.lg,
-  },
-  adminTitle: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.md,
-    color: colors.primary,
-  },
-  adminSyncText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.xs,
-    color: colors.textSecondary,
-  },
-  adminPrimaryButton: {
-    borderRadius: radii.md,
-    backgroundColor: colors.primary,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-  },
-  adminPrimaryButtonText: {
-    color: colors.surfaceWhite,
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    textAlign: 'center',
-  },
-  adminRow: {
-    borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
-    paddingTop: spacing.sm,
-    gap: spacing.xs,
-  },
-  adminRowTitle: {
-    fontFamily: typography.family.body,
-    color: colors.textBody,
-    fontSize: typography.size.sm,
-  },
-  adminRowMeta: {
-    fontFamily: typography.family.body,
-    color: colors.textSecondary,
-    fontSize: typography.size.xs,
-  },
-  adminRowActions: {
-    flexDirection: 'row',
-    gap: spacing.xs,
-  },
-  adminGhostButton: {
-    borderWidth: 1,
-    borderColor: colors.primary,
-    borderRadius: radii.full,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-  },
-  adminGhostButtonText: {
-    color: colors.primary,
-    fontFamily: typography.family.body,
-    fontSize: typography.size.xs,
-  },
-  adminDangerButton: {
-    borderWidth: 1,
-    borderColor: colors.danger,
-    borderRadius: radii.full,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-  },
-  adminDangerButtonText: {
-    color: colors.danger,
-    fontFamily: typography.family.body,
-    fontSize: typography.size.xs,
-  },
+    // ─── Admin section ─────────────────────────────────────────────────────────
+    adminCard: {
+      borderWidth: 1,
+      borderColor: th.border,
+      borderRadius: radii.md,
+      backgroundColor: th.surface,
+      padding: spacing.md,
+      gap: spacing.sm,
+      marginHorizontal: spacing.lg,
+    },
+    adminTitle: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.md,
+      color: th.primary,
+    },
+    adminSyncText: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.xs,
+      color: th.textSecondary,
+    },
+    adminPrimaryButton: {
+      borderRadius: radii.md,
+      backgroundColor: th.fillStrong,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.md,
+    },
+    adminPrimaryButtonText: {
+      color: th.surfaceWhite,
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      textAlign: 'center',
+    },
+    adminRow: {
+      borderTopWidth: 1,
+      borderTopColor: th.borderLight,
+      paddingTop: spacing.sm,
+      gap: spacing.xs,
+    },
+    adminRowTitle: {
+      fontFamily: typography.family.body,
+      color: th.textBody,
+      fontSize: typography.size.sm,
+    },
+    adminRowMeta: {
+      fontFamily: typography.family.body,
+      color: th.textSecondary,
+      fontSize: typography.size.xs,
+    },
+    adminRowActions: {
+      flexDirection: 'row',
+      gap: spacing.xs,
+    },
+    adminGhostButton: {
+      borderWidth: 1,
+      borderColor: th.fillStrong,
+      borderRadius: radii.full,
+      paddingVertical: spacing.xs,
+      paddingHorizontal: spacing.sm,
+    },
+    adminGhostButtonText: {
+      color: th.primary,
+      fontFamily: typography.family.body,
+      fontSize: typography.size.xs,
+    },
+    adminDangerButton: {
+      borderWidth: 1,
+      borderColor: th.danger,
+      borderRadius: radii.full,
+      paddingVertical: spacing.xs,
+      paddingHorizontal: spacing.sm,
+    },
+    adminDangerButtonText: {
+      color: th.danger,
+      fontFamily: typography.family.body,
+      fontSize: typography.size.xs,
+    },
 
-  // ─── Editor modal ──────────────────────────────────────────────────────────
-  editorBackdrop: {
-    flex: 1,
-    backgroundColor: colors.backdropDark,
-    justifyContent: 'center',
-    padding: spacing.lg,
-  },
-  editorScrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-  },
-  editorCard: {
-    borderRadius: radii.lg,
-    backgroundColor: colors.surfaceWhite,
-    borderWidth: 1,
-    borderColor: colors.border,
-    overflow: 'hidden',
-  },
-  editorHeader: {
-    backgroundColor: colors.primaryDeep,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderBottomWidth: 2,
-    borderBottomColor: colors.accent,
-  },
-  editorTitle: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.lg,
-    color: colors.brandText,
-  },
-  editorDate: {
-    fontFamily: typography.family.body,
-    color: colors.textSecondary,
-    fontSize: typography.size.sm,
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: colors.textBody,
-    backgroundColor: colors.surface,
-    marginHorizontal: spacing.md,
-    marginTop: spacing.sm,
-  },
-  inputMultiline: {
-    minHeight: 72,
-    textAlignVertical: 'top',
-  },
-  datePickerTrigger: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  datePickerTriggerText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: colors.textBody,
-    flexShrink: 1,
-  },
-  datePickerTriggerIcon: {
-    fontSize: 16,
-  },
-  datePickerInline: {
-    marginHorizontal: spacing.md,
-    marginTop: spacing.xs,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.xs,
-  },
-  datePickerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.md,
-  },
-  datePickerSegment: {
-    alignItems: 'center',
-    flexShrink: 1,
-  },
-  datePickerStepper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 2,
-  },
-  datePickerLabel: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.xs,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: 2,
-  },
-  datePickerArrow: {
-    width: 28,
-    height: 28,
-    borderRadius: radii.sm,
-    backgroundColor: colors.primaryDeep,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  datePickerArrowText: {
-    color: colors.brandText,
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  datePickerValue: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: colors.textBody,
-    textAlign: 'center',
-    paddingHorizontal: 2,
-    flexShrink: 1,
-  },
-  datePickerDone: {
-    marginTop: spacing.sm,
-    alignSelf: 'center',
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.md,
-    borderRadius: radii.sm,
-    backgroundColor: colors.primaryDeep,
-  },
-  datePickerDoneText: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.sm,
-    color: colors.brandText,
-  },
-  formLabel: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.xs,
-    color: colors.textSecondary,
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
-  },
-  optionRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.xs,
-  },
-  optionPill: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.full,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    backgroundColor: colors.surface,
-  },
-  optionPillActive: {
-    borderColor: colors.accent,
-    backgroundColor: colors.accentGlow,
-  },
-  optionPillText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.xs,
-    color: colors.primary,
-  },
-  optionPillTextActive: {
-    color: colors.primaryDeep,
-    fontWeight: typography.weight.semibold,
-  },
-  checkboxRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
-  },
-  checkboxBox: {
-    width: 18,
-    height: 18,
-    flexShrink: 0,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.surface,
-  },
-  checkboxBoxActive: {
-    borderColor: colors.accent,
-    backgroundColor: colors.accentGlow,
-  },
-  checkboxTick: {
-    color: colors.primaryDeep,
-    fontSize: 12,
-    fontFamily: typography.family.body,
-  },
-  checkboxText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: colors.textBody,
-    flexShrink: 1,
-  },
-  editorActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: spacing.sm,
-    padding: spacing.md,
-  },
-  editorCancel: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.full,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.md,
-  },
-  editorCancelText: {
-    color: colors.textSecondary,
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-  },
-  editorSave: {
-    borderRadius: radii.full,
-    backgroundColor: colors.primary,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.md,
-  },
-  editorSaveText: {
-    color: colors.surfaceWhite,
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-  },
+    // ─── Editor modal ──────────────────────────────────────────────────────────
+    editorBackdrop: {
+      flex: 1,
+      backgroundColor: th.backdropDark,
+      justifyContent: 'center',
+      padding: spacing.lg,
+    },
+    editorScrollContent: {
+      flexGrow: 1,
+      justifyContent: 'center',
+    },
+    editorCard: {
+      borderRadius: radii.lg,
+      backgroundColor: th.surfaceWhite,
+      borderWidth: 1,
+      borderColor: th.border,
+      overflow: 'hidden',
+    },
+    editorHeader: {
+      backgroundColor: th.primaryDeep,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.md,
+      borderBottomWidth: 2,
+      borderBottomColor: th.accent,
+    },
+    editorTitle: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.lg,
+      color: th.brandText,
+    },
+    editorDate: {
+      fontFamily: typography.family.body,
+      color: th.textSecondary,
+      fontSize: typography.size.sm,
+      paddingHorizontal: spacing.md,
+      paddingTop: spacing.sm,
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: th.border,
+      borderRadius: radii.md,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.sm,
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: th.textBody,
+      backgroundColor: th.surface,
+      marginHorizontal: spacing.md,
+      marginTop: spacing.sm,
+    },
+    inputMultiline: {
+      minHeight: 72,
+      textAlignVertical: 'top',
+    },
+    datePickerTrigger: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    datePickerTriggerText: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: th.textBody,
+      flexShrink: 1,
+    },
+    datePickerTriggerIcon: {
+      fontSize: 16,
+    },
+    datePickerInline: {
+      marginHorizontal: spacing.md,
+      marginTop: spacing.xs,
+      backgroundColor: th.surface,
+      borderWidth: 1,
+      borderColor: th.border,
+      borderRadius: radii.md,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.xs,
+    },
+    datePickerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: spacing.md,
+    },
+    datePickerSegment: {
+      alignItems: 'center',
+      flexShrink: 1,
+    },
+    datePickerStepper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 2,
+    },
+    datePickerLabel: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.xs,
+      color: th.textSecondary,
+      textAlign: 'center',
+      marginBottom: 2,
+    },
+    datePickerArrow: {
+      width: 28,
+      height: 28,
+      borderRadius: radii.sm,
+      backgroundColor: th.primaryDeep,
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0,
+    },
+    datePickerArrowText: {
+      color: th.brandText,
+      fontSize: 15,
+      fontWeight: '700',
+    },
+    datePickerValue: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: th.textBody,
+      textAlign: 'center',
+      paddingHorizontal: 2,
+      flexShrink: 1,
+    },
+    datePickerDone: {
+      marginTop: spacing.sm,
+      alignSelf: 'center',
+      paddingVertical: spacing.xs,
+      paddingHorizontal: spacing.md,
+      borderRadius: radii.sm,
+      backgroundColor: th.primaryDeep,
+    },
+    datePickerDoneText: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.sm,
+      color: th.brandText,
+    },
+    formLabel: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.xs,
+      color: th.textSecondary,
+      paddingHorizontal: spacing.md,
+      paddingTop: spacing.sm,
+    },
+    optionRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.xs,
+      paddingHorizontal: spacing.md,
+      paddingTop: spacing.xs,
+    },
+    optionPill: {
+      borderWidth: 1,
+      borderColor: th.border,
+      borderRadius: radii.full,
+      paddingVertical: spacing.xs,
+      paddingHorizontal: spacing.sm,
+      backgroundColor: th.surface,
+    },
+    optionPillActive: {
+      borderColor: th.accent,
+      backgroundColor: th.accentGlow,
+    },
+    optionPillText: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.xs,
+      color: th.primary,
+    },
+    optionPillTextActive: {
+      color: th.onAccent,
+      fontWeight: typography.weight.semibold,
+    },
+    checkboxRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      paddingHorizontal: spacing.md,
+      paddingTop: spacing.sm,
+    },
+    checkboxBox: {
+      width: 18,
+      height: 18,
+      flexShrink: 0,
+      borderWidth: 1,
+      borderColor: th.border,
+      borderRadius: radii.sm,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: th.surface,
+    },
+    checkboxBoxActive: {
+      borderColor: th.accent,
+      backgroundColor: th.accentGlow,
+    },
+    checkboxTick: {
+      color: th.onAccent,
+      fontSize: 12,
+      fontFamily: typography.family.body,
+    },
+    checkboxText: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: th.textBody,
+      flexShrink: 1,
+    },
+    editorActions: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      gap: spacing.sm,
+      padding: spacing.md,
+    },
+    editorCancel: {
+      borderWidth: 1,
+      borderColor: th.border,
+      borderRadius: radii.full,
+      paddingVertical: spacing.xs,
+      paddingHorizontal: spacing.md,
+    },
+    editorCancelText: {
+      color: th.textSecondary,
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+    },
+    editorSave: {
+      borderRadius: radii.full,
+      backgroundColor: th.fillStrong,
+      paddingVertical: spacing.xs,
+      paddingHorizontal: spacing.md,
+    },
+    editorSaveText: {
+      color: th.surfaceWhite,
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+    },
 
-  // ─── Search modal ──────────────────────────────────────────────────────────
-  searchBackdrop: {
-    flex: 1,
-    backgroundColor: colors.backdropDark,
-    justifyContent: 'center',
-    paddingHorizontal: spacing.lg,
-  },
-  searchCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    maxHeight: WINDOW_HEIGHT * 0.7,
-    overflow: 'hidden',
-  },
-  searchModalHeader: {
-    backgroundColor: colors.primaryDeep,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-  },
-  searchModalTitle: {
-    color: colors.brandText,
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.md,
-    textAlign: 'center',
-  },
-  searchInput: {
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    fontFamily: typography.family.body,
-    fontSize: typography.size.md,
-    color: colors.textBody,
-  },
-  searchList: {
-    // Shrink the results list so the header, input, and close button stay visible
-    // (close button was being clipped). Scrolls within whatever space remains.
-    flexShrink: 1,
-  },
-  searchListContent: {
-    padding: spacing.md,
-    gap: spacing.sm,
-  },
-  searchHint: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    paddingVertical: spacing.lg,
-  },
-  searchResultItem: {
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    borderLeftWidth: 3,
-    borderLeftColor: colors.accent,
-    borderRadius: radii.md,
-    padding: spacing.sm,
-    backgroundColor: colors.surfaceWhite,
-    gap: spacing.xs,
-  },
-  searchResultTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  searchResultKind: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.xxs,
-    color: colors.accent,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    flexShrink: 0,
-  },
-  searchResultDate: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.xxs,
-    color: colors.textSecondary,
-    flexShrink: 1,
-    textAlign: 'right',
-  },
-  searchResultLabel: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.sm,
-    color: colors.textBody,
-  },
-  searchCloseButton: {
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    alignItems: 'center',
-  },
-  searchCloseButtonText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.md,
-    color: colors.primary,
-  },
-});
+    // ─── Search modal ──────────────────────────────────────────────────────────
+    searchBackdrop: {
+      flex: 1,
+      backgroundColor: th.backdropDark,
+      justifyContent: 'center',
+      paddingHorizontal: spacing.lg,
+    },
+    searchCard: {
+      backgroundColor: th.surface,
+      borderRadius: radii.lg,
+      borderWidth: 1,
+      borderColor: th.border,
+      maxHeight: WINDOW_HEIGHT * 0.7,
+      overflow: 'hidden',
+    },
+    searchModalHeader: {
+      backgroundColor: th.primaryDeep,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.md,
+    },
+    searchModalTitle: {
+      color: th.brandText,
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.md,
+      textAlign: 'center',
+    },
+    searchInput: {
+      borderBottomWidth: 1,
+      borderBottomColor: th.border,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.md,
+      fontFamily: typography.family.body,
+      fontSize: typography.size.md,
+      color: th.textBody,
+    },
+    searchList: {
+      // Shrink the results list so the header, input, and close button stay visible
+      // (close button was being clipped). Scrolls within whatever space remains.
+      flexShrink: 1,
+    },
+    searchListContent: {
+      padding: spacing.md,
+      gap: spacing.sm,
+    },
+    searchHint: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: th.textSecondary,
+      textAlign: 'center',
+      paddingVertical: spacing.lg,
+    },
+    searchResultItem: {
+      borderWidth: 1,
+      borderColor: th.borderLight,
+      borderLeftWidth: 3,
+      borderLeftColor: th.accent,
+      borderRadius: radii.md,
+      padding: spacing.sm,
+      backgroundColor: th.surfaceWhite,
+      gap: spacing.xs,
+    },
+    searchResultTopRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    searchResultKind: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.xxs,
+      color: th.accent,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+      flexShrink: 0,
+    },
+    searchResultDate: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.xxs,
+      color: th.textSecondary,
+      flexShrink: 1,
+      textAlign: 'right',
+    },
+    searchResultLabel: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.sm,
+      color: th.textBody,
+    },
+    searchCloseButton: {
+      borderTopWidth: 1,
+      borderTopColor: th.border,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.md,
+      alignItems: 'center',
+    },
+    searchCloseButtonText: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.md,
+      color: th.primary,
+    },
+  }) as const;

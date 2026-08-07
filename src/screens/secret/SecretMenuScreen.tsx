@@ -41,7 +41,7 @@ import {
 import { secureStorage } from '../../services/storage/secureStorage';
 import { useAppStore } from '../../store/useAppStore';
 import { useEventsStore } from '../../features/events/useEventsStore';
-import { colors } from '../../theme/colors';
+import { useTheme, useThemedStyles, type ResolvedTheme } from '../../theme/useTheme';
 import { radii, spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 
@@ -68,6 +68,7 @@ function Section({
   children: React.ReactNode;
   defaultOpen?: boolean;
 }) {
+  const styles = useThemedStyles(makeStyles);
   const [open, setOpen] = useState(defaultOpen);
   return (
     <View style={styles.section}>
@@ -82,6 +83,7 @@ function Section({
 
 // ─── Main Screen ─────────────────────────────────────────────────────
 export function SecretMenuScreen({ navigation }: Props) {
+  const styles = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
   const setSecretMenuUnlocked = useAppStore((s) => s.setSecretMenuUnlocked);
   const setCloudflareAdminAuthenticated = useAppStore((s) => s.setCloudflareAdminAuthenticated);
@@ -2163,6 +2165,7 @@ function ActionButton({
   disabled: boolean;
   danger?: boolean;
 }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <Pressable
       style={({ pressed }) => [
@@ -2190,400 +2193,401 @@ function ActionButton({
 // ═════════════════════════════════════════════════════════════════
 //  Styles
 // ═════════════════════════════════════════════════════════════════
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0d1117',
-  },
-  titleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    marginBottom: spacing.xs,
-  },
-  title: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.xl,
-    color: '#58a6ff',
-  },
-  backBtn: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-  },
-  backBtnText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: '#8b949e',
-  },
-  pressed: { opacity: 0.6 },
+const makeStyles = (th: ResolvedTheme) =>
+  ({
+    container: {
+      flex: 1,
+      backgroundColor: '#0d1117',
+    },
+    titleRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: spacing.md,
+      marginBottom: spacing.xs,
+    },
+    title: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.xl,
+      color: '#58a6ff',
+    },
+    backBtn: {
+      paddingHorizontal: spacing.sm,
+      paddingVertical: spacing.xs,
+    },
+    backBtnText: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: '#8b949e',
+    },
+    pressed: { opacity: 0.6 },
 
-  // ── Main scroll ──
-  mainScroll: { flex: 1 },
-  mainContent: { paddingHorizontal: spacing.md, paddingBottom: spacing.xl },
+    // ── Main scroll ──
+    mainScroll: { flex: 1 },
+    mainContent: { paddingHorizontal: spacing.md, paddingBottom: spacing.xl },
 
-  // ── Sections ──
-  section: { marginTop: spacing.sm },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.xs,
-  },
-  sectionChevron: {
-    fontSize: 10,
-    color: '#484f58',
-    width: 18,
-  },
-  sectionLabel: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.sm,
-    color: '#8b949e',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  sectionBody: { paddingLeft: 4, paddingTop: 2 },
+    // ── Sections ──
+    section: { marginTop: spacing.sm },
+    sectionHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: spacing.xs,
+    },
+    sectionChevron: {
+      fontSize: 10,
+      color: '#484f58',
+      width: 18,
+    },
+    sectionLabel: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.sm,
+      color: '#8b949e',
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+    },
+    sectionBody: { paddingLeft: 4, paddingTop: 2 },
 
-  // ── Action buttons ──
-  actionBtn: {
-    backgroundColor: '#161b22',
-    borderWidth: 1,
-    borderColor: '#30363d',
-    borderRadius: radii.md,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    marginBottom: 4,
-  },
-  actionBtnDisabled: { opacity: 0.35 },
-  actionBtnDanger: { borderColor: '#da3633' },
-  actionBtnText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: '#c9d1d9',
-  },
-  actionBtnTextDisabled: { color: '#484f58' },
-  actionBtnTextDanger: { color: '#f85149' },
+    // ── Action buttons ──
+    actionBtn: {
+      backgroundColor: '#161b22',
+      borderWidth: 1,
+      borderColor: '#30363d',
+      borderRadius: radii.md,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.md,
+      marginBottom: 4,
+    },
+    actionBtnDisabled: { opacity: 0.35 },
+    actionBtnDanger: { borderColor: '#da3633' },
+    actionBtnText: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: '#c9d1d9',
+    },
+    actionBtnTextDisabled: { color: '#484f58' },
+    actionBtnTextDanger: { color: '#f85149' },
 
-  // ── Divider ──
-  divider: { height: 1, backgroundColor: '#21262d', marginVertical: spacing.md },
+    // ── Divider ──
+    divider: { height: 1, backgroundColor: '#21262d', marginVertical: spacing.md },
 
-  // ── Console ──
-  consoleHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: spacing.xs,
-  },
-  consoleSectionLabel: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.xs,
-    color: '#8b949e',
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
-  },
-  consoleActions: { flexDirection: 'row', gap: spacing.xs },
-  consoleMiniBtn: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: radii.sm,
-    borderWidth: 1,
-    borderColor: '#30363d',
-  },
-  consoleMiniBtnText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.xs,
-    color: '#8b949e',
-  },
+    // ── Console ──
+    consoleHeaderRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: spacing.xs,
+    },
+    consoleSectionLabel: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.xs,
+      color: '#8b949e',
+      textTransform: 'uppercase',
+      letterSpacing: 1.2,
+    },
+    consoleActions: { flexDirection: 'row', gap: spacing.xs },
+    consoleMiniBtn: {
+      paddingHorizontal: spacing.sm,
+      paddingVertical: 2,
+      borderRadius: radii.sm,
+      borderWidth: 1,
+      borderColor: '#30363d',
+    },
+    consoleMiniBtnText: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.xs,
+      color: '#8b949e',
+    },
 
-  logBox: {
-    maxHeight: 300,
-    backgroundColor: '#010409',
-    borderRadius: radii.md,
-    borderWidth: 1,
-    borderColor: '#21262d',
-  },
-  logBoxContent: { padding: spacing.sm },
-  logEmpty: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: '#484f58',
-    fontStyle: 'italic',
-  },
-  logLine: {
-    fontFamily: typography.family.body,
-    fontSize: 11,
-    color: '#c9d1d9',
-    marginBottom: 1,
-    lineHeight: 16,
-  },
-  logTs: { color: '#484f58' },
-  logOk: { color: '#3fb950' },
-  logErr: { color: '#f85149' },
-  logData: { color: '#79c0ff' },
+    logBox: {
+      maxHeight: 300,
+      backgroundColor: '#010409',
+      borderRadius: radii.md,
+      borderWidth: 1,
+      borderColor: '#21262d',
+    },
+    logBoxContent: { padding: spacing.sm },
+    logEmpty: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: '#484f58',
+      fontStyle: 'italic',
+    },
+    logLine: {
+      fontFamily: typography.family.body,
+      fontSize: 11,
+      color: '#c9d1d9',
+      marginBottom: 1,
+      lineHeight: 16,
+    },
+    logTs: { color: '#484f58' },
+    logOk: { color: '#3fb950' },
+    logErr: { color: '#f85149' },
+    logData: { color: '#79c0ff' },
 
-  // ── Lock row ──
-  lockRow: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: '#21262d',
-    backgroundColor: '#0d1117',
-  },
-  lockBtn: {
-    backgroundColor: colors.primaryDeep,
-    borderRadius: radii.md,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-  },
-  lockBtnText: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.md,
-    color: colors.brandText,
-  },
+    // ── Lock row ──
+    lockRow: {
+      paddingHorizontal: spacing.md,
+      paddingTop: spacing.sm,
+      borderTopWidth: 1,
+      borderTopColor: '#21262d',
+      backgroundColor: '#0d1117',
+    },
+    lockBtn: {
+      backgroundColor: th.primaryDeep,
+      borderRadius: radii.md,
+      paddingVertical: spacing.md,
+      alignItems: 'center',
+    },
+    lockBtnText: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.md,
+      color: th.brandText,
+    },
 
-  // ── Raw HTTP modal ──
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.75)',
-    justifyContent: 'flex-end',
-  },
-  modalCard: {
-    backgroundColor: '#161b22',
-    borderTopLeftRadius: radii.lg,
-    borderTopRightRadius: radii.lg,
-    padding: spacing.md,
-    paddingBottom: spacing.xl,
-  },
-  modalTitle: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.lg,
-    color: '#c9d1d9',
-    marginBottom: 2,
-  },
-  modalSubtitle: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.xs,
-    color: '#484f58',
-    marginBottom: spacing.md,
-  },
-  modalFieldLabel: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.xs,
-    color: '#8b949e',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginBottom: 4,
-    marginTop: spacing.sm,
-  },
-  methodRow: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  methodChip: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: radii.sm,
-    borderWidth: 1,
-    borderColor: '#30363d',
-    backgroundColor: '#0d1117',
-  },
-  methodChipActive: {
-    borderColor: '#58a6ff',
-    backgroundColor: '#1f2937',
-  },
-  methodChipText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.xs,
-    color: '#8b949e',
-  },
-  methodChipTextActive: {
-    color: '#58a6ff',
-  },
-  modalInput: {
-    backgroundColor: '#0d1117',
-    borderWidth: 1,
-    borderColor: '#30363d',
-    borderRadius: radii.md,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.sm,
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: '#c9d1d9',
-  },
-  modalInputMulti: {
-    minHeight: 80,
-    textAlignVertical: 'top',
-  },
-  modalButtonRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.md,
-  },
-  modalBtn: {
-    flex: 1,
-    paddingVertical: spacing.sm + 2,
-    borderRadius: radii.md,
-    alignItems: 'center',
-  },
-  modalBtnCancel: {
-    borderWidth: 1,
-    borderColor: '#30363d',
-  },
-  modalBtnSend: {
-    backgroundColor: '#238636',
-  },
-  modalBtnText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.md,
-    color: '#8b949e',
-  },
-  modalBtnTextSend: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.md,
-    color: '#ffffff',
-  },
+    // ── Raw HTTP modal ──
+    modalBackdrop: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.75)',
+      justifyContent: 'flex-end',
+    },
+    modalCard: {
+      backgroundColor: '#161b22',
+      borderTopLeftRadius: radii.lg,
+      borderTopRightRadius: radii.lg,
+      padding: spacing.md,
+      paddingBottom: spacing.xl,
+    },
+    modalTitle: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.lg,
+      color: '#c9d1d9',
+      marginBottom: 2,
+    },
+    modalSubtitle: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.xs,
+      color: '#484f58',
+      marginBottom: spacing.md,
+    },
+    modalFieldLabel: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.xs,
+      color: '#8b949e',
+      textTransform: 'uppercase',
+      letterSpacing: 0.8,
+      marginBottom: 4,
+      marginTop: spacing.sm,
+    },
+    methodRow: {
+      flexDirection: 'row',
+      gap: 6,
+    },
+    methodChip: {
+      paddingVertical: 6,
+      paddingHorizontal: 12,
+      borderRadius: radii.sm,
+      borderWidth: 1,
+      borderColor: '#30363d',
+      backgroundColor: '#0d1117',
+    },
+    methodChipActive: {
+      borderColor: '#58a6ff',
+      backgroundColor: '#1f2937',
+    },
+    methodChipText: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.xs,
+      color: '#8b949e',
+    },
+    methodChipTextActive: {
+      color: '#58a6ff',
+    },
+    modalInput: {
+      backgroundColor: '#0d1117',
+      borderWidth: 1,
+      borderColor: '#30363d',
+      borderRadius: radii.md,
+      paddingHorizontal: spacing.sm,
+      paddingVertical: spacing.sm,
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: '#c9d1d9',
+    },
+    modalInputMulti: {
+      minHeight: 80,
+      textAlignVertical: 'top',
+    },
+    modalButtonRow: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+      marginTop: spacing.md,
+    },
+    modalBtn: {
+      flex: 1,
+      paddingVertical: spacing.sm + 2,
+      borderRadius: radii.md,
+      alignItems: 'center',
+    },
+    modalBtnCancel: {
+      borderWidth: 1,
+      borderColor: '#30363d',
+    },
+    modalBtnSend: {
+      backgroundColor: '#238636',
+    },
+    modalBtnText: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.md,
+      color: '#8b949e',
+    },
+    modalBtnTextSend: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.md,
+      color: '#ffffff',
+    },
 
-  // ── Terminal ──
-  termContainer: {
-    flex: 1,
-    backgroundColor: '#0d1117',
-  },
-  termHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: '#21262d',
-  },
-  termHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  termTitle: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.lg,
-    color: '#58a6ff',
-  },
-  termEnvBadge: {
-    backgroundColor: '#1f6feb33',
-    borderRadius: radii.sm,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  termEnvBadgeProd: {
-    backgroundColor: '#da363333',
-  },
-  termEnvBadgeText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.xs,
-    color: '#58a6ff',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-  },
-  termCloseBtn: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-  },
-  termCloseBtnText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: '#8b949e',
-  },
-  termEnvRow: {
-    flexDirection: 'row',
-    gap: 6,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderBottomWidth: 1,
-    borderBottomColor: '#21262d',
-  },
-  termEnvChip: {
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-    borderRadius: radii.sm,
-    borderWidth: 1,
-    borderColor: '#30363d',
-  },
-  termEnvChipActive: {
-    borderColor: '#58a6ff',
-    backgroundColor: '#1f2937',
-  },
-  termEnvChipText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.xs,
-    color: '#8b949e',
-  },
-  termEnvChipTextActive: {
-    color: '#58a6ff',
-  },
-  termOutput: {
-    flex: 1,
-    backgroundColor: '#010409',
-  },
-  termOutputContent: {
-    padding: spacing.sm,
-  },
-  termLine: {
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-    fontSize: 12,
-    color: '#c9d1d9',
-    lineHeight: 18,
-  },
-  termLineCmd: {
-    color: '#d2a8ff',
-    fontWeight: '600' as const,
-  },
-  termLineOk: { color: '#3fb950' },
-  termLineErr: { color: '#f85149' },
-  termLineData: { color: '#79c0ff' },
-  termLineBusy: {
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-    fontSize: 12,
-    color: '#e3b341',
-    fontStyle: 'italic',
-  },
-  termInputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.sm,
-    paddingTop: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: '#21262d',
-    backgroundColor: '#0d1117',
-    gap: 6,
-  },
-  termPrompt: {
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-    fontSize: 14,
-    color: '#3fb950',
-    fontWeight: '700' as const,
-  },
-  termInput: {
-    flex: 1,
-    backgroundColor: '#010409',
-    borderWidth: 1,
-    borderColor: '#30363d',
-    borderRadius: radii.md,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.sm,
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-    fontSize: 13,
-    color: '#c9d1d9',
-  },
-  termSendBtn: {
-    backgroundColor: '#238636',
-    borderRadius: radii.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  termSendBtnDisabled: {
-    opacity: 0.4,
-  },
-  termSendBtnText: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.sm,
-    color: '#ffffff',
-  },
-});
+    // ── Terminal ──
+    termContainer: {
+      flex: 1,
+      backgroundColor: '#0d1117',
+    },
+    termHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+      borderBottomWidth: 1,
+      borderBottomColor: '#21262d',
+    },
+    termHeaderLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+    },
+    termTitle: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.lg,
+      color: '#58a6ff',
+    },
+    termEnvBadge: {
+      backgroundColor: '#1f6feb33',
+      borderRadius: radii.sm,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+    },
+    termEnvBadgeProd: {
+      backgroundColor: '#da363333',
+    },
+    termEnvBadgeText: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.xs,
+      color: '#58a6ff',
+      textTransform: 'uppercase',
+      letterSpacing: 0.8,
+    },
+    termCloseBtn: {
+      paddingHorizontal: spacing.sm,
+      paddingVertical: spacing.xs,
+    },
+    termCloseBtnText: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: '#8b949e',
+    },
+    termEnvRow: {
+      flexDirection: 'row',
+      gap: 6,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.xs,
+      borderBottomWidth: 1,
+      borderBottomColor: '#21262d',
+    },
+    termEnvChip: {
+      paddingVertical: 4,
+      paddingHorizontal: 12,
+      borderRadius: radii.sm,
+      borderWidth: 1,
+      borderColor: '#30363d',
+    },
+    termEnvChipActive: {
+      borderColor: '#58a6ff',
+      backgroundColor: '#1f2937',
+    },
+    termEnvChipText: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.xs,
+      color: '#8b949e',
+    },
+    termEnvChipTextActive: {
+      color: '#58a6ff',
+    },
+    termOutput: {
+      flex: 1,
+      backgroundColor: '#010409',
+    },
+    termOutputContent: {
+      padding: spacing.sm,
+    },
+    termLine: {
+      fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+      fontSize: 12,
+      color: '#c9d1d9',
+      lineHeight: 18,
+    },
+    termLineCmd: {
+      color: '#d2a8ff',
+      fontWeight: '600' as const,
+    },
+    termLineOk: { color: '#3fb950' },
+    termLineErr: { color: '#f85149' },
+    termLineData: { color: '#79c0ff' },
+    termLineBusy: {
+      fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+      fontSize: 12,
+      color: '#e3b341',
+      fontStyle: 'italic',
+    },
+    termInputRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: spacing.sm,
+      paddingTop: spacing.sm,
+      borderTopWidth: 1,
+      borderTopColor: '#21262d',
+      backgroundColor: '#0d1117',
+      gap: 6,
+    },
+    termPrompt: {
+      fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+      fontSize: 14,
+      color: '#3fb950',
+      fontWeight: '700' as const,
+    },
+    termInput: {
+      flex: 1,
+      backgroundColor: '#010409',
+      borderWidth: 1,
+      borderColor: '#30363d',
+      borderRadius: radii.md,
+      paddingHorizontal: spacing.sm,
+      paddingVertical: spacing.sm,
+      fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+      fontSize: 13,
+      color: '#c9d1d9',
+    },
+    termSendBtn: {
+      backgroundColor: '#238636',
+      borderRadius: radii.md,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+    },
+    termSendBtnDisabled: {
+      opacity: 0.4,
+    },
+    termSendBtnText: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.sm,
+      color: '#ffffff',
+    },
+  }) as const;

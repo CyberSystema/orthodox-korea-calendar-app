@@ -1,7 +1,7 @@
 import { Children, isValidElement, type ReactNode } from 'react';
 import { Platform, StyleSheet, type TextProps } from 'react-native';
 
-import { colors } from '../../theme/colors';
+import { useTheme, useThemedStyles, type ResolvedTheme } from '../../theme/useTheme';
 import { Text, TextInput } from './ScaledText';
 
 /**
@@ -43,6 +43,8 @@ import { Text, TextInput } from './ScaledText';
  * ScaledText exports a TextInput that applies the very same scaling.
  */
 export function SelectableText({ children, style, ...rest }: TextProps) {
+  const th = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const plain = Platform.OS === 'ios' ? toPlainText(children) : null;
 
   // Not iOS, or children this cannot faithfully flatten (an element child, say).
@@ -50,7 +52,7 @@ export function SelectableText({ children, style, ...rest }: TextProps) {
   // which is the failure that would actually matter.
   if (plain === null) {
     return (
-      <Text selectable selectionColor={colors.accentDim} style={style} {...rest}>
+      <Text selectable selectionColor={th.accentDim} style={style} {...rest}>
         {children}
       </Text>
     );
@@ -62,7 +64,7 @@ export function SelectableText({ children, style, ...rest }: TextProps) {
       editable={false}
       multiline
       scrollEnabled={false}
-      selectionColor={colors.accentDim}
+      selectionColor={th.accentDim}
       // Without this VoiceOver announces each of these as a text field.
       accessibilityRole="text"
       style={[styles.iosTextReset, style]}
@@ -71,10 +73,11 @@ export function SelectableText({ children, style, ...rest }: TextProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  // Listed BEFORE `style` so a caller's own padding still wins.
-  iosTextReset: { padding: 0 },
-});
+const makeStyles = (th: ResolvedTheme) =>
+  ({
+    // Listed BEFORE `style` so a caller's own padding still wins.
+    iosTextReset: { padding: 0 },
+  }) as const;
 
 /**
  * Flatten JSX children to the plain string a TextInput needs for `value`.

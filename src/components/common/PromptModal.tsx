@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import { colors } from '../../theme/colors';
+import { useTheme, useThemedStyles, type ResolvedTheme } from '../../theme/useTheme';
 import { radii, spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import { Text } from './ScaledText';
@@ -49,6 +49,8 @@ export function PromptModal({
   onSubmit,
   onCancel,
 }: PromptModalProps) {
+  const th = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [value, setValue] = useState('');
   const inputRef = useRef<TextInput>(null);
 
@@ -90,7 +92,7 @@ export function PromptModal({
               value={value}
               onChangeText={setValue}
               placeholder={placeholder}
-              placeholderTextColor={colors.textSecondary}
+              placeholderTextColor={th.textSecondary}
               secureTextEntry={secureTextEntry}
               autoCapitalize="none"
               autoCorrect={false}
@@ -126,88 +128,89 @@ export function PromptModal({
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: colors.backdropDark,
-    justifyContent: 'center',
-    paddingHorizontal: spacing.lg,
-  },
-  card: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.lg,
-    backgroundColor: colors.surface,
-    overflow: 'hidden',
-  },
-  header: {
-    backgroundColor: colors.primaryDeep,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderBottomWidth: 2,
-    borderBottomColor: colors.accent,
-  },
-  title: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.lg,
-    color: colors.brandText,
-    textAlign: 'center',
-  },
-  message: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: colors.textSecondary,
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.md,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    backgroundColor: colors.surfaceWhite,
-    color: colors.textBody,
-    fontFamily: typography.family.body,
-    fontSize: typography.size.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    margin: spacing.md,
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.md,
-  },
-  button: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: colors.accent,
-    borderRadius: radii.full,
-    backgroundColor: colors.accentGlow,
-    paddingVertical: spacing.sm,
-  },
-  buttonText: {
-    textAlign: 'center',
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: colors.primaryDeep,
-    fontWeight: typography.weight.semibold,
-  },
-  buttonMuted: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.full,
-    backgroundColor: colors.surfaceWhite,
-    paddingVertical: spacing.sm,
-  },
-  buttonMutedText: {
-    textAlign: 'center',
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: colors.primary,
-  },
-  pressed: {
-    opacity: 0.7,
-  },
-});
+const makeStyles = (th: ResolvedTheme) =>
+  ({
+    backdrop: {
+      flex: 1,
+      backgroundColor: th.backdropDark,
+      justifyContent: 'center',
+      paddingHorizontal: spacing.lg,
+    },
+    card: {
+      borderWidth: 1,
+      borderColor: th.border,
+      borderRadius: radii.lg,
+      backgroundColor: th.surface,
+      overflow: 'hidden',
+    },
+    header: {
+      backgroundColor: th.primaryDeep,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.md,
+      borderBottomWidth: 2,
+      borderBottomColor: th.accent,
+    },
+    title: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.lg,
+      color: th.brandText,
+      textAlign: 'center',
+    },
+    message: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: th.textSecondary,
+      paddingHorizontal: spacing.md,
+      paddingTop: spacing.md,
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: th.border,
+      borderRadius: radii.md,
+      backgroundColor: th.surfaceWhite,
+      color: th.textBody,
+      fontFamily: typography.family.body,
+      fontSize: typography.size.md,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+      margin: spacing.md,
+    },
+    actions: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+      paddingHorizontal: spacing.md,
+      paddingBottom: spacing.md,
+    },
+    button: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: th.accent,
+      borderRadius: radii.full,
+      backgroundColor: th.accentGlow,
+      paddingVertical: spacing.sm,
+    },
+    buttonText: {
+      textAlign: 'center',
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: th.onAccent,
+      fontWeight: typography.weight.semibold,
+    },
+    buttonMuted: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: th.border,
+      borderRadius: radii.full,
+      backgroundColor: th.surfaceWhite,
+      paddingVertical: spacing.sm,
+    },
+    buttonMutedText: {
+      textAlign: 'center',
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: th.primary,
+    },
+    pressed: {
+      opacity: 0.7,
+    },
+  }) as const;

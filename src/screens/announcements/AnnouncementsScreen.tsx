@@ -21,7 +21,7 @@ import { useAnnouncementsStore } from '../../features/announcements/useAnnouncem
 import type { Announcement } from '../../services/api/announcementsRepository';
 import type { LocalizedText } from '../../features/calendar/types';
 import { useAppStore } from '../../store/useAppStore';
-import { colors } from '../../theme/colors';
+import { useTheme, useThemedStyles, type ResolvedTheme } from '../../theme/useTheme';
 import { radii, spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import { formatRelativeTime } from '../../utils/date';
@@ -32,7 +32,9 @@ type Props = CompositeScreenProps<
   NativeStackScreenProps<RootStackParamList>
 >;
 
-function BellIcon({ size = 20, color = colors.brandText }: { size?: number; color?: string }) {
+function BellIcon({ size = 20, color }: { size?: number; color?: string }) {
+  const th = useTheme();
+  color = color ?? th.brandText;
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -53,6 +55,8 @@ function pickLocalized(text: LocalizedText, language: 'en' | 'ko'): string {
 }
 
 export function AnnouncementsScreen({ navigation }: Props) {
+  const th = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const tabBottomPadding = useTabContentBottomPadding();
@@ -201,9 +205,9 @@ export function AnnouncementsScreen({ navigation }: Props) {
         <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
           <View style={styles.headerRow}>
             <View style={styles.headerLine} />
-            <ByzantineKnot size={14} color={colors.accentBright} />
+            <ByzantineKnot size={14} color={th.accentBright} />
             <Text style={styles.headerBrand}>{t('announcements.title')}</Text>
-            <ByzantineKnot size={14} color={colors.accentBright} />
+            <ByzantineKnot size={14} color={th.accentBright} />
             <View style={styles.headerLine} />
           </View>
           <View style={styles.headerGoldLine} />
@@ -225,13 +229,13 @@ export function AnnouncementsScreen({ navigation }: Props) {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={colors.accent}
-            colors={[colors.accent]}
+            tintColor={th.accent}
+            colors={[th.accent]}
           />
         }
         ListEmptyComponent={
           <View style={styles.emptyWrap}>
-            <BellIcon size={40} color={colors.textGhost} />
+            <BellIcon size={40} color={th.textGhost} />
             {loadState === 'loading' ? (
               <Text style={styles.emptyText}>{t('common.loading')}</Text>
             ) : loadState === 'error' ? (
@@ -259,188 +263,189 @@ export function AnnouncementsScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  pressed: {
-    opacity: 0.7,
-  },
+const makeStyles = (th: ResolvedTheme) =>
+  ({
+    container: {
+      flex: 1,
+      backgroundColor: th.background,
+    },
+    pressed: {
+      opacity: 0.7,
+    },
 
-  // ─── Branded header ────────────────────────────────────────────────────────
-  header: {
-    backgroundColor: colors.primaryDeep,
-    paddingBottom: 0,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.sm,
-    gap: spacing.xs,
-  },
-  headerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.accentLine,
-  },
-  headerBrand: {
-    color: colors.brandText,
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.lg,
-    letterSpacing: 0.8,
-    textAlign: 'center',
-    paddingHorizontal: spacing.sm,
-    // Sits between two fixed ornaments — wrap rather than push them off-row.
-    flexShrink: 1,
-  },
-  headerGoldLine: {
-    height: 2,
-    backgroundColor: colors.accent,
-    opacity: 0.7,
-  },
+    // ─── Branded header ────────────────────────────────────────────────────────
+    header: {
+      backgroundColor: th.primaryDeep,
+      paddingBottom: 0,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: spacing.md,
+      paddingBottom: spacing.sm,
+      gap: spacing.xs,
+    },
+    headerLine: {
+      flex: 1,
+      height: 1,
+      backgroundColor: th.accentLine,
+    },
+    headerBrand: {
+      color: th.brandText,
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.lg,
+      letterSpacing: 0.8,
+      textAlign: 'center',
+      paddingHorizontal: spacing.sm,
+      // Sits between two fixed ornaments — wrap rather than push them off-row.
+      flexShrink: 1,
+    },
+    headerGoldLine: {
+      height: 2,
+      backgroundColor: th.accent,
+      opacity: 0.7,
+    },
 
-  // ─── List ──────────────────────────────────────────────────────────────────
-  listContent: {
-    padding: spacing.lg,
-    gap: spacing.md,
-  },
-  listContentEmpty: {
-    flexGrow: 1,
-    justifyContent: 'center',
-  },
+    // ─── List ──────────────────────────────────────────────────────────────────
+    listContent: {
+      padding: spacing.lg,
+      gap: spacing.md,
+    },
+    listContentEmpty: {
+      flexGrow: 1,
+      justifyContent: 'center',
+    },
 
-  // ─── Card ──────────────────────────────────────────────────────────────────
-  card: {
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    borderRadius: radii.lg,
-    backgroundColor: colors.surfaceWhite,
-    padding: spacing.md,
-    gap: spacing.xs,
-  },
-  cardUnread: {
-    borderColor: colors.accent,
-    backgroundColor: colors.surface,
-  },
-  cardTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-  },
-  cardTopLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    flexShrink: 1,
-  },
-  unreadDot: {
-    width: 8,
-    height: 8,
-    borderRadius: radii.full,
-    backgroundColor: colors.accent,
-  },
-  audienceChip: {
-    borderWidth: 1,
-    borderColor: colors.accentDim,
-    borderRadius: radii.full,
-    backgroundColor: colors.accentGlow,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-  },
-  audienceChipText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.xxs,
-    color: colors.primary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  timeText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.xs,
-    color: colors.textSecondary,
-  },
-  cardTitle: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.lg,
-    color: colors.textPrimary,
-    lineHeight: typography.size.lg * 1.35,
-  },
-  cardBody: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.md,
-    color: colors.textBody,
-    lineHeight: typography.size.md * 1.5,
-  },
-  cardFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    marginTop: spacing.xs,
-  },
-  viewEventText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: colors.primary,
-    fontWeight: typography.weight.semibold,
-  },
-  viewEventArrow: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.lg,
-    color: colors.accent,
-    marginTop: -2,
-  },
+    // ─── Card ──────────────────────────────────────────────────────────────────
+    card: {
+      borderWidth: 1,
+      borderColor: th.borderLight,
+      borderRadius: radii.lg,
+      backgroundColor: th.surfaceWhite,
+      padding: spacing.md,
+      gap: spacing.xs,
+    },
+    cardUnread: {
+      borderColor: th.accent,
+      backgroundColor: th.surface,
+    },
+    cardTopRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: spacing.sm,
+    },
+    cardTopLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.xs,
+      flexShrink: 1,
+    },
+    unreadDot: {
+      width: 8,
+      height: 8,
+      borderRadius: radii.full,
+      backgroundColor: th.accent,
+    },
+    audienceChip: {
+      borderWidth: 1,
+      borderColor: th.accentDim,
+      borderRadius: radii.full,
+      backgroundColor: th.accentGlow,
+      paddingHorizontal: spacing.sm,
+      paddingVertical: 2,
+    },
+    audienceChipText: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.xxs,
+      color: th.primary,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    timeText: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.xs,
+      color: th.textSecondary,
+    },
+    cardTitle: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.lg,
+      color: th.textPrimary,
+      lineHeight: typography.size.lg * 1.35,
+    },
+    cardBody: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.md,
+      color: th.textBody,
+      lineHeight: typography.size.md * 1.5,
+    },
+    cardFooter: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.xs,
+      marginTop: spacing.xs,
+    },
+    viewEventText: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: th.primary,
+      fontWeight: typography.weight.semibold,
+    },
+    viewEventArrow: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.lg,
+      color: th.accent,
+      marginTop: -2,
+    },
 
-  // ─── Swipe-to-delete (staff) ───────────────────────────────────────────────
-  swipeDelete: {
-    backgroundColor: colors.danger,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: radii.lg,
-    marginLeft: spacing.sm,
-    paddingHorizontal: spacing.lg,
-  },
-  swipeDeleteText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    fontWeight: typography.weight.bold,
-    color: colors.surfaceWhite,
-  },
+    // ─── Swipe-to-delete (staff) ───────────────────────────────────────────────
+    swipeDelete: {
+      backgroundColor: th.danger,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderRadius: radii.lg,
+      marginLeft: spacing.sm,
+      paddingHorizontal: spacing.lg,
+    },
+    swipeDeleteText: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      fontWeight: typography.weight.bold,
+      color: th.surfaceWhite,
+    },
 
-  // ─── Empty / loading / error ───────────────────────────────────────────────
-  emptyWrap: {
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.xl,
-  },
-  emptyText: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.lg,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginTop: spacing.sm,
-  },
-  emptyHint: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: colors.textFaint,
-    textAlign: 'center',
-  },
-  retryButton: {
-    marginTop: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.accent,
-    borderRadius: radii.full,
-    backgroundColor: colors.accentGlow,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.xl,
-  },
-  retryButtonText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: colors.primaryDeep,
-    fontWeight: typography.weight.semibold,
-  },
-});
+    // ─── Empty / loading / error ───────────────────────────────────────────────
+    emptyWrap: {
+      alignItems: 'center',
+      gap: spacing.sm,
+      paddingHorizontal: spacing.xl,
+    },
+    emptyText: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.lg,
+      color: th.textSecondary,
+      textAlign: 'center',
+      marginTop: spacing.sm,
+    },
+    emptyHint: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: th.textFaint,
+      textAlign: 'center',
+    },
+    retryButton: {
+      marginTop: spacing.sm,
+      borderWidth: 1,
+      borderColor: th.accent,
+      borderRadius: radii.full,
+      backgroundColor: th.accentGlow,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.xl,
+    },
+    retryButtonText: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: th.onAccent,
+      fontWeight: typography.weight.semibold,
+    },
+  }) as const;

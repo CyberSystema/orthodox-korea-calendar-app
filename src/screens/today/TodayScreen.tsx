@@ -39,7 +39,7 @@ import { useCalendarDataVersion } from '../../features/calendar/useCalendarDataV
 import { useEventsStore } from '../../features/events/useEventsStore';
 import { loginAdminThroughCloudflare } from '../../services/api/adminAuth';
 import { useAppStore } from '../../store/useAppStore';
-import { colors } from '../../theme/colors';
+import { useTheme, useThemedStyles, type ResolvedTheme } from '../../theme/useTheme';
 import { radii, spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import type { MainTabsParamList, RootStackParamList } from '../../navigation/types';
@@ -50,7 +50,9 @@ type Props = CompositeScreenProps<
   NativeStackScreenProps<RootStackParamList>
 >;
 
-function MenuIcon({ size = 20, color = colors.brandText }: { size?: number; color?: string }) {
+function MenuIcon({ size = 20, color }: { size?: number; color?: string }) {
+  const th = useTheme();
+  color = color ?? th.brandText;
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M4 7h16M4 12h16M4 17h16" stroke={color} strokeWidth={2} strokeLinecap="round" />
@@ -58,7 +60,9 @@ function MenuIcon({ size = 20, color = colors.brandText }: { size?: number; colo
   );
 }
 
-function SearchSvgIcon({ size = 20, color = colors.brandText }: { size?: number; color?: string }) {
+function SearchSvgIcon({ size = 20, color }: { size?: number; color?: string }) {
+  const th = useTheme();
+  color = color ?? th.brandText;
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx={11} cy={11} r={7} stroke={color} strokeWidth={2} />
@@ -68,6 +72,8 @@ function SearchSvgIcon({ size = 20, color = colors.brandText }: { size?: number;
 }
 
 export function TodayScreen({ navigation }: Props) {
+  const th = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const tabBottomPadding = useTabContentBottomPadding();
@@ -228,7 +234,7 @@ export function TodayScreen({ navigation }: Props) {
           accessibilityRole="button"
           accessibilityLabel={t('a11y.openSettings')}
         >
-          <MenuIcon size={22} color={colors.brandText} />
+          <MenuIcon size={22} color={th.brandText} />
         </Pressable>
       ),
       headerRight: () => (
@@ -238,7 +244,7 @@ export function TodayScreen({ navigation }: Props) {
           accessibilityRole="button"
           accessibilityLabel={t('a11y.search')}
         >
-          <SearchSvgIcon size={22} color={colors.brandText} />
+          <SearchSvgIcon size={22} color={th.brandText} />
         </Pressable>
       ),
       headerTitle: () => (
@@ -327,12 +333,12 @@ export function TodayScreen({ navigation }: Props) {
               accessibilityRole="button"
               accessibilityLabel={t('a11y.openSettings')}
             >
-              <MenuIcon size={20} color={colors.brandText} />
+              <MenuIcon size={20} color={th.brandText} />
             </Pressable>
 
             <View style={styles.headerCenter}>
               <View style={styles.headerLine} />
-              <ByzantineKnot size={14} color={colors.accentBright} />
+              <ByzantineKnot size={14} color={th.accentBright} />
               <Pressable
                 style={styles.headerBrandPress}
                 onPress={handleBrandTap}
@@ -342,7 +348,7 @@ export function TodayScreen({ navigation }: Props) {
               >
                 <Text style={styles.headerBrand}>ORTHODOX KOREA</Text>
               </Pressable>
-              <ByzantineKnot size={14} color={colors.accentBright} />
+              <ByzantineKnot size={14} color={th.accentBright} />
               <View style={styles.headerLine} />
             </View>
 
@@ -353,7 +359,7 @@ export function TodayScreen({ navigation }: Props) {
               accessibilityRole="button"
               accessibilityLabel={t('a11y.search')}
             >
-              <SearchSvgIcon size={20} color={colors.brandText} />
+              <SearchSvgIcon size={20} color={th.brandText} />
             </Pressable>
           </View>
           <View style={styles.headerGoldLine} />
@@ -410,7 +416,7 @@ export function TodayScreen({ navigation }: Props) {
             accessibilityRole="button"
             accessibilityLabel={t('a11y.previousDay')}
           >
-            <ByzantineArrow direction="left" size={22} color={colors.accent} />
+            <ByzantineArrow direction="left" size={22} color={th.accent} />
           </Pressable>
           <View style={styles.dayNavLine} />
           <Text style={styles.dayNavDate}>{formatDisplayDate(activeDateISO, language)}</Text>
@@ -422,7 +428,7 @@ export function TodayScreen({ navigation }: Props) {
             accessibilityRole="button"
             accessibilityLabel={t('a11y.nextDay')}
           >
-            <ByzantineArrow direction="right" size={22} color={colors.accent} />
+            <ByzantineArrow direction="right" size={22} color={th.accent} />
           </Pressable>
         </View>
 
@@ -495,7 +501,7 @@ export function TodayScreen({ navigation }: Props) {
             <TextInput
               style={styles.modalInput}
               placeholder={t('today.searchPlaceholder')}
-              placeholderTextColor={colors.textSecondary}
+              placeholderTextColor={th.textSecondary}
               value={searchQuery}
               onChangeText={setSearchQuery}
               autoCapitalize="none"
@@ -572,7 +578,7 @@ export function TodayScreen({ navigation }: Props) {
                   accessibilityRole="button"
                   accessibilityLabel={`${t('today.yearLabel')} ${t('a11y.decreaseValue')}`}
                 >
-                  <ByzantineArrow direction="left" size={18} color={colors.accent} />
+                  <ByzantineArrow direction="left" size={18} color={th.accent} />
                 </Pressable>
                 <Text style={styles.pickerValue}>{selectedYear}</Text>
                 <Pressable
@@ -582,7 +588,7 @@ export function TodayScreen({ navigation }: Props) {
                   accessibilityRole="button"
                   accessibilityLabel={`${t('today.yearLabel')} ${t('a11y.increaseValue')}`}
                 >
-                  <ByzantineArrow direction="right" size={18} color={colors.accent} />
+                  <ByzantineArrow direction="right" size={18} color={th.accent} />
                 </Pressable>
               </View>
             </View>
@@ -597,7 +603,7 @@ export function TodayScreen({ navigation }: Props) {
                   accessibilityRole="button"
                   accessibilityLabel={`${t('today.monthLabel')} ${t('a11y.decreaseValue')}`}
                 >
-                  <ByzantineArrow direction="left" size={18} color={colors.accent} />
+                  <ByzantineArrow direction="left" size={18} color={th.accent} />
                 </Pressable>
                 <Text style={styles.pickerValue}>
                   {new Date(selectedYear, selectedMonth - 1, 1).toLocaleDateString(
@@ -614,7 +620,7 @@ export function TodayScreen({ navigation }: Props) {
                   accessibilityRole="button"
                   accessibilityLabel={`${t('today.monthLabel')} ${t('a11y.increaseValue')}`}
                 >
-                  <ByzantineArrow direction="right" size={18} color={colors.accent} />
+                  <ByzantineArrow direction="right" size={18} color={th.accent} />
                 </Pressable>
               </View>
             </View>
@@ -629,7 +635,7 @@ export function TodayScreen({ navigation }: Props) {
                   accessibilityRole="button"
                   accessibilityLabel={`${t('today.dayLabel')} ${t('a11y.decreaseValue')}`}
                 >
-                  <ByzantineArrow direction="left" size={18} color={colors.accent} />
+                  <ByzantineArrow direction="left" size={18} color={th.accent} />
                 </Pressable>
                 <Text style={styles.pickerValue}>{selectedDay}</Text>
                 <Pressable
@@ -639,7 +645,7 @@ export function TodayScreen({ navigation }: Props) {
                   accessibilityRole="button"
                   accessibilityLabel={`${t('today.dayLabel')} ${t('a11y.increaseValue')}`}
                 >
-                  <ByzantineArrow direction="right" size={18} color={colors.accent} />
+                  <ByzantineArrow direction="right" size={18} color={th.accent} />
                 </Pressable>
               </View>
             </View>
@@ -685,369 +691,370 @@ export function TodayScreen({ navigation }: Props) {
 // the card and clipped the close button).
 const WINDOW_HEIGHT = Dimensions.get('window').height;
 
-const styles = StyleSheet.create({
-  // ─── Scaffold ──────────────────────────────────────────────────────────────
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  scrollArea: {
-    flex: 1,
-  },
-  content: {
-    gap: spacing.md,
-  },
-  pressed: {
-    opacity: 0.7,
-  },
+const makeStyles = (th: ResolvedTheme) =>
+  ({
+    // ─── Scaffold ──────────────────────────────────────────────────────────────
+    container: {
+      flex: 1,
+      backgroundColor: th.background,
+    },
+    scrollArea: {
+      flex: 1,
+    },
+    content: {
+      gap: spacing.md,
+    },
+    pressed: {
+      opacity: 0.7,
+    },
 
-  // ─── Branded header ────────────────────────────────────────────────────────
-  header: {
-    backgroundColor: colors.primaryDeep,
-    paddingBottom: 0,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.sm,
-    gap: spacing.sm,
-  },
-  headerIconButton: {
-    width: 36,
-    height: 36,
-    borderRadius: radii.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.accentSubtle,
-  },
-  headerCenter: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  headerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.accentLine,
-  },
-  // The Pressable needs the shrink too: a View defaults to flexShrink 0, so it
-  // would size to the title's full width and the Text's own flexShrink would
-  // never engage — pushing the search button off the row at a raised font scale.
-  headerBrandPress: {
-    flexShrink: 1,
-  },
-  headerBrand: {
-    color: colors.brandText,
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.xs,
-    letterSpacing: 1.2,
-    textAlign: 'center',
-    flexShrink: 1,
-  },
-  nativeHeaderTitle: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.lg,
-    color: colors.brandText,
-    letterSpacing: 1,
-  },
-  headerGoldLine: {
-    height: 2,
-    backgroundColor: colors.accent,
-    opacity: 0.7,
-  },
+    // ─── Branded header ────────────────────────────────────────────────────────
+    header: {
+      backgroundColor: th.primaryDeep,
+      paddingBottom: 0,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: spacing.md,
+      paddingBottom: spacing.sm,
+      gap: spacing.sm,
+    },
+    headerIconButton: {
+      width: 36,
+      height: 36,
+      borderRadius: radii.full,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: th.accentSubtle,
+    },
+    headerCenter: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.xs,
+    },
+    headerLine: {
+      flex: 1,
+      height: 1,
+      backgroundColor: th.accentLine,
+    },
+    // The Pressable needs the shrink too: a View defaults to flexShrink 0, so it
+    // would size to the title's full width and the Text's own flexShrink would
+    // never engage — pushing the search button off the row at a raised font scale.
+    headerBrandPress: {
+      flexShrink: 1,
+    },
+    headerBrand: {
+      color: th.brandText,
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.xs,
+      letterSpacing: 1.2,
+      textAlign: 'center',
+      flexShrink: 1,
+    },
+    nativeHeaderTitle: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.lg,
+      color: th.brandText,
+      letterSpacing: 1,
+    },
+    headerGoldLine: {
+      height: 2,
+      backgroundColor: th.accent,
+      opacity: 0.7,
+    },
 
-  // ─── Action pills ──────────────────────────────────────────────────────────
-  actionRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    marginTop: spacing.md,
-  },
-  actionPill: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.full,
-    backgroundColor: colors.surfaceWhite,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.md,
-  },
-  actionPillText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.xs,
-    color: colors.primary,
-  },
-  actionPillAccent: {
-    borderWidth: 1,
-    borderColor: colors.accent,
-    borderRadius: radii.full,
-    backgroundColor: colors.accentGlow,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.md,
-  },
-  actionPillAccentText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.xs,
-    color: colors.primaryDeep,
-    fontWeight: typography.weight.semibold,
-  },
+    // ─── Action pills ──────────────────────────────────────────────────────────
+    actionRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.sm,
+      paddingHorizontal: spacing.lg,
+      marginTop: spacing.md,
+    },
+    actionPill: {
+      borderWidth: 1,
+      borderColor: th.border,
+      borderRadius: radii.full,
+      backgroundColor: th.surfaceWhite,
+      paddingVertical: spacing.xs,
+      paddingHorizontal: spacing.md,
+    },
+    actionPillText: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.xs,
+      color: th.primary,
+    },
+    actionPillAccent: {
+      borderWidth: 1,
+      borderColor: th.accent,
+      borderRadius: radii.full,
+      backgroundColor: th.accentGlow,
+      paddingVertical: spacing.xs,
+      paddingHorizontal: spacing.md,
+    },
+    actionPillAccentText: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.xs,
+      color: th.onAccent,
+      fontWeight: typography.weight.semibold,
+    },
 
-  // ─── Day navigator ─────────────────────────────────────────────────────────
-  dayNavigator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: spacing.lg,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.xs,
-    borderRadius: radii.lg,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-  },
-  dayNavigatorToday: {
-    borderColor: colors.accent,
-    backgroundColor: colors.accentGlow,
-  },
-  dayNavLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.border,
-    marginHorizontal: spacing.xs,
-  },
-  dayArrowButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    borderRadius: radii.full,
-    backgroundColor: colors.surfaceWhite,
-    // Hold their size while the date grows; the date wraps instead (below).
-    flexShrink: 0,
-  },
-  dayNavDate: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.md,
-    color: colors.textPrimary,
-    textAlign: 'center',
-    paddingHorizontal: spacing.sm,
-    // Long weekday/month names ("Wednesday, September 30, 2026") at a raised
-    // font scale used to push the arrows out of the rounded container and get
-    // them clipped. RN defaults flexShrink to 0, so this has to be explicit.
-    flexShrink: 1,
-  },
+    // ─── Day navigator ─────────────────────────────────────────────────────────
+    dayNavigator: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginHorizontal: spacing.lg,
+      paddingVertical: spacing.xs,
+      paddingHorizontal: spacing.xs,
+      borderRadius: radii.lg,
+      backgroundColor: th.surface,
+      borderWidth: 1,
+      borderColor: th.borderLight,
+    },
+    dayNavigatorToday: {
+      borderColor: th.accent,
+      backgroundColor: th.accentGlow,
+    },
+    dayNavLine: {
+      flex: 1,
+      height: 1,
+      backgroundColor: th.border,
+      marginHorizontal: spacing.xs,
+    },
+    dayArrowButton: {
+      width: 40,
+      height: 40,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1,
+      borderColor: th.borderLight,
+      borderRadius: radii.full,
+      backgroundColor: th.surfaceWhite,
+      // Hold their size while the date grows; the date wraps instead (below).
+      flexShrink: 0,
+    },
+    dayNavDate: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.md,
+      color: th.textPrimary,
+      textAlign: 'center',
+      paddingHorizontal: spacing.sm,
+      // Long weekday/month names ("Wednesday, September 30, 2026") at a raised
+      // font scale used to push the arrows out of the rounded container and get
+      // them clipped. RN defaults flexShrink to 0, so this has to be explicit.
+      flexShrink: 1,
+    },
 
-  // ─── Warning text ──────────────────────────────────────────────────────────
-  warningText: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    marginHorizontal: spacing.lg,
-    backgroundColor: colors.surfaceWhite,
-    fontFamily: typography.family.body,
-    color: colors.textSecondary,
-    fontSize: typography.size.sm,
-    textAlign: 'center',
-  },
+    // ─── Warning text ──────────────────────────────────────────────────────────
+    warningText: {
+      borderWidth: 1,
+      borderColor: th.border,
+      borderRadius: radii.md,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.md,
+      marginHorizontal: spacing.lg,
+      backgroundColor: th.surfaceWhite,
+      fontFamily: typography.family.body,
+      color: th.textSecondary,
+      fontSize: typography.size.sm,
+      textAlign: 'center',
+    },
 
-  // ─── Manuscript frame ──────────────────────────────────────────────────────
-  manuscriptFrame: {
-    marginHorizontal: spacing.lg,
-  },
+    // ─── Manuscript frame ──────────────────────────────────────────────────────
+    manuscriptFrame: {
+      marginHorizontal: spacing.lg,
+    },
 
-  // ─── Modal shared ──────────────────────────────────────────────────────────
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: colors.backdropDark,
-    justifyContent: 'center',
-    paddingHorizontal: spacing.lg,
-  },
-  modalCard: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.lg,
-    backgroundColor: colors.surface,
-    overflow: 'hidden',
-    maxHeight: WINDOW_HEIGHT * 0.7,
-  },
-  modalHeader: {
-    backgroundColor: colors.primaryDeep,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderBottomWidth: 2,
-    borderBottomColor: colors.accent,
-  },
-  modalTitle: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.lg,
-    color: colors.brandText,
-    textAlign: 'center',
-  },
-  modalInput: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    backgroundColor: colors.surfaceWhite,
-    color: colors.textBody,
-    fontFamily: typography.family.body,
-    fontSize: typography.size.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    margin: spacing.md,
-  },
-  modalHint: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-  },
+    // ─── Modal shared ──────────────────────────────────────────────────────────
+    modalBackdrop: {
+      flex: 1,
+      backgroundColor: th.backdropDark,
+      justifyContent: 'center',
+      paddingHorizontal: spacing.lg,
+    },
+    modalCard: {
+      borderWidth: 1,
+      borderColor: th.border,
+      borderRadius: radii.lg,
+      backgroundColor: th.surface,
+      overflow: 'hidden',
+      maxHeight: WINDOW_HEIGHT * 0.7,
+    },
+    modalHeader: {
+      backgroundColor: th.primaryDeep,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.md,
+      borderBottomWidth: 2,
+      borderBottomColor: th.accent,
+    },
+    modalTitle: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.lg,
+      color: th.brandText,
+      textAlign: 'center',
+    },
+    modalInput: {
+      borderWidth: 1,
+      borderColor: th.border,
+      borderRadius: radii.md,
+      backgroundColor: th.surfaceWhite,
+      color: th.textBody,
+      fontFamily: typography.family.body,
+      fontSize: typography.size.md,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+      margin: spacing.md,
+    },
+    modalHint: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: th.textSecondary,
+      textAlign: 'center',
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.md,
+    },
 
-  // ─── Search results ────────────────────────────────────────────────────────
-  searchList: {
-    // Shrink the results list so the header, input, and close button stay visible
-    // (close button was being clipped). Scrolls within whatever space remains.
-    flexShrink: 1,
-    paddingHorizontal: spacing.md,
-  },
-  searchListContent: {
-    gap: spacing.xs,
-    paddingBottom: spacing.sm,
-  },
-  searchResultItem: {
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    borderRadius: radii.md,
-    backgroundColor: colors.surfaceWhite,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    gap: 2,
-  },
-  searchResultTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  searchResultKind: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.xxs,
-    color: colors.accent,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    flexShrink: 0,
-  },
-  searchResultDate: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.xs,
-    color: colors.textSecondary,
-    // The full "dddd, MMMM D, YYYY" string is the long half of this row.
-    flexShrink: 1,
-    textAlign: 'right',
-  },
-  searchResultLabel: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.md,
-    color: colors.textPrimary,
-  },
+    // ─── Search results ────────────────────────────────────────────────────────
+    searchList: {
+      // Shrink the results list so the header, input, and close button stay visible
+      // (close button was being clipped). Scrolls within whatever space remains.
+      flexShrink: 1,
+      paddingHorizontal: spacing.md,
+    },
+    searchListContent: {
+      gap: spacing.xs,
+      paddingBottom: spacing.sm,
+    },
+    searchResultItem: {
+      borderWidth: 1,
+      borderColor: th.borderLight,
+      borderRadius: radii.md,
+      backgroundColor: th.surfaceWhite,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.sm,
+      gap: 2,
+    },
+    searchResultTopRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    searchResultKind: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.xxs,
+      color: th.accent,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+      flexShrink: 0,
+    },
+    searchResultDate: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.xs,
+      color: th.textSecondary,
+      // The full "dddd, MMMM D, YYYY" string is the long half of this row.
+      flexShrink: 1,
+      textAlign: 'right',
+    },
+    searchResultLabel: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.md,
+      color: th.textPrimary,
+    },
 
-  // ─── Modal buttons ─────────────────────────────────────────────────────────
-  modalCloseButton: {
-    borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
-    paddingVertical: spacing.md,
-    margin: 0,
-  },
-  modalCloseButtonText: {
-    textAlign: 'center',
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: colors.primary,
-    fontWeight: typography.weight.semibold,
-  },
+    // ─── Modal buttons ─────────────────────────────────────────────────────────
+    modalCloseButton: {
+      borderTopWidth: 1,
+      borderTopColor: th.borderLight,
+      paddingVertical: spacing.md,
+      margin: 0,
+    },
+    modalCloseButtonText: {
+      textAlign: 'center',
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: th.primary,
+      fontWeight: typography.weight.semibold,
+    },
 
-  // ─── Date picker ───────────────────────────────────────────────────────────
-  pickerRow: {
-    gap: spacing.xs,
-    paddingHorizontal: spacing.md,
-    marginTop: spacing.sm,
-  },
-  pickerLabel: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: colors.textSecondary,
-  },
-  pickerControl: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    backgroundColor: colors.surfaceWhite,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-  },
-  pickerArrowButton: {
-    width: 34,
-    height: 34,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.surface,
-    flexShrink: 0,
-  },
-  pickerValue: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.lg,
-    color: colors.primary,
-    textAlign: 'center',
-    // A long month name ("September") at a raised font scale would otherwise
-    // push the increment arrow outside the modal card, which clips it away.
-    flex: 1,
-    flexShrink: 1,
-  },
+    // ─── Date picker ───────────────────────────────────────────────────────────
+    pickerRow: {
+      gap: spacing.xs,
+      paddingHorizontal: spacing.md,
+      marginTop: spacing.sm,
+    },
+    pickerLabel: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: th.textSecondary,
+    },
+    pickerControl: {
+      borderWidth: 1,
+      borderColor: th.border,
+      borderRadius: radii.md,
+      backgroundColor: th.surfaceWhite,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: spacing.sm,
+      paddingVertical: spacing.xs,
+    },
+    pickerArrowButton: {
+      width: 34,
+      height: 34,
+      borderWidth: 1,
+      borderColor: th.border,
+      borderRadius: radii.full,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: th.surface,
+      flexShrink: 0,
+    },
+    pickerValue: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.lg,
+      color: th.primary,
+      textAlign: 'center',
+      // A long month name ("September") at a raised font scale would otherwise
+      // push the increment arrow outside the modal card, which clips it away.
+      flex: 1,
+      flexShrink: 1,
+    },
 
-  // ─── Modal action row ──────────────────────────────────────────────────────
-  modalActionsRow: {
-    flexDirection: 'row',
-    gap: spacing.xs,
-    padding: spacing.md,
-  },
-  modalActionButton: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: colors.accent,
-    borderRadius: radii.full,
-    backgroundColor: colors.accentGlow,
-    paddingVertical: spacing.sm,
-  },
-  modalActionButtonText: {
-    textAlign: 'center',
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: colors.primaryDeep,
-    fontWeight: typography.weight.semibold,
-  },
-  modalActionButtonMuted: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.full,
-    backgroundColor: colors.surfaceWhite,
-    paddingVertical: spacing.sm,
-  },
-  modalActionButtonMutedText: {
-    textAlign: 'center',
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: colors.primary,
-  },
-});
+    // ─── Modal action row ──────────────────────────────────────────────────────
+    modalActionsRow: {
+      flexDirection: 'row',
+      gap: spacing.xs,
+      padding: spacing.md,
+    },
+    modalActionButton: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: th.accent,
+      borderRadius: radii.full,
+      backgroundColor: th.accentGlow,
+      paddingVertical: spacing.sm,
+    },
+    modalActionButtonText: {
+      textAlign: 'center',
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: th.onAccent,
+      fontWeight: typography.weight.semibold,
+    },
+    modalActionButtonMuted: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: th.border,
+      borderRadius: radii.full,
+      backgroundColor: th.surfaceWhite,
+      paddingVertical: spacing.sm,
+    },
+    modalActionButtonMutedText: {
+      textAlign: 'center',
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: th.primary,
+    },
+  }) as const;

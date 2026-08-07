@@ -31,7 +31,7 @@ import { useNetworkStore } from '../../store/useNetworkStore';
 import { effectiveFontScale } from '../../theme/fontScale';
 import { getAppVersionLabel } from '../../utils/appVersion';
 import { USES_NATIVE_HEADER } from '../../navigation/nativeHeader';
-import { colors } from '../../theme/colors';
+import { useTheme, useThemedStyles, type ResolvedTheme } from '../../theme/useTheme';
 import { radii, spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 
@@ -76,6 +76,7 @@ function describeRuntimeVersion(runtimeVersion: unknown, version: string | undef
 }
 
 function Row({ label, value }: { label: string; value: string }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.row}>
       <Text style={styles.rowLabel}>{label}</Text>
@@ -87,6 +88,7 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.card}>
       <Text style={styles.cardTitle}>{title}</Text>
@@ -96,6 +98,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 export function DiagnosticsScreen() {
+  const styles = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
   const { fontScale: osScale } = useWindowDimensions();
 
@@ -228,63 +231,64 @@ export function DiagnosticsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    padding: spacing.lg,
-    gap: spacing.md,
-  },
-  pressed: { opacity: 0.7 },
-  refresh: {
-    alignSelf: 'flex-start',
-    borderWidth: 1,
-    borderColor: colors.accent,
-    borderRadius: radii.md,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.md,
-  },
-  refreshText: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.sm,
-    color: colors.accent,
-  },
-  card: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    padding: spacing.md,
-    gap: spacing.sm,
-  },
-  cardTitle: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.sm,
-    color: colors.accent,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-  },
-  rows: { gap: spacing.xs },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.sm,
-  },
-  rowLabel: {
-    flexBasis: '38%',
-    flexGrow: 0,
-    flexShrink: 0,
-    fontFamily: typography.family.body,
-    fontSize: typography.size.xs,
-    color: colors.textSecondary,
-  },
-  rowValue: {
-    flexShrink: 1,
-    flexGrow: 1,
-    fontFamily: typography.family.body,
-    fontSize: typography.size.xs,
-    color: colors.textBody,
-  },
-});
+const makeStyles = (th: ResolvedTheme) =>
+  ({
+    container: {
+      flex: 1,
+      backgroundColor: th.background,
+    },
+    content: {
+      padding: spacing.lg,
+      gap: spacing.md,
+    },
+    pressed: { opacity: 0.7 },
+    refresh: {
+      alignSelf: 'flex-start',
+      borderWidth: 1,
+      borderColor: th.accent,
+      borderRadius: radii.md,
+      paddingVertical: spacing.xs,
+      paddingHorizontal: spacing.md,
+    },
+    refreshText: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.sm,
+      color: th.accent,
+    },
+    card: {
+      borderWidth: 1,
+      borderColor: th.border,
+      backgroundColor: th.surface,
+      borderRadius: radii.lg,
+      padding: spacing.md,
+      gap: spacing.sm,
+    },
+    cardTitle: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.sm,
+      color: th.accent,
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+    },
+    rows: { gap: spacing.xs },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: spacing.sm,
+    },
+    rowLabel: {
+      flexBasis: '38%',
+      flexGrow: 0,
+      flexShrink: 0,
+      fontFamily: typography.family.body,
+      fontSize: typography.size.xs,
+      color: th.textSecondary,
+    },
+    rowValue: {
+      flexShrink: 1,
+      flexGrow: 1,
+      fontFamily: typography.family.body,
+      fontSize: typography.size.xs,
+      color: th.textBody,
+    },
+  }) as const;

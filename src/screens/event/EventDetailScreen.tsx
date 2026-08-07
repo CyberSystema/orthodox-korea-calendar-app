@@ -14,7 +14,7 @@ import { localized } from '../../features/calendar/types';
 import type { RootStackParamList } from '../../navigation/types';
 import { fetchRemoteEventById } from '../../services/api/eventsRepository';
 import { useAppStore } from '../../store/useAppStore';
-import { colors, shadows } from '../../theme/colors';
+import { useTheme, useThemedStyles, type ResolvedTheme } from '../../theme/useTheme';
 import { radii, spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import { formatDisplayDate } from '../../utils/date';
@@ -22,6 +22,8 @@ import { formatDisplayDate } from '../../utils/date';
 type Props = NativeStackScreenProps<RootStackParamList, 'EventDetail'>;
 
 export function EventDetailScreen({ route }: Props) {
+  const th = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { language } = useAppStore();
@@ -144,7 +146,7 @@ export function EventDetailScreen({ route }: Props) {
     return (
       <View style={styles.container}>
         <View style={styles.emptyCard}>
-          <ActivityIndicator size="small" color={colors.accentBright} />
+          <ActivityIndicator size="small" color={th.accentBright} />
           <Text style={styles.emptyTitle}>{t('common.loading')}</Text>
         </View>
       </View>
@@ -175,9 +177,9 @@ export function EventDetailScreen({ route }: Props) {
         <View style={styles.headerStrip}>
           <View style={styles.headerStripInner}>
             <View style={styles.stripLine} />
-            <ByzantineKnot size={14} color={colors.accentBright} />
+            <ByzantineKnot size={14} color={th.accentBright} />
             <Text style={styles.stripLabel}>{t('event.title')}</Text>
-            <ByzantineKnot size={14} color={colors.accentBright} />
+            <ByzantineKnot size={14} color={th.accentBright} />
             <View style={styles.stripLine} />
           </View>
         </View>
@@ -249,183 +251,184 @@ export function EventDetailScreen({ route }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    padding: spacing.lg,
-    gap: spacing.md,
-  },
-  pressed: {
-    opacity: 0.7,
-  },
+const makeStyles = (th: ResolvedTheme) =>
+  ({
+    container: {
+      flex: 1,
+      backgroundColor: th.background,
+    },
+    content: {
+      padding: spacing.lg,
+      gap: spacing.md,
+    },
+    pressed: {
+      opacity: 0.7,
+    },
 
-  // ─── Empty state ───────────────────────────────────────────────────────────
-  emptyCard: {
-    margin: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.lg,
-    backgroundColor: colors.surface,
-    padding: spacing.xl,
-    alignItems: 'center',
-  },
-  emptyTitle: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.lg,
-    color: colors.textSecondary,
-  },
+    // ─── Empty state ───────────────────────────────────────────────────────────
+    emptyCard: {
+      margin: spacing.lg,
+      borderWidth: 1,
+      borderColor: th.border,
+      borderRadius: radii.lg,
+      backgroundColor: th.surface,
+      padding: spacing.xl,
+      alignItems: 'center',
+    },
+    emptyTitle: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.lg,
+      color: th.textSecondary,
+    },
 
-  // ─── Header card ───────────────────────────────────────────────────────────
-  headerCard: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.lg,
-    backgroundColor: colors.surface,
-    overflow: 'hidden',
-  },
-  headerStrip: {
-    backgroundColor: colors.primaryDeep,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-  },
-  headerStripInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  stripLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.accentLine,
-  },
-  stripLabel: {
-    color: colors.brandText,
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.xxs,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    flexShrink: 1,
-  },
-  headerGoldLine: {
-    height: 2,
-    backgroundColor: colors.accent,
-    opacity: 0.7,
-  },
-  headerBody: {
-    padding: spacing.lg,
-    gap: spacing.sm,
-  },
-  eventTitle: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.xl,
-    color: colors.primary,
-    lineHeight: 28,
-  },
-  eventSummary: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.md,
-    color: colors.textBody,
-    lineHeight: 22,
-  },
+    // ─── Header card ───────────────────────────────────────────────────────────
+    headerCard: {
+      borderWidth: 1,
+      borderColor: th.border,
+      borderRadius: radii.lg,
+      backgroundColor: th.surface,
+      overflow: 'hidden',
+    },
+    headerStrip: {
+      backgroundColor: th.primaryDeep,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.md,
+    },
+    headerStripInner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.xs,
+    },
+    stripLine: {
+      flex: 1,
+      height: 1,
+      backgroundColor: th.accentLine,
+    },
+    stripLabel: {
+      color: th.brandText,
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.xxs,
+      letterSpacing: 0.8,
+      textTransform: 'uppercase',
+      flexShrink: 1,
+    },
+    headerGoldLine: {
+      height: 2,
+      backgroundColor: th.accent,
+      opacity: 0.7,
+    },
+    headerBody: {
+      padding: spacing.lg,
+      gap: spacing.sm,
+    },
+    eventTitle: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.xl,
+      color: th.primary,
+      lineHeight: 28,
+    },
+    eventSummary: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.md,
+      color: th.textBody,
+      lineHeight: 22,
+    },
 
-  // ─── Meta card ─────────────────────────────────────────────────────────────
-  metaCard: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.lg,
-    backgroundColor: colors.surfaceWhite,
-    padding: spacing.md,
-    ...shadows.warm,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: spacing.xs,
-  },
-  metaDivider: {
-    height: 1,
-    backgroundColor: colors.borderLight,
-  },
-  metaLabel: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: colors.textSecondary,
-    flexShrink: 0,
-  },
-  metaValue: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.sm,
-    color: colors.textPrimary,
-    // The value is the long half (a full formatted date) — wrap it, don't let
-    // it run past the card edge.
-    flexShrink: 1,
-    textAlign: 'right',
-    paddingLeft: spacing.sm,
-  },
-  draftBadge: {
-    borderWidth: 1,
-    borderColor: colors.accent,
-    borderRadius: radii.full,
-    backgroundColor: colors.accentGlow,
-    paddingVertical: 2,
-    paddingHorizontal: spacing.sm,
-  },
-  draftBadgeText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.xxs,
-    color: colors.primaryDeep,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
+    // ─── Meta card ─────────────────────────────────────────────────────────────
+    metaCard: {
+      borderWidth: 1,
+      borderColor: th.border,
+      borderRadius: radii.lg,
+      backgroundColor: th.surfaceWhite,
+      padding: spacing.md,
+      ...th.shadows.warm,
+    },
+    metaRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: spacing.xs,
+    },
+    metaDivider: {
+      height: 1,
+      backgroundColor: th.borderLight,
+    },
+    metaLabel: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: th.textSecondary,
+      flexShrink: 0,
+    },
+    metaValue: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.sm,
+      color: th.textPrimary,
+      // The value is the long half (a full formatted date) — wrap it, don't let
+      // it run past the card edge.
+      flexShrink: 1,
+      textAlign: 'right',
+      paddingLeft: spacing.sm,
+    },
+    draftBadge: {
+      borderWidth: 1,
+      borderColor: th.accent,
+      borderRadius: radii.full,
+      backgroundColor: th.accentGlow,
+      paddingVertical: 2,
+      paddingHorizontal: spacing.sm,
+    },
+    draftBadgeText: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.xxs,
+      color: th.onAccent,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
 
-  // ─── Details card ──────────────────────────────────────────────────────────
-  detailsCard: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.lg,
-    backgroundColor: colors.surfaceWhite,
-    padding: spacing.lg,
-    ...shadows.warm,
-  },
-  detailsText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.md,
-    color: colors.textBody,
-    lineHeight: 24,
-  },
+    // ─── Details card ──────────────────────────────────────────────────────────
+    detailsCard: {
+      borderWidth: 1,
+      borderColor: th.border,
+      borderRadius: radii.lg,
+      backgroundColor: th.surfaceWhite,
+      padding: spacing.lg,
+      ...th.shadows.warm,
+    },
+    detailsText: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.md,
+      color: th.textBody,
+      lineHeight: 24,
+    },
 
-  // ─── Actions card ──────────────────────────────────────────────────────────
-  actionsCard: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.lg,
-    backgroundColor: colors.surfaceWhite,
-    padding: spacing.md,
-    gap: spacing.sm,
-    ...shadows.warm,
-  },
-  actionsRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  actionButton: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: colors.accent,
-    borderRadius: radii.full,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    backgroundColor: colors.accentGlow,
-    alignItems: 'center',
-  },
-  actionButtonText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: colors.primaryDeep,
-    fontWeight: typography.weight.semibold,
-  },
-});
+    // ─── Actions card ──────────────────────────────────────────────────────────
+    actionsCard: {
+      borderWidth: 1,
+      borderColor: th.border,
+      borderRadius: radii.lg,
+      backgroundColor: th.surfaceWhite,
+      padding: spacing.md,
+      gap: spacing.sm,
+      ...th.shadows.warm,
+    },
+    actionsRow: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+    },
+    actionButton: {
+      flex: 1,
+      borderWidth: 1,
+      borderColor: th.accent,
+      borderRadius: radii.full,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.sm,
+      backgroundColor: th.accentGlow,
+      alignItems: 'center',
+    },
+    actionButtonText: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: th.onAccent,
+      fontWeight: typography.weight.semibold,
+    },
+  }) as const;

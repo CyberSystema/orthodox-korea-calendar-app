@@ -1,6 +1,6 @@
 import { Image, StyleSheet, View } from 'react-native';
 
-import { colors } from '../../theme/colors';
+import { useTheme, useThemedStyles, type ResolvedTheme } from '../../theme/useTheme';
 import { radii, spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import type { LiturgicalDay } from '../../features/calendar/types';
@@ -25,6 +25,7 @@ type Flag = {
 };
 
 export function LiturgicalFlagsRow({ day, labels }: Props) {
+  const styles = useThemedStyles(makeStyles);
   const flags: Flag[] = [];
   if (day.fast) {
     flags.push({
@@ -85,35 +86,36 @@ export function LiturgicalFlagsRow({ day, labels }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-  },
-  badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surfaceWhite,
-    borderRadius: radii.full,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    // Keep a long label inside the card instead of widening the wrap row.
-    maxWidth: '100%',
-  },
-  badgeText: {
-    color: colors.textBody,
-    fontFamily: typography.family.body,
-    fontSize: typography.size.xxs,
-    flexShrink: 1,
-  },
-  badgeImage: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    flexShrink: 0,
-  },
-});
+const makeStyles = (th: ResolvedTheme) =>
+  ({
+    wrap: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.xs,
+    },
+    badge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.xs,
+      borderWidth: 1,
+      borderColor: th.border,
+      backgroundColor: th.surfaceWhite,
+      borderRadius: radii.full,
+      paddingVertical: spacing.xs,
+      paddingHorizontal: spacing.sm,
+      // Keep a long label inside the card instead of widening the wrap row.
+      maxWidth: '100%',
+    },
+    badgeText: {
+      color: th.textBody,
+      fontFamily: typography.family.body,
+      fontSize: typography.size.xxs,
+      flexShrink: 1,
+    },
+    badgeImage: {
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      flexShrink: 0,
+    },
+  }) as const;

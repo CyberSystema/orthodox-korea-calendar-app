@@ -26,10 +26,12 @@ import { initNetworkMonitor, useNetworkStore } from '../store/useNetworkStore';
 import { verifyAdminCloudflareSession } from '../services/api/adminAuth';
 import { OfflineBanner } from '../components/common/OfflineBanner';
 import { ByzantineSplashScreen } from '../components/common/ByzantineSplashScreen';
-import { colors } from '../theme/colors';
-import { navigationTheme } from '../theme/navigationTheme';
+import { useTheme, useThemedStyles, type ResolvedTheme } from '../theme/useTheme';
+import { useNavigationTheme } from '../theme/navigationTheme';
 
 export function RootApp() {
+  const styles = useThemedStyles(makeStyles);
+  const navigationTheme = useNavigationTheme();
   const isHydrated = useAppStore((state) => state.isHydrated);
   const hydratePreferences = useAppStore((state) => state.hydratePreferences);
   const eventsHydrated = useEventsStore((state) => state.isHydrated);
@@ -234,19 +236,20 @@ export function RootApp() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    // Brand background behind everything, so any frame where neither the splash
-    // nor a screen has painted shows the brand color instead of white.
-    backgroundColor: colors.primaryDeep,
-  },
-  // Column: the navigator fills, and the offline banner (when visible) takes its
-  // height at the bottom, lifting the content above it.
-  appHost: {
-    flex: 1,
-  },
-  navHost: {
-    flex: 1,
-  },
-});
+const makeStyles = (th: ResolvedTheme) =>
+  ({
+    root: {
+      flex: 1,
+      // Brand background behind everything, so any frame where neither the splash
+      // nor a screen has painted shows the brand color instead of white.
+      backgroundColor: th.primaryDeep,
+    },
+    // Column: the navigator fills, and the offline banner (when visible) takes its
+    // height at the bottom, lifting the content above it.
+    appHost: {
+      flex: 1,
+    },
+    navHost: {
+      flex: 1,
+    },
+  }) as const;

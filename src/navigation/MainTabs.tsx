@@ -12,7 +12,7 @@ import {
 } from '../features/announcements/useAnnouncementsStore';
 import { useAppStore } from '../store/useAppStore';
 import { useDayOfMonth } from '../hooks/useDayOfMonth';
-import { colors } from '../theme/colors';
+import { useTheme, useThemedStyles, type ResolvedTheme } from '../theme/useTheme';
 import { typography } from '../theme/typography';
 import { BRAND_TITLE, USES_NATIVE_HEADER } from './nativeHeader';
 import type { LaunchScreen } from './launchScreen';
@@ -187,6 +187,7 @@ const newsIcon = (): NativeBottomTabIcon =>
   isIOS ? { type: 'sfSymbol', name: 'bell' } : androidIcon('news', ANDROID_ICON_ASSETS.news);
 
 export function MainTabs() {
+  const th = useTheme();
   const { t } = useTranslation();
   // The native tab bar has no `tabBarAllowFontScaling`, so whatever size we pass
   // is scaled AGAIN by the OS. Use the app-only multiplier here or the OS scale
@@ -213,15 +214,15 @@ export function MainTabs() {
         // headerRight, so the button handlers stay local to them.
         headerShown: USES_NATIVE_HEADER,
         headerTitleAlign: 'center',
-        headerStyle: { backgroundColor: colors.primaryDeep },
-        headerTintColor: colors.brandText,
+        headerStyle: { backgroundColor: th.primaryDeep },
+        headerTintColor: th.brandText,
         headerShadowVisible: false,
         headerTitleStyle: {
           fontFamily: typography.family.heading,
           fontSize: typography.size.lg * Math.min(appFontScale, 1.4),
-          color: colors.brandText,
+          color: th.brandText,
         },
-        tabBarActiveTintColor: colors.tabActive,
+        tabBarActiveTintColor: th.tabActive,
         // iPadOS 18+ renders a UITabBarController's bar at the TOP, and no mode
         // changes that: 'tabSidebar' only adds a sidebar-toggle button beside the
         // same top pill (verified on the iPad Pro 11" simulator, iPadOS 27).
@@ -229,7 +230,7 @@ export function MainTabs() {
         tabBarControllerMode: 'tabBar',
         // Android only — on iOS the option IS honoured, but the system grey is
         // what a UIKit tab bar should use, so it is left alone there.
-        tabBarInactiveTintColor: isIOS ? undefined : colors.tabInactive,
+        tabBarInactiveTintColor: isIOS ? undefined : th.tabInactive,
         // NOTE: `tabBarActiveIndicatorColor` is deliberately not set —
         // @react-navigation/bottom-tabs discards it through an
         // operator-precedence bug and always draws the Android pill as the
@@ -240,7 +241,7 @@ export function MainTabs() {
           fontFamily: typography.family.heading,
           fontSize: typography.size.xxs * Math.min(appFontScale, 1.5),
         },
-        tabBarBadgeStyle: { backgroundColor: colors.crimson, color: colors.surfaceWhite },
+        tabBarBadgeStyle: { backgroundColor: th.crimson, color: th.surfaceWhite },
       }}
     >
       <Tab.Screen

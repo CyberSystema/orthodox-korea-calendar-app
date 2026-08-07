@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
-import { colors } from '../../theme/colors';
+import { useTheme, useThemedStyles, type ResolvedTheme } from '../../theme/useTheme';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import { Text } from './ScaledText';
@@ -10,6 +10,7 @@ type Props = {
 };
 
 export function OrnamentTitle({ text }: Props) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.row}>
       <View style={styles.lineOuter} />
@@ -21,32 +22,33 @@ export function OrnamentTitle({ text }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  lineOuter: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.border,
-  },
-  dot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.accent,
-    opacity: 0.7,
-  },
-  text: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.xs,
-    color: colors.accent,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    // Sits between two flex:1 rules — let it wrap rather than squeeze them out.
-    flexShrink: 1,
-    textAlign: 'center',
-  },
-});
+const makeStyles = (th: ResolvedTheme) =>
+  ({
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.xs,
+    },
+    lineOuter: {
+      flex: 1,
+      height: 1,
+      backgroundColor: th.border,
+    },
+    dot: {
+      width: 4,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: th.accent,
+      opacity: 0.7,
+    },
+    text: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.xs,
+      color: th.accent,
+      letterSpacing: 0.8,
+      textTransform: 'uppercase',
+      // Sits between two flex:1 rules — let it wrap rather than squeeze them out.
+      flexShrink: 1,
+      textAlign: 'center',
+    },
+  }) as const;

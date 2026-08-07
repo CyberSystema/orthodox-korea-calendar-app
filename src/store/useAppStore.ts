@@ -9,12 +9,14 @@ import {
   type LaunchScreen,
 } from '../navigation/launchScreen';
 import { secureStorage } from '../services/storage/secureStorage';
+import { DEFAULT_THEME_MODE, normalizeThemeMode, type ThemeMode } from '../theme/useTheme';
 import { DEFAULT_FONT_SCALE, normalizeFontScale, type FontScale } from '../theme/fontScale';
 import type { SupportedLanguage } from '../types/language';
 
 const LANGUAGE_KEY = 'app.language';
 const FONT_SCALE_KEY = 'app.fontScale';
 const LAUNCH_SCREEN_KEY = 'app.launchScreen';
+const THEME_MODE_KEY = 'app.themeMode';
 // We persist only the fact that staff mode is enabled — never the raw passcode.
 // The session token (managed by the SDK) is what proves authentication.
 const STAFF_MODE_KEY = 'auth.staffModeEnabled';
@@ -28,6 +30,8 @@ type AppState = {
   fontScale: FontScale;
   /** Which tab the app opens on; see navigation/launchScreen.ts. */
   launchScreen: LaunchScreen;
+  /** Light / dark / follow-the-system; see theme/useTheme.ts. */
+  themeMode: ThemeMode;
   selectedDateISO: string | null;
   adminMode: boolean;
   cloudflareAdminAuthenticated: boolean;
@@ -36,6 +40,7 @@ type AppState = {
   setLanguage: (language: SupportedLanguage) => void;
   setFontScale: (fontScale: FontScale) => void;
   setLaunchScreen: (launchScreen: LaunchScreen) => void;
+  setThemeMode: (themeMode: ThemeMode) => void;
   setSelectedDateISO: (dateISO: string | null) => void;
   setAdminMode: (value: boolean) => void;
   setCloudflareAdminAuthenticated: (value: boolean) => void;
@@ -47,6 +52,7 @@ export const useAppStore = create<AppState>((set) => ({
   language: (i18n.language as SupportedLanguage) || 'en',
   fontScale: DEFAULT_FONT_SCALE,
   launchScreen: DEFAULT_LAUNCH_SCREEN,
+  themeMode: DEFAULT_THEME_MODE,
   selectedDateISO: null,
   adminMode: false,
   cloudflareAdminAuthenticated: false,
@@ -56,6 +62,7 @@ export const useAppStore = create<AppState>((set) => ({
       savedLanguage,
       savedFontScale,
       savedLaunchScreen,
+      savedThemeMode,
       hadAuthToken,
       staffModeFlag,
       legacyPasscode,
@@ -63,6 +70,7 @@ export const useAppStore = create<AppState>((set) => ({
       secureStorage.getItem(LANGUAGE_KEY),
       secureStorage.getItem(FONT_SCALE_KEY),
       secureStorage.getItem(LAUNCH_SCREEN_KEY),
+      secureStorage.getItem(THEME_MODE_KEY),
       hasAdminAuthToken(),
       secureStorage.getItem(STAFF_MODE_KEY),
       secureStorage.getItem(LEGACY_STAFF_PASSCODE_KEY),
@@ -106,6 +114,9 @@ export const useAppStore = create<AppState>((set) => ({
       // read ONLY when the navigator mounts, and RootApp mounts it once hydration
       // finishes. Committing this later would always open the default tab.
       launchScreen: normalizeLaunchScreen(savedLaunchScreen),
+      // Same reason again: the palette must be right on the FIRST painted frame,
+      // or the app flashes light before switching to night.
+      themeMode: normalizeThemeMode(savedThemeMode),
       adminMode: staffModeEnabled,
       cloudflareAdminAuthenticated,
     });
@@ -122,6 +133,10 @@ export const useAppStore = create<AppState>((set) => ({
   setLaunchScreen: (launchScreen) => {
     void secureStorage.setItem(LAUNCH_SCREEN_KEY, launchScreen);
     set({ launchScreen });
+  },
+  setThemeMode: (themeMode) => {
+    void secureStorage.setItem(THEME_MODE_KEY, themeMode);
+    set({ themeMode });
   },
   setSelectedDateISO: (selectedDateISO) => set({ selectedDateISO }),
   setAdminMode: (value) => set({ adminMode: value }),

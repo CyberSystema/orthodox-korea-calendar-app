@@ -9,7 +9,7 @@ import { SettingsScreen } from '../screens/settings/SettingsScreen';
 import { StaffScreen } from '../screens/settings/StaffScreen';
 import { DiagnosticsScreen } from '../screens/settings/DiagnosticsScreen';
 import { useTextScale } from '../hooks/useTextScale';
-import { colors } from '../theme/colors';
+import { useTheme, useThemedStyles, type ResolvedTheme } from '../theme/useTheme';
 import { typography } from '../theme/typography';
 import { MainTabs } from './MainTabs';
 import type { RootStackParamList } from './types';
@@ -17,6 +17,7 @@ import type { RootStackParamList } from './types';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function RootNavigator() {
+  const th = useTheme();
   const { t } = useTranslation();
   // Native-stack draws its header title natively, outside our ScaledText — size
   // it here so it follows the reader's setting like the rest of the app.
@@ -26,15 +27,15 @@ export function RootNavigator() {
     <Stack.Navigator
       initialRouteName="MainTabs"
       screenOptions={{
-        headerStyle: { backgroundColor: colors.primaryDeep },
+        headerStyle: { backgroundColor: th.primaryDeep },
         headerTitleStyle: {
           fontFamily: typography.family.heading,
           fontSize: typography.size.lg * Math.min(textScale, 1.4),
-          color: colors.brandText,
+          color: th.brandText,
         },
-        headerTintColor: colors.brandText,
+        headerTintColor: th.brandText,
         headerShadowVisible: false,
-        contentStyle: { backgroundColor: colors.background },
+        contentStyle: { backgroundColor: th.background },
       }}
     >
       <Stack.Screen

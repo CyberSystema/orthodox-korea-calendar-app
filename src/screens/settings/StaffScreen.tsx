@@ -16,7 +16,7 @@ import { canUseEventsApi } from '../../services/api/eventsRepository';
 import { secureStorage } from '../../services/storage/secureStorage';
 import { useAppStore } from '../../store/useAppStore';
 import { useNetworkStore } from '../../store/useNetworkStore';
-import { colors } from '../../theme/colors';
+import { useTheme, useThemedStyles, type ResolvedTheme } from '../../theme/useTheme';
 import { radii, spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 
@@ -37,6 +37,8 @@ const STAFF_MODE_KEY = 'auth.staffModeEnabled';
  * is on. Turning staff mode off signs the session out.
  */
 export function StaffScreen() {
+  const th = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { adminMode, cloudflareAdminAuthenticated, setAdminMode, setCloudflareAdminAuthenticated } =
@@ -174,8 +176,8 @@ export function StaffScreen() {
             disabled={authBusy || !isOnline}
             accessibilityLabel={t('settings.adminMode')}
             onValueChange={(value) => void onToggleAdminMode(value)}
-            trackColor={{ false: colors.backgroundWarm, true: colors.accentDim }}
-            thumbColor={adminMode ? colors.accent : colors.textFaint}
+            trackColor={{ false: th.backgroundWarm, true: th.accentDim }}
+            thumbColor={adminMode ? th.accent : th.textFaint}
           />
         </View>
 
@@ -186,7 +188,7 @@ export function StaffScreen() {
               value={passcodeDraft}
               onChangeText={setPasscodeDraft}
               placeholder={t('settings.adminPasscodePlaceholder')}
-              placeholderTextColor={colors.textSecondary}
+              placeholderTextColor={th.textSecondary}
               style={styles.input}
               autoCapitalize="none"
               autoCorrect={false}
@@ -222,77 +224,78 @@ export function StaffScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    padding: spacing.lg,
-    gap: spacing.lg,
-  },
-  pressed: { opacity: 0.7 },
-  intro: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: colors.textSecondary,
-    lineHeight: typography.size.sm * 1.5,
-  },
-  rowCard: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.md,
-  },
-  rowTitle: {
-    flexShrink: 1,
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.md,
-    color: colors.textBody,
-  },
-  card: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    padding: spacing.lg,
-    gap: spacing.md,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    fontFamily: typography.family.body,
-    fontSize: typography.size.md,
-    color: colors.textBody,
-    backgroundColor: colors.surfaceWhite,
-  },
-  buttonOutline: {
-    borderWidth: 1,
-    borderColor: colors.accent,
-    borderRadius: radii.md,
-    paddingVertical: spacing.sm,
-    alignItems: 'center',
-  },
-  buttonDisabled: { opacity: 0.5 },
-  buttonOutlineText: {
-    fontFamily: typography.family.heading,
-    fontSize: typography.size.sm,
-    color: colors.accent,
-  },
-  statusText: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: colors.textSecondary,
-    lineHeight: typography.size.sm * 1.5,
-  },
-});
+const makeStyles = (th: ResolvedTheme) =>
+  ({
+    flex: { flex: 1 },
+    container: {
+      flex: 1,
+      backgroundColor: th.background,
+    },
+    content: {
+      padding: spacing.lg,
+      gap: spacing.lg,
+    },
+    pressed: { opacity: 0.7 },
+    intro: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: th.textSecondary,
+      lineHeight: typography.size.sm * 1.5,
+    },
+    rowCard: {
+      borderWidth: 1,
+      borderColor: th.border,
+      backgroundColor: th.surface,
+      borderRadius: radii.lg,
+      paddingVertical: spacing.md,
+      paddingHorizontal: spacing.lg,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: spacing.md,
+    },
+    rowTitle: {
+      flexShrink: 1,
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.md,
+      color: th.textBody,
+    },
+    card: {
+      borderWidth: 1,
+      borderColor: th.border,
+      backgroundColor: th.surface,
+      borderRadius: radii.lg,
+      padding: spacing.lg,
+      gap: spacing.md,
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: th.border,
+      borderRadius: radii.md,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+      fontFamily: typography.family.body,
+      fontSize: typography.size.md,
+      color: th.textBody,
+      backgroundColor: th.surfaceWhite,
+    },
+    buttonOutline: {
+      borderWidth: 1,
+      borderColor: th.accent,
+      borderRadius: radii.md,
+      paddingVertical: spacing.sm,
+      alignItems: 'center',
+    },
+    buttonDisabled: { opacity: 0.5 },
+    buttonOutlineText: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.sm,
+      color: th.accent,
+    },
+    statusText: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: th.textSecondary,
+      lineHeight: typography.size.sm * 1.5,
+    },
+  }) as const;

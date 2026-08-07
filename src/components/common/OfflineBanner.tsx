@@ -3,7 +3,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { useNetworkStore } from '../../store/useNetworkStore';
-import { colors } from '../../theme/colors';
+import { useTheme, useThemedStyles, type ResolvedTheme } from '../../theme/useTheme';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import { Text } from './ScaledText';
@@ -12,6 +12,7 @@ import { Text } from './ScaledText';
 // that the calendar is being served from the on-device cache and that online-only
 // features (event sync, Staff Mode) are paused until the connection returns.
 export function OfflineBanner() {
+  const styles = useThemedStyles(makeStyles);
   const isOnline = useNetworkStore((state) => state.isOnline);
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
@@ -31,19 +32,20 @@ export function OfflineBanner() {
   );
 }
 
-const styles = StyleSheet.create({
-  banner: {
-    backgroundColor: colors.primaryDeep,
-    borderTopWidth: 1,
-    borderTopColor: colors.accent,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-  },
-  text: {
-    fontFamily: typography.family.body,
-    fontSize: typography.size.sm,
-    color: colors.brandText,
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-});
+const makeStyles = (th: ResolvedTheme) =>
+  ({
+    banner: {
+      backgroundColor: th.primaryDeep,
+      borderTopWidth: 1,
+      borderTopColor: th.accent,
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.sm,
+    },
+    text: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: th.brandText,
+      textAlign: 'center',
+      lineHeight: 18,
+    },
+  }) as const;
