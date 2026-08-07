@@ -23,8 +23,12 @@ import { SECRET_MENU_ENABLED } from '../../config/features';
 import { useTranslation } from 'react-i18next';
 import Svg, { Circle, Path } from 'react-native-svg';
 
+import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
+
+import { IlluminatedGround } from '../../components/common/IlluminatedGround';
 import { ByzantineArrow } from '../../components/common/ByzantineArrow';
 import { ByzantineKnot } from '../../components/common/ByzantineKnot';
+import { HeadpieceButton, IlluminatedHeader } from '../../components/common/IlluminatedHeader';
 import { LiturgicalDayPanel } from '../../components/common/LiturgicalDayPanel';
 import { PromptModal } from '../../components/common/PromptModal';
 import { Text, TextInput } from '../../components/common/ScaledText';
@@ -77,6 +81,13 @@ export function TodayScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const tabBottomPadding = useTabContentBottomPadding();
+
+  // Drives the headpiece's parallax. Kept on the UI thread — the header reads it
+  // through Reanimated, so scrolling never crosses the bridge.
+  const scrollY = useSharedValue(0);
+  const onScroll = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
   const keyboardHeight = useKeyboardHeight();
   // The search modal is top-anchored at (insets.top + 28) — a comfortable gap below the
   // notch — and capped to the band above the keyboard, so the WHOLE card is always on
@@ -320,10 +331,35 @@ export function TodayScreen({ navigation }: Props) {
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
+      {/* ONE ground for the whole screen — see IlluminatedGround. Must come
+          first so the headpiece and the page both sit on it. */}
+      {th.direction === 'illuminated' ? <IlluminatedGround /> : null}
       {/* ═══ BRANDED HEADER (fixed) ═══
           Skipped on iPad, where the platform's own header carries the title and
           these buttons instead — see USES_NATIVE_HEADER. */}
-      {USES_NATIVE_HEADER ? null : (
+      {USES_NATIVE_HEADER ? null : th.direction === 'illuminated' ? (
+        /* The Illuminated direction replaces the flat band with a manuscript
+           headpiece — gradient, travelling sheen, vines and a closing rule. */
+        <IlluminatedHeader
+          title={BRAND_TITLE}
+          topInset={insets.top}
+          onBrandPress={handleBrandTap}
+          scrollY={scrollY}
+          left={
+            <HeadpieceButton
+              onPress={() => navigation.navigate('Settings')}
+              label={t('a11y.openSettings')}
+            >
+              <MenuIcon size={19} color={th.brandText} />
+            </HeadpieceButton>
+          }
+          right={
+            <HeadpieceButton onPress={openSearch} label={t('a11y.search')}>
+              <SearchSvgIcon size={19} color={th.brandText} />
+            </HeadpieceButton>
+          }
+        />
+      ) : (
         <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
           <View style={styles.headerRow}>
             <Pressable
@@ -366,8 +402,10 @@ export function TodayScreen({ navigation }: Props) {
         </View>
       )}
 
-      <ScrollView
+      <Animated.ScrollView
         style={styles.scrollArea}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         // The toolbar is the platform's own and does NOT take layout space away
         // from this screen — on iOS 26+ it is a floating capsule that content
         // scrolls under. Reserve it explicitly or the last row is stranded
@@ -474,7 +512,7 @@ export function TodayScreen({ navigation }: Props) {
             }
           />
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* ═══ SEARCH MODAL ═══ */}
       <Modal
@@ -775,29 +813,34 @@ const makeStyles = (th: ResolvedTheme) =>
     },
     actionPill: {
       borderWidth: 1,
-      borderColor: th.border,
-      borderRadius: radii.full,
-      backgroundColor: th.surfaceWhite,
+      // On the illuminated leaf nothing is a filled capsule: a control is a
+      // gold-ruled square that sits ON the parchment, so the page keeps one
+      // material throughout instead of white chips floating on it.
+      borderColor: th.direction === 'illuminated' ? th.accentLine : th.border,
+      borderRadius: th.direction === 'illuminated' ? radii.sm : radii.full,
+      backgroundColor: th.direction === 'illuminated' ? 'transparent' : th.surfaceWhite,
       paddingVertical: spacing.xs,
       paddingHorizontal: spacing.md,
     },
     actionPillText: {
       fontFamily: typography.family.body,
       fontSize: typography.size.xs,
-      color: th.primary,
+      // Gold on parchment, matching the headpiece's own lettering.
+      color: th.direction === 'illuminated' ? th.accent : th.primary,
+      letterSpacing: th.direction === 'illuminated' ? 0.6 : 0,
     },
     actionPillAccent: {
       borderWidth: 1,
       borderColor: th.accent,
-      borderRadius: radii.full,
-      backgroundColor: th.accentGlow,
+      borderRadius: th.direction === 'illuminated' ? radii.sm : radii.full,
+      backgroundColor: th.direction === 'illuminated' ? 'transparent' : th.accentGlow,
       paddingVertical: spacing.xs,
       paddingHorizontal: spacing.md,
     },
     actionPillAccentText: {
       fontFamily: typography.family.body,
       fontSize: typography.size.xs,
-      color: th.onAccent,
+      color: th.direction === 'illuminated' ? th.accentBright : th.onAccent,
       fontWeight: typography.weight.semibold,
     },
 

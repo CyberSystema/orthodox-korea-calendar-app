@@ -15,7 +15,9 @@ import { useTabContentBottomPadding } from '../../hooks/useTabContentBottomPaddi
 import { USES_NATIVE_HEADER } from '../../navigation/nativeHeader';
 import Svg, { Path } from 'react-native-svg';
 
+import { IlluminatedGround } from '../../components/common/IlluminatedGround';
 import { ByzantineKnot } from '../../components/common/ByzantineKnot';
+import { IlluminatedHeader } from '../../components/common/IlluminatedHeader';
 import { Text } from '../../components/common/ScaledText';
 import { useAnnouncementsStore } from '../../features/announcements/useAnnouncementsStore';
 import type { Announcement } from '../../services/api/announcementsRepository';
@@ -199,9 +201,16 @@ export function AnnouncementsScreen({ navigation }: Props) {
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
+      {/* ONE ground for the whole screen — see IlluminatedGround. Must come
+          first so the headpiece and the page both sit on it. */}
+      {th.direction === 'illuminated' ? <IlluminatedGround /> : null}
       {/* ═══ BRANDED HEADER ═══
           Skipped on iPad, where the platform's header shows this same title. */}
-      {USES_NATIVE_HEADER ? null : (
+      {USES_NATIVE_HEADER ? null : th.direction === 'illuminated' ? (
+        /* No brand tap and no buttons here — this screen's title is the section
+           name, not the brand, so the secret-menu counter does not belong. */
+        <IlluminatedHeader title={t('announcements.title')} topInset={insets.top} />
+      ) : (
         <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
           <View style={styles.headerRow}>
             <View style={styles.headerLine} />

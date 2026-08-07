@@ -2,7 +2,12 @@ import { useMemo } from 'react';
 import { StyleSheet, useColorScheme } from 'react-native';
 
 import { useAppStore } from '../store/useAppStore';
-import { DIRECTION_DESIGN, type Direction, type DirectionDesign } from './direction';
+import {
+  DIRECTION_DESIGN,
+  directionPalette,
+  type Direction,
+  type DirectionDesign,
+} from './direction';
 import {
   lightShadows,
   lightTheme,
@@ -58,6 +63,10 @@ export function useTheme(): ResolvedTheme {
     const base = dark ? nightTheme : lightTheme;
     return {
       ...base,
+      // A direction may re-tint the palette it is given. Illuminated does, so
+      // that every surface in the app lets the leaf through — see
+      // directionPalette for why this belongs here and not in the screens.
+      ...directionPalette(direction, base, dark),
       isDark: dark,
       shadows: dark ? nightShadows : lightShadows,
       direction,

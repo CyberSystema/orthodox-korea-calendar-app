@@ -1,12 +1,24 @@
-import { useMemo } from 'react';
-import { Pressable, View } from 'react-native';
+import { useEffect, useMemo } from 'react';
+import * as Haptics from 'expo-haptics';
+import { Pressable, useWindowDimensions, View } from 'react-native';
+import Animated, {
+  Easing,
+  FadeIn,
+  FadeInDown,
+  ZoomIn,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 
 import type { LiturgicalDay, LiturgicalEvent } from '../../features/calendar/types';
 import { localized } from '../../features/calendar/types';
 import type { SupportedLanguage } from '../../types/language';
 import { spacing } from '../../theme/spacing';
 import { useTheme, useThemedStyles, type ResolvedTheme } from '../../theme/useTheme';
-import { ByzantineKnot } from './ByzantineKnot';
+import { Mandorla, OrnamentalRule } from './IlluminatedOrnaments';
+import { CandleGlow, GoldLeafNumeral } from './IlluminatedSkia';
 import { Text } from './ScaledText';
 import { SelectableText } from './SelectableText';
 
@@ -15,37 +27,40 @@ type Props = {
   dateISO: string;
   liturgicalDay: LiturgicalDay | null;
   events: LiturgicalEvent[];
-  labels: {
-    readings: string;
-    saints: string;
-    events: string;
-    tone: string;
-    noReadings: string;
-  };
+  labels: { readings: string; saints: string; events: string; tone: string; noReadings: string };
   onEventPress?: (event: LiturgicalEvent) => void;
 };
 
+/** Entrance timings. Each band arrives just after the one above it, so the page
+ *  assembles downward like a leaf being written rather than all at once. */
+const STEP = 90;
+const DUR = 520;
+
 /**
- * THE DAY AS A PAGE, not as a card.
+ * THE DAY AS AN ILLUMINATED LEAF.
  *
- * This is the Illuminated direction's own composition, and it is deliberately a
- * different SHAPE from the default panel rather than the same layout in another
- * typeface — that was the failure of the first attempt at these directions.
- * What actually changes:
+ * This is not the default panel restyled — it is a different composition, and
+ * the ornament is drawn rather than implied:
  *
- *   HIERARCHY. The old panel gave the date, the feast, the readings and the
- *   saints nearly the same weight (15/17/20pt) inside one bordered box, so the
- *   eye had nowhere to land. Here the numeral is ~72pt and the commemoration is
- *   the headline; everything else recedes. The type scale spans 11 → 72 instead
- *   of 15 → 20.
+ *   A MANDORLA behind the date, the almond of light Byzantine work puts behind a
+ *   holy figure. Its rays only appear when the day is a feast, and on a great
+ *   feast it turns slowly — so rank is something you SEE before you read.
  *
- *   COMPOSITION. No card floating in empty space. Full-bleed bands separated by
- *   gold rules, so the page fills the screen the way a manuscript leaf does.
+ *   AN ILLUMINATED CAPITAL opens the day's principal commemoration, framed in a
+ *   gold lattice like a decorated initial.
  *
- *   RANK IS VISIBLE. A feast, a fast and an ordinary Tuesday currently look
- *   identical apart from a coloured dot. Here the day's own flags — which the
- *   app already computes — set the hero's colour and ornament, so a great feast
- *   announces itself.
+ *   RULED BANDS with lozenge dividers instead of hairlines, corner vines framing
+ *   the leaf, and a parchment tooth over the whole page so the flat areas do not
+ *   read as plastic.
+ *
+ *   MOTION that assembles the page downward on arrival, and re-runs when the day
+ *   changes — keyed on the date, so paging through days feels like turning
+ *   leaves.
+ *
+ * Every ornament is pointer-transparent and hidden from assistive tech; none of
+ * it sits between the reader and the text. The numeral opts out of text scaling
+ * because it is a display figure inside a fixed composition — the reader's size
+ * setting governs the content beneath it.
  */
 export function IlluminatedDay({
   language,
@@ -57,6 +72,7 @@ export function IlluminatedDay({
 }: Props) {
   const th = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const { width } = useWindowDimensions();
 
   const { dayNum, weekday, monthYear, isSunday } = useMemo(() => {
     const d = new Date(`${dateISO}T00:00:00`);
@@ -69,80 +85,143 @@ export function IlluminatedDay({
     };
   }, [dateISO, language]);
 
-  const celebrations = useMemo(
-    () =>
-      (language === 'ko'
-        ? liturgicalDay?.celebrationsLocalized?.ko
-        : liturgicalDay?.celebrationsLocalized?.en) ??
-      liturgicalDay?.celebrations ??
-      [],
-    [liturgicalDay, language],
+  const pick = <T,>(ko: T | undefined, en: T | undefined, fallback: T): T =>
+    (language === 'ko' ? ko : en) ?? fallback;
+
+  const celebrations = pick(
+    liturgicalDay?.celebrationsLocalized?.ko,
+    liturgicalDay?.celebrationsLocalized?.en,
+    liturgicalDay?.celebrations ?? [],
   );
-  const saints = useMemo(
-    () =>
-      (language === 'ko'
-        ? liturgicalDay?.saintsLocalized?.ko
-        : liturgicalDay?.saintsLocalized?.en) ??
-      liturgicalDay?.saints ??
-      [],
-    [liturgicalDay, language],
+  const saints = pick(
+    liturgicalDay?.saintsLocalized?.ko,
+    liturgicalDay?.saintsLocalized?.en,
+    liturgicalDay?.saints ?? [],
   );
-  const readings = useMemo(
-    () =>
-      (language === 'ko'
-        ? liturgicalDay?.readingsLocalized?.ko
-        : liturgicalDay?.readingsLocalized?.en) ??
-      liturgicalDay?.readings ??
-      [],
-    [liturgicalDay, language],
+  const readings = pick(
+    liturgicalDay?.readingsLocalized?.ko,
+    liturgicalDay?.readingsLocalized?.en,
+    liturgicalDay?.readings ?? [],
   );
 
-  // The headline is the day's principal commemoration: a high-rank entry if there
-  // is one, else the first celebration, else the first saint. Everything else
-  // falls into the list below, so the page always has exactly one focal point.
+  // One focal point: a high-rank entry, else the first celebration, else the
+  // first saint. It is then removed from the list so it is never said twice.
   const headline = useMemo(() => {
     const ranked = celebrations.find((c) => c.highRank) ?? celebrations[0] ?? saints[0];
     return ranked ? localized(ranked.title, language) : null;
   }, [celebrations, saints, language]);
 
+  const rest = useMemo(() => {
+    const all = [...celebrations, ...saints];
+    return headline ? all.filter((c) => localized(c.title, language) !== headline) : all;
+  }, [celebrations, saints, headline, language]);
+
   const isFeast = celebrations.some((c) => c.highRank);
   const isFast = Boolean(liturgicalDay?.fast);
   const heroColor = isFeast || isSunday ? th.feastAccent : th.textPrimary;
 
-  const rest = useMemo(() => {
-    const all = [...celebrations, ...saints];
-    // Drop the entry already used as the headline so it is not said twice.
-    return headline ? all.filter((c) => localized(c.title, language) !== headline) : all;
-  }, [celebrations, saints, headline, language]);
+  // The mandorla turns only on a great feast — a whole degree of ceremony the
+  // app previously expressed as a coloured dot. One slow rotation, never fast
+  // enough to distract from reading.
+  const spin = useSharedValue(0);
+  useEffect(() => {
+    spin.value = 0;
+    if (!isFeast) return;
+    spin.value = withRepeat(withTiming(1, { duration: 64000, easing: Easing.linear }), -1, false);
+  }, [isFeast, spin]);
+  const spinStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${spin.value * 360}deg` }],
+  }));
+
+  // A soft tick when the day changes — turning a leaf should be felt, not only
+  // seen. Selection-strength, so it never feels like an alert.
+  useEffect(() => {
+    void Haptics.selectionAsync().catch(() => {});
+  }, [dateISO]);
+
+  const halo = Math.min(width * 0.72, 300);
+  const capital = headline?.trim()?.[0] ?? '';
+  const headlineRest = headline ? headline.trim().slice(1) : '';
 
   return (
-    <View style={styles.page}>
+    // Keyed on the date so every entrance animation re-runs when the reader pages
+    // to another day — the page is re-written rather than mutated.
+    <View style={styles.page} key={dateISO}>
       {/* ═══ HERO ═══ */}
       <View style={styles.hero}>
-        <Text style={styles.weekday}>{weekday.toUpperCase()}</Text>
-        <Text style={[styles.numeral, { color: heroColor }]} allowFontScaling={false}>
-          {dayNum}
-        </Text>
-        <Text style={styles.monthYear}>{monthYear}</Text>
-
-        <View style={styles.ornamentRow}>
-          <View style={styles.rule} />
-          <ByzantineKnot size={12} color={th.accent} />
-          <View style={styles.rule} />
+        {/* Three stacked light layers: a wide candle pool, the turning mandorla,
+            and the gilded figure itself. */}
+        <View style={styles.glow} pointerEvents="none" accessible={false}>
+          <CandleGlow size={halo * 1.35} color={th.accent} intense={isFeast} />
         </View>
+        <Animated.View
+          style={[styles.halo, spinStyle]}
+          pointerEvents="none"
+          accessible={false}
+          entering={FadeIn.duration(900)}
+        >
+          <Mandorla size={halo} color={th.accent} intense={isFeast} rays={isFeast ? 24 : 12} />
+        </Animated.View>
 
-        {headline ? (
-          <SelectableText style={[styles.headline, { color: heroColor }]}>
-            {headline}
-          </SelectableText>
+        <Animated.View entering={FadeInDown.duration(DUR)}>
+          <Text style={styles.weekday}>{weekday.toUpperCase()}</Text>
+        </Animated.View>
+
+        <Animated.View entering={ZoomIn.delay(STEP).duration(680)}>
+          {/* On a feast the numeral is GILDED: a Skia specular band travels across
+              the glyph, which is what makes gold read as metal rather than as
+              yellow paint. Ordinary days keep plain type — the gilding has to
+              mean something. */}
+          {isFeast ? (
+            <View accessible accessibilityLabel={String(dayNum)}>
+              <GoldLeafNumeral
+                value={String(dayNum)}
+                size={{ width: halo, height: 120 }}
+                fontSize={96}
+                base={th.accent}
+                highlight={th.accentPale}
+              />
+            </View>
+          ) : (
+            <Text style={[styles.numeral, { color: heroColor }]} allowFontScaling={false}>
+              {dayNum}
+            </Text>
+          )}
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(STEP * 2).duration(DUR)}>
+          <Text style={styles.monthYear}>{monthYear}</Text>
+        </Animated.View>
+
+        {isFast ? (
+          <Animated.View entering={FadeIn.delay(STEP * 3).duration(DUR)}>
+            <Text style={styles.fastMark}>†</Text>
+          </Animated.View>
         ) : null}
-
-        {/* Fasting is a state of the day, not a badge to collect — one quiet line. */}
-        {isFast ? <Text style={styles.fastMark}>{'†'}</Text> : null}
       </View>
 
+      {/* ═══ THE DAY'S NAME, WITH A RAISED INITIAL ═══
+          The initial is INLINE — a nested Text — not a framed box beside the
+          name. A box cannot be wrapped around in React Native (there is no
+          float), so the remainder started a new column and "A  imilianos" read
+          as a typo rather than as an illuminated capital. Nested Text keeps the
+          letter in the text flow, so the name wraps as one word at any font
+          scale, and it stays correct in Korean, where the initial is a whole
+          syllable block rather than a broken letter.
+
+          Plain Text, not SelectableText: this is a heading, and headings are
+          deliberately outside the selection surface (see SelectableText). */}
+      {headline ? (
+        <Animated.View entering={FadeInDown.delay(STEP * 3).duration(DUR)}>
+          <Text style={styles.headline}>
+            <Text style={[styles.versal, { color: heroColor }]}>{capital}</Text>
+            {headlineRest}
+          </Text>
+        </Animated.View>
+      ) : null}
+
       {/* ═══ READINGS ═══ */}
-      <Section title={labels.readings}>
+      <Band title={labels.readings} delay={STEP * 4} width={width}>
         {readings.length ? (
           readings.map((r) => (
             <SelectableText key={r} style={styles.reading}>
@@ -152,22 +231,22 @@ export function IlluminatedDay({
         ) : (
           <Text style={styles.muted}>{labels.noReadings}</Text>
         )}
-      </Section>
+      </Band>
 
       {/* ═══ COMMEMORATIONS ═══ */}
       {rest.length ? (
-        <Section title={labels.saints}>
+        <Band title={labels.saints} delay={STEP * 5} width={width}>
           {rest.map((c, i) => (
             <SelectableText key={`${c.id}-${i}`} style={styles.commemoration}>
               {localized(c.title, language)}
             </SelectableText>
           ))}
-        </Section>
+        </Band>
       ) : null}
 
       {/* ═══ PARISH EVENTS ═══ */}
       {events.length ? (
-        <Section title={labels.events}>
+        <Band title={labels.events} delay={STEP * 6} width={width}>
           {events.map((e) => (
             <Pressable
               key={e.id}
@@ -178,24 +257,34 @@ export function IlluminatedDay({
               <Text style={styles.eventTitle}>{localized(e.title, language)}</Text>
             </Pressable>
           ))}
-        </Section>
+        </Band>
       ) : null}
     </View>
   );
 }
 
-/** A ruled section label — the manuscript's own way of starting a new part. */
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+/** A ruled band: ornamental divider, letterspaced label, then its content. */
+function Band({
+  title,
+  delay,
+  width,
+  children,
+}: {
+  title: string;
+  delay: number;
+  width: number;
+  children: React.ReactNode;
+}) {
+  const th = useTheme();
   const styles = useThemedStyles(makeStyles);
   return (
-    <View style={styles.section}>
-      <View style={styles.sectionHead}>
-        <View style={styles.rule} />
-        <Text style={styles.sectionLabel}>{title.toUpperCase()}</Text>
-        <View style={styles.rule} />
+    <Animated.View style={styles.band} entering={FadeInDown.delay(delay).duration(DUR)}>
+      <View pointerEvents="none" accessible={false}>
+        <OrnamentalRule width={width - spacing.lg * 2} color={th.accent} />
       </View>
-      <View style={styles.sectionBody}>{children}</View>
-    </View>
+      <Text style={styles.bandLabel}>{title.toUpperCase()}</Text>
+      <View style={styles.bandBody}>{children}</View>
+    </Animated.View>
   );
 }
 
@@ -203,78 +292,68 @@ const makeStyles = (th: ResolvedTheme) =>
   ({
     page: {
       paddingHorizontal: spacing.lg,
-      gap: spacing.xxl,
+      paddingBottom: spacing.xl,
+      gap: spacing.xl,
     },
     pressed: { opacity: 0.6 },
 
     // ── Hero ────────────────────────────────────────────────────────────────
-    hero: {
-      alignItems: 'center',
-      paddingTop: spacing.xl,
-      gap: spacing.xs,
-    },
+    hero: { alignItems: 'center', paddingTop: spacing.xxl, gap: spacing.xs },
+    halo: { position: 'absolute', top: -10, alignItems: 'center', justifyContent: 'center' },
+    glow: { position: 'absolute', top: -60, alignItems: 'center', justifyContent: 'center' },
     weekday: {
       fontFamily: th.design.fontHeading,
       fontSize: 13,
-      letterSpacing: 4,
+      letterSpacing: 5,
       color: th.accent,
     },
     numeral: {
-      // The single largest thing on the screen. Deliberately opted out of text
-      // scaling: it is a display figure inside a fixed composition, and the
-      // reader's size setting governs the CONTENT below it.
       fontFamily: th.design.fontHeading,
-      fontSize: 72,
-      lineHeight: 80,
+      fontSize: 86,
+      lineHeight: 96,
     },
     monthYear: {
       fontFamily: th.design.fontHeading,
       fontSize: 17,
+      letterSpacing: 1,
       color: th.textSecondary,
-    },
-    ornamentRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.sm,
-      alignSelf: 'stretch',
-      paddingVertical: spacing.md,
-    },
-    rule: {
-      flex: 1,
-      height: 1,
-      backgroundColor: th.accentDim,
-    },
-    headline: {
-      fontFamily: th.design.fontHeadingStrong,
-      fontSize: 26,
-      lineHeight: 34,
-      textAlign: 'center',
     },
     fastMark: {
       fontFamily: th.design.fontHeading,
-      fontSize: 20,
+      fontSize: 22,
       color: th.fastAccent,
-      paddingTop: spacing.xs,
     },
 
-    // ── Sections ────────────────────────────────────────────────────────────
-    section: { gap: spacing.md },
-    sectionHead: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: spacing.sm,
+    // ── Illuminated capital + headline ──────────────────────────────────────
+    versal: {
+      fontFamily: th.design.fontHeadingStrong,
+      // Roughly 1.6× the headline — large enough to read as an initial, small
+      // enough that it never forces the first line taller than the rest.
+      fontSize: 38,
     },
-    sectionLabel: {
+    headline: {
+      flexShrink: 1,
+      fontFamily: th.design.fontHeadingStrong,
+      fontSize: 24,
+      lineHeight: 32,
+      color: th.textPrimary,
+      // Pulls the first line's cap-height level with the top of the frame.
+      paddingTop: 3,
+    },
+
+    // ── Bands ───────────────────────────────────────────────────────────────
+    band: { gap: spacing.sm, alignItems: 'center' },
+    bandLabel: {
       fontFamily: th.design.fontHeading,
       fontSize: 11,
-      letterSpacing: 3,
+      letterSpacing: 4,
       color: th.accent,
     },
-    sectionBody: { gap: spacing.sm },
+    bandBody: { gap: spacing.sm, alignSelf: 'stretch' },
     reading: {
       fontFamily: th.design.fontHeading,
-      fontSize: 20,
-      lineHeight: 28,
+      fontSize: 21,
+      lineHeight: 30,
       color: th.textBody,
       textAlign: 'center',
     },

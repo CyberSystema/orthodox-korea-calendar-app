@@ -95,3 +95,43 @@ export const DIRECTION_DESIGN: Record<Direction, DirectionDesign> = {
     texture: true,
   },
 };
+
+/**
+ * A direction's overrides ON TOP of the light/night palette.
+ *
+ * ILLUMINATED MAKES ITS SURFACES TRANSLUCENT, and this is the whole reason the
+ * hook exists. The app draws one parchment ground per screen
+ * (`IlluminatedGround`); if the cards, bars and rows on top of it stayed opaque,
+ * the ground would only ever be visible in the gaps between them, and the screen
+ * would go back to reading as separate panels pasted onto a page. Making the
+ * surfaces let the leaf through — rather than re-styling every box — is what
+ * makes an untouched screen blend too, and it is one edit instead of a hunt
+ * through twenty stylesheets.
+ *
+ * The alpha is deliberately high enough (0.72 / 0.62) that body text keeps its
+ * contrast: the ground beneath is a low-contrast wash and noise, not imagery, so
+ * what shows through changes the material, not the legibility.
+ *
+ * Refined returns nothing — it is the palette as authored.
+ */
+export function directionPalette(
+  direction: Direction,
+  base: Record<string, string>,
+  dark: boolean,
+): Record<string, string> {
+  if (direction !== 'illuminated') return {};
+
+  // Deep wine-black on night, warm ink-on-parchment on light.
+  const veil = dark ? '18, 10, 10' : '255, 251, 243';
+  return {
+    surfaceWhite: `rgba(${veil}, 0.72)`,
+    surface: `rgba(${veil}, 0.62)`,
+    card: `rgba(${veil}, 0.72)`,
+    cardRaised: `rgba(${veil}, 0.82)`,
+    // Rules on the leaf are gold, never grey — this is what ties a card's edge
+    // to the headpiece, the grid and the ornament without touching a screen.
+    border: base.accentLine,
+    borderLight: base.accentLine,
+    rule: base.accentLine,
+  };
+}

@@ -24,9 +24,11 @@ import { SECRET_MENU_ENABLED } from '../../config/features';
 import { useTranslation } from 'react-i18next';
 import Svg, { Circle, Path } from 'react-native-svg';
 
+import { IlluminatedGround } from '../../components/common/IlluminatedGround';
 import { ByzantineArrow } from '../../components/common/ByzantineArrow';
 import { ByzantineKnot } from '../../components/common/ByzantineKnot';
 import { KeyboardSafeView } from '../../components/common/KeyboardSafeView';
+import { HeadpieceButton, IlluminatedHeader } from '../../components/common/IlluminatedHeader';
 import { LiturgicalDayPanel } from '../../components/common/LiturgicalDayPanel';
 import { PromptModal } from '../../components/common/PromptModal';
 import { Text, TextInput } from '../../components/common/ScaledText';
@@ -498,9 +500,31 @@ export function MonthScreen({ navigation, route }: Props) {
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
+      {/* ONE ground for the whole screen — see IlluminatedGround. Must come
+          first so the headpiece and the page both sit on it. */}
+      {th.direction === 'illuminated' ? <IlluminatedGround /> : null}
       {/* ═══ BRANDED HEADER (fixed) ═══
           Skipped on iPad — the platform's header carries these instead. */}
-      {USES_NATIVE_HEADER ? null : (
+      {USES_NATIVE_HEADER ? null : th.direction === 'illuminated' ? (
+        <IlluminatedHeader
+          title={BRAND_TITLE}
+          topInset={insets.top}
+          onBrandPress={handleBrandTap}
+          left={
+            <HeadpieceButton
+              onPress={() => navigation.navigate('Settings')}
+              label={t('a11y.openSettings')}
+            >
+              <MenuIcon size={19} color={th.brandText} />
+            </HeadpieceButton>
+          }
+          right={
+            <HeadpieceButton onPress={openSearch} label={t('a11y.search')}>
+              <SearchSvgIcon size={19} color={th.brandText} />
+            </HeadpieceButton>
+          }
+        />
+      ) : (
         <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
           <View style={styles.headerRow}>
             <Pressable
@@ -1235,9 +1259,11 @@ const makeStyles = (th: ResolvedTheme) =>
     },
     cell: {
       width: '14.2857%',
-      minHeight: 56,
+      // Illuminated rules the grid in gold and gives each cell more room, so the
+      // month reads as a ruled table in a manuscript rather than a spreadsheet.
+      minHeight: th.direction === 'illuminated' ? 64 : 56,
       borderWidth: 0.5,
-      borderColor: th.borderLight,
+      borderColor: th.direction === 'illuminated' ? th.accentLine : th.borderLight,
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: th.surfaceWhite,
@@ -1259,12 +1285,14 @@ const makeStyles = (th: ResolvedTheme) =>
     },
     cellSelected: {
       backgroundColor: th.fillStrong,
-      borderColor: th.primaryDeep,
-      borderWidth: 1.5,
+      // The selected day is GILDED in Illuminated — a gold rule around wine,
+      // which is the same pairing the headpiece uses.
+      borderColor: th.direction === 'illuminated' ? th.accentBright : th.primaryDeep,
+      borderWidth: th.direction === 'illuminated' ? 2 : 1.5,
     },
     cellDay: {
       fontFamily: typography.family.body,
-      fontSize: typography.size.sm,
+      fontSize: th.direction === 'illuminated' ? typography.size.md : typography.size.sm,
       color: th.textPrimary,
     },
     cellDayHigh: {
