@@ -144,6 +144,8 @@ const en = {
     fontSizePreview: 'Sunday of the Holy Fathers — Tone 6',
     fontSizeHint:
       'This adds to your device text size, so the app can go larger than the system on its own.',
+    launchScreen: 'Launch Screen',
+    launchScreenHint: 'Choose the screen the app opens on. Takes effect next time you open it.',
     notifications: 'Notifications',
     notificationsAutoPrompt:
       'Notification permission is requested once on first launch. You can change it any time in your device settings.',

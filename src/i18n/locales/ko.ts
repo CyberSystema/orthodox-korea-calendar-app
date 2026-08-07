@@ -150,6 +150,8 @@ const ko: Translations = {
     fontSizePreview: '거룩한 교부들의 주일 — 제6조',
     fontSizeHint:
       '기기의 글자 크기 설정에 더해서 적용되므로, 앱 글자를 시스템 설정보다 더 크게 볼 수 있습니다.',
+    launchScreen: '시작 화면',
+    launchScreenHint: '앱을 열었을 때 처음 보이는 화면을 선택하세요. 다음에 열 때부터 적용됩니다.',
     notifications: '알림',
     notificationsAutoPrompt:
       '알림 권한은 첫 실행 시 한 번 요청됩니다. 기기 설정에서 언제든지 변경할 수 있습니다.',

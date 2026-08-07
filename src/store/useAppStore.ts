@@ -3,12 +3,18 @@ import { create } from 'zustand';
 
 import { hasAdminAuthToken, verifyAdminCloudflareSession } from '../services/api/adminAuth';
 import { canUseEventsApi } from '../services/api/eventsRepository';
+import {
+  DEFAULT_LAUNCH_SCREEN,
+  normalizeLaunchScreen,
+  type LaunchScreen,
+} from '../navigation/launchScreen';
 import { secureStorage } from '../services/storage/secureStorage';
 import { DEFAULT_FONT_SCALE, normalizeFontScale, type FontScale } from '../theme/fontScale';
 import type { SupportedLanguage } from '../types/language';
 
 const LANGUAGE_KEY = 'app.language';
 const FONT_SCALE_KEY = 'app.fontScale';
+const LAUNCH_SCREEN_KEY = 'app.launchScreen';
 // We persist only the fact that staff mode is enabled — never the raw passcode.
 // The session token (managed by the SDK) is what proves authentication.
 const STAFF_MODE_KEY = 'auth.staffModeEnabled';
@@ -20,6 +26,8 @@ type AppState = {
   language: SupportedLanguage;
   /** Reader-chosen text size multiplier; see theme/fontScale.ts. */
   fontScale: FontScale;
+  /** Which tab the app opens on; see navigation/launchScreen.ts. */
+  launchScreen: LaunchScreen;
   selectedDateISO: string | null;
   adminMode: boolean;
   cloudflareAdminAuthenticated: boolean;
@@ -27,6 +35,7 @@ type AppState = {
   hydratePreferences: () => Promise<void>;
   setLanguage: (language: SupportedLanguage) => void;
   setFontScale: (fontScale: FontScale) => void;
+  setLaunchScreen: (launchScreen: LaunchScreen) => void;
   setSelectedDateISO: (dateISO: string | null) => void;
   setAdminMode: (value: boolean) => void;
   setCloudflareAdminAuthenticated: (value: boolean) => void;
@@ -37,19 +46,27 @@ export const useAppStore = create<AppState>((set) => ({
   isHydrated: false,
   language: (i18n.language as SupportedLanguage) || 'en',
   fontScale: DEFAULT_FONT_SCALE,
+  launchScreen: DEFAULT_LAUNCH_SCREEN,
   selectedDateISO: null,
   adminMode: false,
   cloudflareAdminAuthenticated: false,
   secretMenuUnlocked: false,
   hydratePreferences: async () => {
-    const [savedLanguage, savedFontScale, hadAuthToken, staffModeFlag, legacyPasscode] =
-      await Promise.all([
-        secureStorage.getItem(LANGUAGE_KEY),
-        secureStorage.getItem(FONT_SCALE_KEY),
-        hasAdminAuthToken(),
-        secureStorage.getItem(STAFF_MODE_KEY),
-        secureStorage.getItem(LEGACY_STAFF_PASSCODE_KEY),
-      ]);
+    const [
+      savedLanguage,
+      savedFontScale,
+      savedLaunchScreen,
+      hadAuthToken,
+      staffModeFlag,
+      legacyPasscode,
+    ] = await Promise.all([
+      secureStorage.getItem(LANGUAGE_KEY),
+      secureStorage.getItem(FONT_SCALE_KEY),
+      secureStorage.getItem(LAUNCH_SCREEN_KEY),
+      hasAdminAuthToken(),
+      secureStorage.getItem(STAFF_MODE_KEY),
+      secureStorage.getItem(LEGACY_STAFF_PASSCODE_KEY),
+    ]);
 
     let staffModeEnabled = staffModeFlag === '1';
     let cloudflareAdminAuthenticated = false;
@@ -85,6 +102,10 @@ export const useAppStore = create<AppState>((set) => ({
       // Set with the same commit that flips isHydrated, so the navigator's first
       // render already uses the reader's size — no visible resize on launch.
       fontScale: normalizeFontScale(savedFontScale),
+      // Same reason, but load-bearing rather than cosmetic: `initialRouteName` is
+      // read ONLY when the navigator mounts, and RootApp mounts it once hydration
+      // finishes. Committing this later would always open the default tab.
+      launchScreen: normalizeLaunchScreen(savedLaunchScreen),
       adminMode: staffModeEnabled,
       cloudflareAdminAuthenticated,
     });
@@ -97,6 +118,10 @@ export const useAppStore = create<AppState>((set) => ({
   setFontScale: (fontScale) => {
     void secureStorage.setItem(FONT_SCALE_KEY, String(fontScale));
     set({ fontScale });
+  },
+  setLaunchScreen: (launchScreen) => {
+    void secureStorage.setItem(LAUNCH_SCREEN_KEY, launchScreen);
+    set({ launchScreen });
   },
   setSelectedDateISO: (selectedDateISO) => set({ selectedDateISO }),
   setAdminMode: (value) => set({ adminMode: value }),

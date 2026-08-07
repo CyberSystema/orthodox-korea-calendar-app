@@ -20,6 +20,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { useNetworkStore } from '../../store/useNetworkStore';
 import { colors } from '../../theme/colors';
 import { FONT_SCALE_STEPS, type FontScale } from '../../theme/fontScale';
+import { LAUNCH_SCREENS, LAUNCH_SCREEN_LABEL_KEYS } from '../../navigation/launchScreen';
 import { radii, spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 
@@ -43,6 +44,8 @@ export function SettingsScreen() {
     adminMode,
     cloudflareAdminAuthenticated,
     fontScale,
+    launchScreen,
+    setLaunchScreen,
     setAdminMode,
     setCloudflareAdminAuthenticated,
     setFontScale,
@@ -210,6 +213,40 @@ export function SettingsScreen() {
               chosen size the moment a pill is tapped. */}
           <Text style={styles.fontScalePreview}>{t('settings.fontSizePreview')}</Text>
           <Text style={styles.statusText}>{t('settings.fontSizeHint')}</Text>
+        </View>
+
+        {/* ═══ LAUNCH SCREEN ═══ */}
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <OrnamentTitle text={t('settings.launchScreen')} />
+          </View>
+          <View style={styles.fontScaleRow}>
+            {LAUNCH_SCREENS.map((screen) => {
+              const selected = launchScreen === screen;
+              return (
+                <Pressable
+                  key={screen}
+                  style={({ pressed }) => [
+                    styles.fontScalePill,
+                    selected && styles.fontScalePillActive,
+                    pressed && styles.pressed,
+                  ]}
+                  onPress={() => setLaunchScreen(screen)}
+                  hitSlop={8}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={t(LAUNCH_SCREEN_LABEL_KEYS[screen])}
+                >
+                  <Text
+                    style={[styles.fontScalePillText, selected && styles.fontScalePillTextActive]}
+                  >
+                    {t(LAUNCH_SCREEN_LABEL_KEYS[screen])}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          <Text style={styles.statusText}>{t('settings.launchScreenHint')}</Text>
         </View>
 
         {/* ═══ ADMIN MODE TOGGLE ═══ */}

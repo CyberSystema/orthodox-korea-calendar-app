@@ -15,6 +15,7 @@ import { useDayOfMonth } from '../hooks/useDayOfMonth';
 import { colors } from '../theme/colors';
 import { typography } from '../theme/typography';
 import { BRAND_TITLE, USES_NATIVE_HEADER } from './nativeHeader';
+import type { LaunchScreen } from './launchScreen';
 import type { MainTabsParamList } from './types';
 
 /**
@@ -196,10 +197,13 @@ export function MainTabs() {
   const unreadCount = useAnnouncementsStore((state) =>
     countUnread(state.announcements, state.lastSeenId),
   );
+  // Settings → Launch Screen. Read ONLY on mount, which is why the store commits
+  // it in the same set() that flips isHydrated (see navigation/launchScreen.ts).
+  const launchScreen: LaunchScreen = useAppStore((state) => state.launchScreen);
 
   return (
     <Tab.Navigator
-      initialRouteName="Today"
+      initialRouteName={launchScreen}
       screenOptions={{
         // iPhone/Android: each tab screen draws its own branded ORTHODOX KOREA
         // header, which also carries the Settings entry, and only the toolbar is
