@@ -817,7 +817,7 @@ const makeStyles = (th: ResolvedTheme) =>
       // gold-ruled square that sits ON the parchment, so the page keeps one
       // material throughout instead of white chips floating on it.
       borderColor: th.direction === 'illuminated' ? th.accentLine : th.border,
-      borderRadius: th.direction === 'illuminated' ? radii.sm : radii.full,
+      borderRadius: th.design.controlRadius,
       backgroundColor: th.direction === 'illuminated' ? 'transparent' : th.surfaceWhite,
       paddingVertical: spacing.xs,
       paddingHorizontal: spacing.md,
@@ -832,7 +832,7 @@ const makeStyles = (th: ResolvedTheme) =>
     actionPillAccent: {
       borderWidth: 1,
       borderColor: th.accent,
-      borderRadius: th.direction === 'illuminated' ? radii.sm : radii.full,
+      borderRadius: th.design.controlRadius,
       backgroundColor: th.direction === 'illuminated' ? 'transparent' : th.accentGlow,
       paddingVertical: spacing.xs,
       paddingHorizontal: spacing.md,

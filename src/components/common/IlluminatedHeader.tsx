@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import { useEffect } from 'react';
 import { useWindowDimensions, View, Pressable, StyleSheet } from 'react-native';
 import Animated, {
   Easing,
@@ -58,12 +59,19 @@ export function IlluminatedHeader({
   // The sheen. One long, slow pass — at 9 seconds it reads as ambient light
   // rather than as a loading shimmer, which is the difference between "rich"
   // and "busy".
+  //
+  // Started in an effect, NOT in the render body: assigning to `.value` while
+  // rendering is a Reanimated anti-pattern (it warns) and it restarted the
+  // animation on every re-render, so the sheen jumped whenever the screen
+  // updated instead of running continuously.
   const sheen = useSharedValue(0);
-  sheen.value = withRepeat(
-    withTiming(1, { duration: 9000, easing: Easing.inOut(Easing.quad) }),
-    -1,
-    true,
-  );
+  useEffect(() => {
+    sheen.value = withRepeat(
+      withTiming(1, { duration: 9000, easing: Easing.inOut(Easing.quad) }),
+      -1,
+      true,
+    );
+  }, [sheen]);
 
   const sheenStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: interpolate(sheen.value, [0, 1], [-width * 0.6, width * 0.6]) }],

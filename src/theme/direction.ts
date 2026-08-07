@@ -57,6 +57,16 @@ export type DirectionDesign = {
   fontKorean: string;
   /** Card corner radius — manuscript pages are squarer than app cards. */
   cardRadius: number;
+  /**
+   * Corner radius for CONTROLS (choice pills, action buttons, tags).
+   *
+   * One value so every control in the app agrees. Refined keeps the capsule;
+   * Illuminated is nearly square, because a rounded chip is the one shape that
+   * instantly reads as "app UI" and breaks the illusion of a ruled page. Screens
+   * read `th.design.controlRadius` rather than `radii.full`, so a control on a
+   * screen nobody has revisited still matches the rest.
+   */
+  controlRadius: number;
   /** Card border weight. Illuminated draws a gold rule, refined a hairline. */
   cardBorderWidth: number;
   /** Draw the day card's border in gold rather than the neutral rule colour. */
@@ -76,6 +86,7 @@ export const DIRECTION_DESIGN: Record<Direction, DirectionDesign> = {
     fontKorean: 'NanumMyeongjo',
     fontBody: undefined,
     cardRadius: 14,
+    controlRadius: 999,
     cardBorderWidth: 1,
     goldFrame: false,
     dropCap: false,
@@ -88,6 +99,7 @@ export const DIRECTION_DESIGN: Record<Direction, DirectionDesign> = {
     fontKorean: 'NanumMyeongjo',
     fontBody: 'EBGaramond',
     cardRadius: 4,
+    controlRadius: 6,
     cardBorderWidth: 2,
     goldFrame: true,
     dropCap: true,

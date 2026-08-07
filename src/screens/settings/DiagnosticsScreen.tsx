@@ -13,6 +13,7 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { IlluminatedGround } from '../../components/common/IlluminatedGround';
 import { Text } from '../../components/common/ScaledText';
 import { DIAGNOSTICS_ENABLED, SECRET_MENU_ENABLED } from '../../config/features';
 import {
@@ -76,6 +77,7 @@ function describeRuntimeVersion(runtimeVersion: unknown, version: string | undef
 }
 
 function Row({ label, value }: { label: string; value: string }) {
+  const th = useTheme();
   const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.row}>
@@ -98,6 +100,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 export function DiagnosticsScreen() {
+  const th = useTheme();
   const styles = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
   const { fontScale: osScale } = useWindowDimensions();
@@ -142,92 +145,99 @@ export function DiagnosticsScreen() {
   const loadedYears = getLoadedCalendarYears();
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={[
-        styles.content,
-        { paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.xl },
-      ]}
-    >
-      <StatusBar style="light" />
-
-      <Pressable
-        onPress={refresh}
-        style={({ pressed }) => [styles.refresh, pressed && styles.pressed]}
-        accessibilityRole="button"
+    <>
+      {/* The leaf continues onto pushed screens. A Fragment sibling, not a
+          child: these roots are ScrollViews, and a ground inside one would
+          scroll away. absoluteFill then resolves against the navigator's own
+          screen container, which fills the window. */}
+      {th.direction === 'illuminated' ? <IlluminatedGround /> : null}
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.xl },
+        ]}
       >
-        <Text style={styles.refreshText}>{'Refresh'}</Text>
-      </Pressable>
+        <StatusBar style="light" />
 
-      <Section title={'Build'}>
-        <Row label="version" value={getAppVersionLabel()} />
-        {/* app.json sets this to a POLICY object ({ policy: 'appVersion' }), not a
-            string, so String() alone renders "[object Object]". Show the policy and
-            what it currently resolves to, which is the value an OTA must match. */}
-        <Row
-          label="runtimeVersion"
-          value={describeRuntimeVersion(cfg?.runtimeVersion, cfg?.version)}
-        />
-        <Row label="sdkVersion" value={String(cfg?.sdkVersion ?? '—')} />
-        <Row label="channel" value={String((Constants as { channel?: string }).channel ?? '—')} />
-        <Row label="__DEV__" value={String(__DEV__)} />
-        <Row label="secretMenu" value={String(SECRET_MENU_ENABLED)} />
-        <Row label="diagnostics" value={String(DIAGNOSTICS_ENABLED)} />
-      </Section>
+        <Pressable
+          onPress={refresh}
+          style={({ pressed }) => [styles.refresh, pressed && styles.pressed]}
+          accessibilityRole="button"
+        >
+          <Text style={styles.refreshText}>{'Refresh'}</Text>
+        </Pressable>
 
-      <Section title={'Backend'}>
-        <Row label="apiConfigured" value={String(isApiConfigured)} />
-        <Row label="baseUrl" value={configuredBaseUrl || '—'} />
-        <Row label="apnsEnv" value={process.env.EXPO_PUBLIC_APNS_ENV ?? '—'} />
-        <Row label="online" value={String(isOnline)} />
-      </Section>
+        <Section title={'Build'}>
+          <Row label="version" value={getAppVersionLabel()} />
+          {/* app.json sets this to a POLICY object ({ policy: 'appVersion' }), not a
+              string, so String() alone renders "[object Object]". Show the policy and
+              what it currently resolves to, which is the value an OTA must match. */}
+          <Row
+            label="runtimeVersion"
+            value={describeRuntimeVersion(cfg?.runtimeVersion, cfg?.version)}
+          />
+          <Row label="sdkVersion" value={String(cfg?.sdkVersion ?? '—')} />
+          <Row label="channel" value={String((Constants as { channel?: string }).channel ?? '—')} />
+          <Row label="__DEV__" value={String(__DEV__)} />
+          <Row label="secretMenu" value={String(SECRET_MENU_ENABLED)} />
+          <Row label="diagnostics" value={String(DIAGNOSTICS_ENABLED)} />
+        </Section>
 
-      <Section title={'Calendar data'}>
-        <Row label="dataVersion" value={String(getCalendarDataVersion())} />
-        <Row label="lastSync" value={formatTime(getLastCalendarSyncAt())} />
-        <Row label="loadedYears" value={loadedYears.length ? loadedYears.join(', ') : '—'} />
-        <Row
-          label="sourceOverride"
-          value={process.env.EXPO_PUBLIC_CALENDAR_DATA_BASE_URL ?? '(github default)'}
-        />
-      </Section>
+        <Section title={'Backend'}>
+          <Row label="apiConfigured" value={String(isApiConfigured)} />
+          <Row label="baseUrl" value={configuredBaseUrl || '—'} />
+          <Row label="apnsEnv" value={process.env.EXPO_PUBLIC_APNS_ENV ?? '—'} />
+          <Row label="online" value={String(isOnline)} />
+        </Section>
 
-      <Section title={'Events sync'}>
-        <Row label="hydrated" value={String(eventsHydrated)} />
-        <Row label="count" value={String(events.length)} />
-        <Row label="syncState" value={syncState} />
-        <Row label="lastSyncedYear" value={String(lastSyncedYear ?? '—')} />
-        <Row label="lastSyncedAt" value={formatTime(lastSyncedAt)} />
-        <Row label="syncError" value={syncError ?? '—'} />
-      </Section>
+        <Section title={'Calendar data'}>
+          <Row label="dataVersion" value={String(getCalendarDataVersion())} />
+          <Row label="lastSync" value={formatTime(getLastCalendarSyncAt())} />
+          <Row label="loadedYears" value={loadedYears.length ? loadedYears.join(', ') : '—'} />
+          <Row
+            label="sourceOverride"
+            value={process.env.EXPO_PUBLIC_CALENDAR_DATA_BASE_URL ?? '(github default)'}
+          />
+        </Section>
 
-      <Section title={'Announcements'}>
-        <Row label="count" value={String(announcements.length)} />
-        <Row label="unread" value={String(unread)} />
-        <Row label="lastSeenId" value={String(lastSeenId)} />
-      </Section>
+        <Section title={'Events sync'}>
+          <Row label="hydrated" value={String(eventsHydrated)} />
+          <Row label="count" value={String(events.length)} />
+          <Row label="syncState" value={syncState} />
+          <Row label="lastSyncedYear" value={String(lastSyncedYear ?? '—')} />
+          <Row label="lastSyncedAt" value={formatTime(lastSyncedAt)} />
+          <Row label="syncError" value={syncError ?? '—'} />
+        </Section>
 
-      <Section title={'Notifications'}>
-        <Row label="permission" value={permission} />
-      </Section>
+        <Section title={'Announcements'}>
+          <Row label="count" value={String(announcements.length)} />
+          <Row label="unread" value={String(unread)} />
+          <Row label="lastSeenId" value={String(lastSeenId)} />
+        </Section>
 
-      <Section title={'Device'}>
-        <Row label="platform" value={`${Platform.OS} ${String(Platform.Version)}`} />
-        <Row label="model" value={Device.modelName ?? '—'} />
-        <Row label="isPad" value={String(Platform.OS === 'ios' && Platform.isPad)} />
-        <Row label="nativeHeader" value={String(USES_NATIVE_HEADER)} />
-        <Row label="appHydrated" value={String(appHydrated)} />
-      </Section>
+        <Section title={'Notifications'}>
+          <Row label="permission" value={permission} />
+        </Section>
 
-      <Section title={'Preferences'}>
-        <Row label="language" value={language} />
-        <Row label="launchScreen" value={launchScreen} />
-        <Row label="appScale" value={String(appScale)} />
-        <Row label="osScale" value={String(osScale)} />
-        <Row label="effective" value={effectiveFontScale(appScale, osScale).toFixed(2)} />
-        <Row label="staffMode" value={`${adminMode} / authed ${staffAuthed}`} />
-      </Section>
-    </ScrollView>
+        <Section title={'Device'}>
+          <Row label="platform" value={`${Platform.OS} ${String(Platform.Version)}`} />
+          <Row label="model" value={Device.modelName ?? '—'} />
+          <Row label="isPad" value={String(Platform.OS === 'ios' && Platform.isPad)} />
+          <Row label="nativeHeader" value={String(USES_NATIVE_HEADER)} />
+          <Row label="appHydrated" value={String(appHydrated)} />
+        </Section>
+
+        <Section title={'Preferences'}>
+          <Row label="language" value={language} />
+          <Row label="launchScreen" value={launchScreen} />
+          <Row label="appScale" value={String(appScale)} />
+          <Row label="osScale" value={String(osScale)} />
+          <Row label="effective" value={effectiveFontScale(appScale, osScale).toFixed(2)} />
+          <Row label="staffMode" value={`${adminMode} / authed ${staffAuthed}`} />
+        </Section>
+      </ScrollView>
+    </>
   );
 }
 
@@ -235,7 +245,9 @@ const makeStyles = (th: ResolvedTheme) =>
   ({
     container: {
       flex: 1,
-      backgroundColor: th.background,
+      backgroundColor: th.direction === 'illuminated' ? 'transparent' : th.background,
+      // Transparent under Illuminated: the ground is a sibling BEHIND this
+      // scroll view, so an opaque background here would paint over the leaf.
     },
     content: {
       padding: spacing.lg,

@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
+import { IlluminatedGround } from '../../components/common/IlluminatedGround';
 import { KeyboardSafeView } from '../../components/common/KeyboardSafeView';
 import { Text } from '../../components/common/ScaledText';
 import {
@@ -155,72 +156,79 @@ export function StaffScreen() {
   };
 
   return (
-    <KeyboardSafeView style={styles.flex} keyboardVerticalOffset={insets.top}>
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={[
-          styles.content,
-          { paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.xl },
-        ]}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
-      >
-        <StatusBar style="light" />
+    <>
+      {/* The leaf continues onto pushed screens. A Fragment sibling, not a
+          child: this root is a scroll container, and a ground inside one would
+          scroll away. absoluteFill then resolves against the navigator's own
+          screen container, which fills the window. */}
+      {th.direction === 'illuminated' ? <IlluminatedGround /> : null}
+      <KeyboardSafeView style={styles.flex} keyboardVerticalOffset={insets.top}>
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={[
+            styles.content,
+            { paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.xl },
+          ]}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+        >
+          <StatusBar style="light" />
 
-        <Text style={styles.intro}>{t('settings.staffIntro')}</Text>
+          <Text style={styles.intro}>{t('settings.staffIntro')}</Text>
 
-        <View style={styles.rowCard}>
-          <Text style={styles.rowTitle}>{t('settings.adminMode')}</Text>
-          <Switch
-            value={adminMode}
-            disabled={authBusy || !isOnline}
-            accessibilityLabel={t('settings.adminMode')}
-            onValueChange={(value) => void onToggleAdminMode(value)}
-            trackColor={{ false: th.backgroundWarm, true: th.accentDim }}
-            thumbColor={adminMode ? th.accent : th.textFaint}
-          />
-        </View>
-
-        {needsAuthentication ? (
-          <View style={styles.card}>
-            <TextInput
-              secureTextEntry
-              value={passcodeDraft}
-              onChangeText={setPasscodeDraft}
-              placeholder={t('settings.adminPasscodePlaceholder')}
-              placeholderTextColor={th.textSecondary}
-              style={styles.input}
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={isOnline}
-            />
-            <Pressable
-              style={({ pressed }) => [
-                styles.buttonOutline,
-                (authBusy || !isOnline) && styles.buttonDisabled,
-                pressed && styles.pressed,
-              ]}
+          <View style={styles.rowCard}>
+            <Text style={styles.rowTitle}>{t('settings.adminMode')}</Text>
+            <Switch
+              value={adminMode}
               disabled={authBusy || !isOnline}
-              onPress={onSavePasscode}
-              accessibilityRole="button"
-            >
-              <Text style={styles.buttonOutlineText}>{t('settings.saveAdminPasscode')}</Text>
-            </Pressable>
-            {adminMode && !cloudflareAdminAuthenticated ? (
-              <Text style={styles.statusText}>{t('settings.sessionExpired')}</Text>
-            ) : null}
+              accessibilityLabel={t('settings.adminMode')}
+              onValueChange={(value) => void onToggleAdminMode(value)}
+              trackColor={{ false: th.backgroundWarm, true: th.accentDim }}
+              thumbColor={adminMode ? th.accent : th.textFaint}
+            />
           </View>
-        ) : (
-          <Text style={styles.statusText}>{t('settings.stuffPasscodeStored')}</Text>
-        )}
 
-        {!isOnline ? (
-          <Text style={styles.statusText}>{t('settings.offlineStaffDisabled')}</Text>
-        ) : null}
+          {needsAuthentication ? (
+            <View style={styles.card}>
+              <TextInput
+                secureTextEntry
+                value={passcodeDraft}
+                onChangeText={setPasscodeDraft}
+                placeholder={t('settings.adminPasscodePlaceholder')}
+                placeholderTextColor={th.textSecondary}
+                style={styles.input}
+                autoCapitalize="none"
+                autoCorrect={false}
+                editable={isOnline}
+              />
+              <Pressable
+                style={({ pressed }) => [
+                  styles.buttonOutline,
+                  (authBusy || !isOnline) && styles.buttonDisabled,
+                  pressed && styles.pressed,
+                ]}
+                disabled={authBusy || !isOnline}
+                onPress={onSavePasscode}
+                accessibilityRole="button"
+              >
+                <Text style={styles.buttonOutlineText}>{t('settings.saveAdminPasscode')}</Text>
+              </Pressable>
+              {adminMode && !cloudflareAdminAuthenticated ? (
+                <Text style={styles.statusText}>{t('settings.sessionExpired')}</Text>
+              ) : null}
+            </View>
+          ) : (
+            <Text style={styles.statusText}>{t('settings.stuffPasscodeStored')}</Text>
+          )}
 
-        {statusText ? <Text style={styles.statusText}>{statusText}</Text> : null}
-      </ScrollView>
-    </KeyboardSafeView>
+          {!isOnline ? (
+            <Text style={styles.statusText}>{t('settings.offlineStaffDisabled')}</Text>
+          ) : null}
+
+          {statusText ? <Text style={styles.statusText}>{statusText}</Text> : null}
+        </ScrollView>
+      </KeyboardSafeView>
+    </>
   );
 }
 
@@ -229,7 +237,9 @@ const makeStyles = (th: ResolvedTheme) =>
     flex: { flex: 1 },
     container: {
       flex: 1,
-      backgroundColor: th.background,
+      backgroundColor: th.direction === 'illuminated' ? 'transparent' : th.background,
+      // Transparent under Illuminated: the ground is a sibling BEHIND this
+      // scroll view, so an opaque background here would paint over the leaf.
     },
     content: {
       padding: spacing.lg,

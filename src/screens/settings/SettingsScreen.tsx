@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import Svg, { Path } from 'react-native-svg';
 
+import { IlluminatedGround } from '../../components/common/IlluminatedGround';
 import { OrnamentTitle } from '../../components/common/OrnamentTitle';
 import { Text } from '../../components/common/ScaledText';
 import { DIAGNOSTICS_ENABLED } from '../../config/features';
@@ -81,185 +82,198 @@ export function SettingsScreen({ navigation }: Props) {
   const versionLabel = getAppVersionLabel();
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={[
-        styles.content,
-        { paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.xl },
-      ]}
-    >
-      <StatusBar style="light" />
+    <>
+      {/* The leaf continues onto pushed screens. A Fragment sibling, not a
+          child: these roots are ScrollViews, and a ground inside one would
+          scroll away. absoluteFill then resolves against the navigator's own
+          screen container, which fills the window. */}
+      {th.direction === 'illuminated' ? <IlluminatedGround /> : null}
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.xl },
+        ]}
+      >
+        <StatusBar style="light" />
 
-      {/* ═══ TEXT SIZE ═══ */}
-      <View style={styles.card}>
-        <OrnamentTitle text={tr('settings.fontSize')} />
-        <View style={styles.pillRow}>
-          {FONT_SCALE_STEPS.map((step) => {
-            const selected = fontScale === step;
-            return (
-              <Pressable
-                key={step}
-                style={({ pressed }) => [
-                  styles.pill,
-                  selected && styles.pillActive,
-                  pressed && styles.pressed,
-                ]}
-                onPress={() => setFontScale(step)}
-                hitSlop={8}
-                accessibilityRole="radio"
-                accessibilityState={{ selected }}
-                accessibilityLabel={tr(FONT_SCALE_LABEL_KEYS[step])}
-              >
-                <Text style={[styles.pillText, selected && styles.pillTextActive]}>
-                  {tr(FONT_SCALE_LABEL_KEYS[step])}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-        {/* The preview is really the whole screen — every label re-renders at the
-            chosen size the moment a pill is tapped — but a sample line makes the
-            effect obvious without scrolling. */}
-        <Text style={styles.preview}>{tr('settings.fontSizePreview')}</Text>
-      </View>
-
-      {/* ═══ LAUNCH SCREEN ═══ */}
-      <View style={styles.card}>
-        <OrnamentTitle text={tr('settings.launchScreen')} />
-        <View style={styles.pillRow}>
-          {LAUNCH_SCREENS.map((screen) => {
-            const selected = launchScreen === screen;
-            return (
-              <Pressable
-                key={screen}
-                style={({ pressed }) => [
-                  styles.pill,
-                  selected && styles.pillActive,
-                  pressed && styles.pressed,
-                ]}
-                onPress={() => setLaunchScreen(screen)}
-                hitSlop={8}
-                accessibilityRole="radio"
-                accessibilityState={{ selected }}
-                accessibilityLabel={tr(LAUNCH_SCREEN_LABEL_KEYS[screen])}
-              >
-                <Text style={[styles.pillText, selected && styles.pillTextActive]}>
-                  {tr(LAUNCH_SCREEN_LABEL_KEYS[screen])}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      </View>
-
-      {/* ═══ APPEARANCE ═══ */}
-      <View style={styles.card}>
-        <OrnamentTitle text={tr('settings.theme')} />
-        <View style={styles.pillRow}>
-          {THEME_MODES.map((mode) => {
-            const selected = themeMode === mode;
-            return (
-              <Pressable
-                key={mode}
-                style={({ pressed }) => [
-                  styles.pill,
-                  selected && styles.pillActive,
-                  pressed && styles.pressed,
-                ]}
-                onPress={() => setThemeMode(mode)}
-                hitSlop={8}
-                accessibilityRole="radio"
-                accessibilityState={{ selected }}
-                accessibilityLabel={tr(THEME_MODE_LABEL_KEYS[mode])}
-              >
-                <Text style={[styles.pillText, selected && styles.pillTextActive]}>
-                  {tr(THEME_MODE_LABEL_KEYS[mode])}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-        <Text style={styles.hint}>{tr('settings.themeHint')}</Text>
-      </View>
-
-      {/* ═══ NOTIFICATIONS ═══ */}
-      <View style={styles.card}>
-        <OrnamentTitle text={tr('settings.notifications')} />
-        <Text style={styles.hint}>{tr('settings.notificationsHint')}</Text>
-      </View>
-
-      {/* ═══ DIRECTION TRIAL (owner sideloads only) ═══
-          TEMPORARY. Delete this card, theme/direction.ts and the losing
-          direction once one is chosen. Switching is live and instant because
-          these directions change no navigation option — see direction.ts. */}
-      {DIAGNOSTICS_ENABLED ? (
+        {/* ═══ TEXT SIZE ═══ */}
         <View style={styles.card}>
-          <OrnamentTitle text="Direction (trial)" />
+          <OrnamentTitle text={tr('settings.fontSize')} />
           <View style={styles.pillRow}>
-            {DIRECTIONS.map((d) => {
-              const selected = direction === d;
+            {FONT_SCALE_STEPS.map((step) => {
+              const selected = fontScale === step;
               return (
                 <Pressable
-                  key={d}
+                  key={step}
                   style={({ pressed }) => [
                     styles.pill,
                     selected && styles.pillActive,
                     pressed && styles.pressed,
                   ]}
-                  onPress={() => setDirection(d)}
+                  onPress={() => setFontScale(step)}
                   hitSlop={8}
                   accessibilityRole="radio"
                   accessibilityState={{ selected }}
-                  accessibilityLabel={DIRECTION_LABELS[d]}
+                  accessibilityLabel={tr(FONT_SCALE_LABEL_KEYS[step])}
                 >
                   <Text style={[styles.pillText, selected && styles.pillTextActive]}>
-                    {DIRECTION_LABELS[d]}
+                    {tr(FONT_SCALE_LABEL_KEYS[step])}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          {/* The preview is really the whole screen — every label re-renders at the
+              chosen size the moment a pill is tapped — but a sample line makes the
+              effect obvious without scrolling. */}
+          <Text style={styles.preview}>{tr('settings.fontSizePreview')}</Text>
+        </View>
+
+        {/* ═══ LAUNCH SCREEN ═══ */}
+        <View style={styles.card}>
+          <OrnamentTitle text={tr('settings.launchScreen')} />
+          <View style={styles.pillRow}>
+            {LAUNCH_SCREENS.map((screen) => {
+              const selected = launchScreen === screen;
+              return (
+                <Pressable
+                  key={screen}
+                  style={({ pressed }) => [
+                    styles.pill,
+                    selected && styles.pillActive,
+                    pressed && styles.pressed,
+                  ]}
+                  onPress={() => setLaunchScreen(screen)}
+                  hitSlop={8}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={tr(LAUNCH_SCREEN_LABEL_KEYS[screen])}
+                >
+                  <Text style={[styles.pillText, selected && styles.pillTextActive]}>
+                    {tr(LAUNCH_SCREEN_LABEL_KEYS[screen])}
                   </Text>
                 </Pressable>
               );
             })}
           </View>
         </View>
-      ) : null}
 
-      {/* ═══ QUIET ENTRIES ═══
-          "Parish staff" is the only door to event editing in a store build. It is
-          a plain word rather than a hidden gesture so staff can find it without
-          being told a trick, and it says nothing that would puzzle a reader who
-          opens it out of curiosity. Diagnostics is owner-only and simply absent
-          from store builds. */}
-      <View style={styles.linkGroup}>
-        <Pressable
-          style={({ pressed }) => [
-            styles.linkRow,
-            // In a store build this is the ONLY row, so it must not draw a
-            // divider under itself.
-            !DIAGNOSTICS_ENABLED && styles.linkRowLast,
-            pressed && styles.pressed,
-          ]}
-          onPress={() => navigation.navigate('Staff')}
-          accessibilityRole="button"
-        >
-          <Text style={styles.linkText}>{tr('settings.staffEntry')}</Text>
-          <ChevronRight color={th.textFaint} />
-        </Pressable>
+        {/* ═══ APPEARANCE ═══ */}
+        <View style={styles.card}>
+          <OrnamentTitle text={tr('settings.theme')} />
+          <View style={styles.pillRow}>
+            {THEME_MODES.map((mode) => {
+              const selected = themeMode === mode;
+              return (
+                <Pressable
+                  key={mode}
+                  style={({ pressed }) => [
+                    styles.pill,
+                    selected && styles.pillActive,
+                    pressed && styles.pressed,
+                  ]}
+                  onPress={() => setThemeMode(mode)}
+                  hitSlop={8}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={tr(THEME_MODE_LABEL_KEYS[mode])}
+                >
+                  <Text style={[styles.pillText, selected && styles.pillTextActive]}>
+                    {tr(THEME_MODE_LABEL_KEYS[mode])}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          <Text style={styles.hint}>{tr('settings.themeHint')}</Text>
+        </View>
 
+        {/* ═══ NOTIFICATIONS ═══ */}
+        <View style={styles.card}>
+          <OrnamentTitle text={tr('settings.notifications')} />
+          <Text style={styles.hint}>{tr('settings.notificationsHint')}</Text>
+        </View>
+
+        {/* ═══ DIRECTION TRIAL (owner sideloads only) ═══
+            TEMPORARY. Delete this card, theme/direction.ts and the losing
+            direction once one is chosen. Switching is live and instant because
+            these directions change no navigation option — see direction.ts. */}
         {DIAGNOSTICS_ENABLED ? (
+          <View style={styles.card}>
+            <OrnamentTitle text="Direction (trial)" />
+            <View style={styles.pillRow}>
+              {DIRECTIONS.map((d) => {
+                const selected = direction === d;
+                return (
+                  <Pressable
+                    key={d}
+                    style={({ pressed }) => [
+                      styles.pill,
+                      selected && styles.pillActive,
+                      pressed && styles.pressed,
+                    ]}
+                    onPress={() => setDirection(d)}
+                    hitSlop={8}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected }}
+                    accessibilityLabel={DIRECTION_LABELS[d]}
+                  >
+                    <Text style={[styles.pillText, selected && styles.pillTextActive]}>
+                      {DIRECTION_LABELS[d]}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        ) : null}
+
+        {/* ═══ QUIET ENTRIES ═══
+            "Parish staff" is the only door to event editing in a store build. It is
+            a plain word rather than a hidden gesture so staff can find it without
+            being told a trick, and it says nothing that would puzzle a reader who
+            opens it out of curiosity. Diagnostics is owner-only and simply absent
+            from store builds. */}
+        <View style={styles.linkGroup}>
           <Pressable
-            style={({ pressed }) => [styles.linkRow, styles.linkRowLast, pressed && styles.pressed]}
-            onPress={() => navigation.navigate('Diagnostics')}
+            style={({ pressed }) => [
+              styles.linkRow,
+              // In a store build this is the ONLY row, so it must not draw a
+              // divider under itself.
+              !DIAGNOSTICS_ENABLED && styles.linkRowLast,
+              pressed && styles.pressed,
+            ]}
+            onPress={() => navigation.navigate('Staff')}
             accessibilityRole="button"
           >
-            <Text style={styles.linkText}>{tr('settings.diagnosticsEntry')}</Text>
+            <Text style={styles.linkText}>{tr('settings.staffEntry')}</Text>
             <ChevronRight color={th.textFaint} />
           </Pressable>
-        ) : null}
-      </View>
 
-      {versionLabel ? (
-        <Text style={styles.versionText}>{tr('settings.version', { version: versionLabel })}</Text>
-      ) : null}
-    </ScrollView>
+          {DIAGNOSTICS_ENABLED ? (
+            <Pressable
+              style={({ pressed }) => [
+                styles.linkRow,
+                styles.linkRowLast,
+                pressed && styles.pressed,
+              ]}
+              onPress={() => navigation.navigate('Diagnostics')}
+              accessibilityRole="button"
+            >
+              <Text style={styles.linkText}>{tr('settings.diagnosticsEntry')}</Text>
+              <ChevronRight color={th.textFaint} />
+            </Pressable>
+          ) : null}
+        </View>
+
+        {versionLabel ? (
+          <Text style={styles.versionText}>
+            {tr('settings.version', { version: versionLabel })}
+          </Text>
+        ) : null}
+      </ScrollView>
+    </>
   );
 }
 
@@ -267,7 +281,9 @@ const makeStyles = (th: ResolvedTheme) =>
   ({
     container: {
       flex: 1,
-      backgroundColor: th.background,
+      backgroundColor: th.direction === 'illuminated' ? 'transparent' : th.background,
+      // Transparent under Illuminated: the ground is a sibling BEHIND this
+      // scroll view, so an opaque background here would paint over the leaf.
     },
     content: {
       padding: spacing.lg,
@@ -294,7 +310,7 @@ const makeStyles = (th: ResolvedTheme) =>
     pill: {
       borderWidth: 1,
       borderColor: th.border,
-      borderRadius: radii.full,
+      borderRadius: th.design.controlRadius,
       backgroundColor: th.surfaceWhite,
       paddingVertical: spacing.sm,
       paddingHorizontal: spacing.md,

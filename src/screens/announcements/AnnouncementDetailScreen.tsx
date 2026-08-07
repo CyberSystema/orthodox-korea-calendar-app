@@ -5,6 +5,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { IlluminatedGround } from '../../components/common/IlluminatedGround';
 import { Text } from '../../components/common/ScaledText';
 import {
   ensureLiturgicalYear,
@@ -41,6 +42,7 @@ function resolveEventRef(eventId: string): { parentId: string; occurrenceDate?: 
 }
 
 export function AnnouncementDetailScreen({ route, navigation }: Props) {
+  const th = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { announcement } = route.params;
   const { t } = useTranslation();
@@ -124,83 +126,92 @@ export function AnnouncementDetailScreen({ route, navigation }: Props) {
   }, [announcement.id, deleteAnnouncement, navigation, t]);
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={[
-        styles.content,
-        { paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.lg },
-      ]}
-    >
-      {/* ═══ ANNOUNCEMENT CARD ═══ */}
-      <View style={styles.card}>
-        <View style={styles.topRow}>
-          {audience ? (
-            <View style={styles.audienceChip}>
-              <Text style={styles.audienceChipText}>{audience}</Text>
-            </View>
-          ) : (
-            <View style={styles.noticeChip}>
-              <Text style={styles.noticeChipText}>{t('announcements.noticeLabel')}</Text>
-            </View>
-          )}
-          <Text style={styles.timeText}>{formatRelativeTime(announcement.sentAt, language)}</Text>
-        </View>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.dateText}>
-          {formatDisplayDate(dayjs(announcement.sentAt * 1000).format('YYYY-MM-DD'), language)}
-        </Text>
-        {body ? <Text style={styles.body}>{body}</Text> : null}
-      </View>
-
-      {/* ═══ LINKED DAY EVENTS ═══ */}
-      {announcement.eventId ? (
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>{t('announcements.linkedEvents')}</Text>
-          {resolving ? (
-            <Text style={styles.mutedText}>{t('common.loading')}</Text>
-          ) : dayEvents.length > 0 ? (
-            <>
-              {linkedDateISO ? (
-                <Text style={styles.linkedDate}>{formatDisplayDate(linkedDateISO, language)}</Text>
-              ) : null}
-              {dayEvents.map((event) => (
-                <Pressable
-                  key={event.id}
-                  style={({ pressed }) => [styles.eventCard, pressed && styles.pressed]}
-                  onPress={() => openEvent(event)}
-                  accessibilityRole="button"
-                  accessibilityLabel={pickLocalized(event.title, language)}
-                >
-                  <Text style={styles.eventTitle}>{pickLocalized(event.title, language)}</Text>
-                  <Text style={styles.eventOpen}>{t('announcements.viewEvent')} ›</Text>
-                </Pressable>
-              ))}
-            </>
-          ) : (
-            <Text style={styles.mutedText}>{t('announcements.eventUnavailable')}</Text>
-          )}
-        </View>
-      ) : null}
-
-      {/* ═══ STAFF DELETE ═══ */}
-      {isStaff ? (
-        <Pressable
-          style={({ pressed }) => [
-            styles.deleteButton,
-            pressed && styles.pressed,
-            deleting && styles.deleteButtonDisabled,
-          ]}
-          onPress={confirmDelete}
-          disabled={deleting}
-          accessibilityRole="button"
-          accessibilityLabel={t('announcements.deleteAction')}
-        >
-          <Text style={styles.deleteButtonText}>
-            {deleting ? t('common.loading') : t('announcements.deleteAction')}
+    <>
+      {/* The leaf continues onto pushed screens. A Fragment sibling, not a
+          child: these roots are ScrollViews, and a ground inside one would
+          scroll away. absoluteFill then resolves against the navigator's own
+          screen container, which fills the window. */}
+      {th.direction === 'illuminated' ? <IlluminatedGround /> : null}
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.lg },
+        ]}
+      >
+        {/* ═══ ANNOUNCEMENT CARD ═══ */}
+        <View style={styles.card}>
+          <View style={styles.topRow}>
+            {audience ? (
+              <View style={styles.audienceChip}>
+                <Text style={styles.audienceChipText}>{audience}</Text>
+              </View>
+            ) : (
+              <View style={styles.noticeChip}>
+                <Text style={styles.noticeChipText}>{t('announcements.noticeLabel')}</Text>
+              </View>
+            )}
+            <Text style={styles.timeText}>{formatRelativeTime(announcement.sentAt, language)}</Text>
+          </View>
+          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.dateText}>
+            {formatDisplayDate(dayjs(announcement.sentAt * 1000).format('YYYY-MM-DD'), language)}
           </Text>
-        </Pressable>
-      ) : null}
-    </ScrollView>
+          {body ? <Text style={styles.body}>{body}</Text> : null}
+        </View>
+
+        {/* ═══ LINKED DAY EVENTS ═══ */}
+        {announcement.eventId ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>{t('announcements.linkedEvents')}</Text>
+            {resolving ? (
+              <Text style={styles.mutedText}>{t('common.loading')}</Text>
+            ) : dayEvents.length > 0 ? (
+              <>
+                {linkedDateISO ? (
+                  <Text style={styles.linkedDate}>
+                    {formatDisplayDate(linkedDateISO, language)}
+                  </Text>
+                ) : null}
+                {dayEvents.map((event) => (
+                  <Pressable
+                    key={event.id}
+                    style={({ pressed }) => [styles.eventCard, pressed && styles.pressed]}
+                    onPress={() => openEvent(event)}
+                    accessibilityRole="button"
+                    accessibilityLabel={pickLocalized(event.title, language)}
+                  >
+                    <Text style={styles.eventTitle}>{pickLocalized(event.title, language)}</Text>
+                    <Text style={styles.eventOpen}>{t('announcements.viewEvent')} ›</Text>
+                  </Pressable>
+                ))}
+              </>
+            ) : (
+              <Text style={styles.mutedText}>{t('announcements.eventUnavailable')}</Text>
+            )}
+          </View>
+        ) : null}
+
+        {/* ═══ STAFF DELETE ═══ */}
+        {isStaff ? (
+          <Pressable
+            style={({ pressed }) => [
+              styles.deleteButton,
+              pressed && styles.pressed,
+              deleting && styles.deleteButtonDisabled,
+            ]}
+            onPress={confirmDelete}
+            disabled={deleting}
+            accessibilityRole="button"
+            accessibilityLabel={t('announcements.deleteAction')}
+          >
+            <Text style={styles.deleteButtonText}>
+              {deleting ? t('common.loading') : t('announcements.deleteAction')}
+            </Text>
+          </Pressable>
+        ) : null}
+      </ScrollView>
+    </>
   );
 }
 
@@ -208,7 +219,9 @@ const makeStyles = (th: ResolvedTheme) =>
   ({
     container: {
       flex: 1,
-      backgroundColor: th.background,
+      backgroundColor: th.direction === 'illuminated' ? 'transparent' : th.background,
+      // Transparent under Illuminated: the ground is a sibling BEHIND this
+      // scroll view, so an opaque background here would paint over the leaf.
     },
     content: {
       padding: spacing.lg,
@@ -235,7 +248,7 @@ const makeStyles = (th: ResolvedTheme) =>
     audienceChip: {
       borderWidth: 1,
       borderColor: th.accentDim,
-      borderRadius: radii.full,
+      borderRadius: th.design.controlRadius,
       backgroundColor: th.accentGlow,
       paddingHorizontal: spacing.sm,
       paddingVertical: 2,
@@ -250,7 +263,7 @@ const makeStyles = (th: ResolvedTheme) =>
     noticeChip: {
       borderWidth: 1,
       borderColor: th.borderLight,
-      borderRadius: radii.full,
+      borderRadius: th.design.controlRadius,
       backgroundColor: th.surface,
       paddingHorizontal: spacing.sm,
       paddingVertical: 2,
@@ -337,7 +350,7 @@ const makeStyles = (th: ResolvedTheme) =>
       marginTop: spacing.sm,
       borderWidth: 1,
       borderColor: th.danger,
-      borderRadius: radii.full,
+      borderRadius: th.design.controlRadius,
       backgroundColor: th.crimsonTint,
       paddingVertical: spacing.md,
       alignItems: 'center',
