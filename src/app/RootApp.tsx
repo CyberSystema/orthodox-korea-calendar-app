@@ -28,10 +28,21 @@ import { OfflineBanner } from '../components/common/OfflineBanner';
 import { ByzantineSplashScreen } from '../components/common/ByzantineSplashScreen';
 import { useTheme, useThemedStyles, type ResolvedTheme } from '../theme/useTheme';
 import { useNavigationTheme } from '../theme/navigationTheme';
+import { useFonts } from 'expo-font';
 
 export function RootApp() {
   const styles = useThemedStyles(makeStyles);
   const navigationTheme = useNavigationTheme();
+  // Both directions' faces, plus the Korean partner. Loaded inside the SAME gate
+  // that already holds the splash, so no text ever paints in a fallback face and
+  // then reflows — the app simply appears in the right typeface.
+  const [fontsLoaded] = useFonts({
+    Spectral: require('../../assets/fonts/Spectral-Regular.ttf'),
+    'Spectral-SemiBold': require('../../assets/fonts/Spectral-SemiBold.ttf'),
+    EBGaramond: require('../../assets/fonts/EBGaramond-Regular.ttf'),
+    'EBGaramond-SemiBold': require('../../assets/fonts/EBGaramond-SemiBold.ttf'),
+    NanumMyeongjo: require('../../assets/fonts/NanumMyeongjo-Regular.ttf'),
+  });
   const isHydrated = useAppStore((state) => state.isHydrated);
   const hydratePreferences = useAppStore((state) => state.hydratePreferences);
   const eventsHydrated = useEventsStore((state) => state.isHydrated);
@@ -182,7 +193,7 @@ export function RootApp() {
     return () => clearTimeout(timer);
   }, []);
 
-  const appReady = isHydrated && eventsHydrated && minSplashElapsed;
+  const appReady = isHydrated && eventsHydrated && minSplashElapsed && fontsLoaded;
   const [splashMounted, setSplashMounted] = useState(true);
   const splashOpacity = useRef(new Animated.Value(1)).current;
 

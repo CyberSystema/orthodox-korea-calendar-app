@@ -9,25 +9,66 @@ import {
 
 import { useAppStore } from '../../store/useAppStore';
 import { MAX_TOTAL_FONT_SCALE } from '../../theme/fontScale';
+import { DIRECTION_DESIGN } from '../../theme/direction';
+import { typography } from '../../theme/typography';
 
 /**
- * Multiply a style's own fontSize/lineHeight by the app scale, leaving every
- * other declaration (and every conditional array entry) untouched.
+ * The active direction's face for a style's declared family.
+ *
+ * WHY HERE. Every user-facing string already routes through this wrapper — the
+ * `check:scaled-text` guard enforces it — so this one function can restyle the
+ * whole app's typography. Screens keep writing
+ * `fontFamily: typography.family.heading` and get Spectral or EB Garamond
+ * depending on the direction, with not one stylesheet edited.
+ *
+ * KOREAN. A serif picked for English has no Hangul, so Korean would fall back to
+ * the system face and look unrelated. When the reader is in Korean we hand back
+ * the matched Korean serif instead, for both roles.
  */
-function scaleTextStyle(style: TextProps['style'], appScale: number) {
+function directionFamily(
+  family: string | undefined,
+  design: (typeof DIRECTION_DESIGN)[keyof typeof DIRECTION_DESIGN],
+  korean: boolean,
+): string | undefined {
+  if (family === undefined) return undefined;
+  if (korean) return design.fontKorean;
+  // Only the app's own two logical roles are remapped. Anything else (a system
+  // font asked for deliberately, an icon face) is left exactly as written.
+  if (family === typography.family.heading) return design.fontHeading;
+  if (family === typography.family.body) return design.fontBody ?? family;
+  return family;
+}
+
+/**
+ * Multiply a style's own fontSize/lineHeight by the app scale and swap in the
+ * direction's typeface, leaving every other declaration untouched.
+ */
+function scaleTextStyle(
+  style: TextProps['style'],
+  appScale: number,
+  design: (typeof DIRECTION_DESIGN)[keyof typeof DIRECTION_DESIGN],
+  korean: boolean,
+) {
   const flat = StyleSheet.flatten(style) as TextStyle | undefined;
   const fontSize = typeof flat?.fontSize === 'number' ? flat.fontSize : undefined;
   const lineHeight = typeof flat?.lineHeight === 'number' ? flat.lineHeight : undefined;
+  const fontFamily = directionFamily(flat?.fontFamily, design, korean);
+
+  const familyPatch = fontFamily && fontFamily !== flat?.fontFamily ? { fontFamily } : null;
 
   // No own fontSize means the size is inherited from an enclosing Text that we
-  // already scaled — leave it alone rather than double-applying.
-  if (fontSize === undefined) return style;
+  // already scaled — leave the size alone rather than double-applying, but still
+  // let the family through.
+  if (fontSize === undefined) {
+    return familyPatch ? [style, familyPatch] : style;
+  }
 
   return [
     style,
     {
       fontSize: fontSize * appScale,
       ...(lineHeight === undefined ? null : { lineHeight: lineHeight * appScale }),
+      ...familyPatch,
     },
   ];
 }
@@ -65,6 +106,8 @@ function scaleTextStyle(style: TextProps['style'], appScale: number) {
  */
 export function Text({ style, ref, ...rest }: TextProps & { ref?: React.Ref<RNText> }) {
   const appScale = useAppStore((state) => state.fontScale);
+  const design = DIRECTION_DESIGN[useAppStore((state) => state.direction)];
+  const korean = useAppStore((state) => state.language) === 'ko';
   const enabled = rest.allowFontScaling !== false;
 
   // RN multiplies the OS scale on top of whatever size we hand it; this bounds
@@ -74,8 +117,15 @@ export function Text({ style, ref, ...rest }: TextProps & { ref?: React.Ref<RNTe
 
   // Default install: one comparison per Text, no flatten, no new style object.
   if (!enabled || appScale === 1) {
+    // Even at scale 1 the TYPEFACE still has to be swapped, so this path goes
+    // through the same helper with a neutral multiplier.
     return (
-      <RNText ref={ref} maxFontSizeMultiplier={maxFontSizeMultiplier} {...rest} style={style} />
+      <RNText
+        ref={ref}
+        maxFontSizeMultiplier={maxFontSizeMultiplier}
+        {...rest}
+        style={scaleTextStyle(style, 1, design, korean)}
+      />
     );
   }
 
@@ -84,7 +134,7 @@ export function Text({ style, ref, ...rest }: TextProps & { ref?: React.Ref<RNTe
       ref={ref}
       maxFontSizeMultiplier={maxFontSizeMultiplier}
       {...rest}
-      style={scaleTextStyle(style, appScale)}
+      style={scaleTextStyle(style, appScale, design, korean)}
     />
   );
 }
@@ -96,6 +146,8 @@ export function TextInput({
   ...rest
 }: TextInputProps & { ref?: React.Ref<RNTextInput> }) {
   const appScale = useAppStore((state) => state.fontScale);
+  const design = DIRECTION_DESIGN[useAppStore((state) => state.direction)];
+  const korean = useAppStore((state) => state.language) === 'ko';
   const enabled = rest.allowFontScaling !== false;
   const maxFontSizeMultiplier = MAX_TOTAL_FONT_SCALE / appScale;
 
@@ -105,7 +157,7 @@ export function TextInput({
         ref={ref}
         maxFontSizeMultiplier={maxFontSizeMultiplier}
         {...rest}
-        style={style}
+        style={scaleTextStyle(style, 1, design, korean)}
       />
     );
   }
@@ -115,7 +167,7 @@ export function TextInput({
       ref={ref}
       maxFontSizeMultiplier={maxFontSizeMultiplier}
       {...rest}
-      style={scaleTextStyle(style, appScale)}
+      style={scaleTextStyle(style, appScale, design, korean)}
     />
   );
 }

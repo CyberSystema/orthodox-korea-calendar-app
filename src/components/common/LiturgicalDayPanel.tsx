@@ -51,6 +51,7 @@ export function LiturgicalDayPanel({
   labels,
   onEventPress,
 }: Props) {
+  const th = useTheme();
   const styles = useThemedStyles(makeStyles);
   const { isSunday, isSaturday, dayNum, dayName, monthYear } = useMemo(() => {
     const d = new Date(`${dateISO}T00:00:00`);
@@ -136,6 +137,12 @@ export function LiturgicalDayPanel({
 
   return (
     <View style={styles.card}>
+      {/* Illuminated only: a second hairline inside the gold frame. Purely
+          decorative, so it is pointer-transparent and hidden from screen
+          readers. */}
+      {th.design.goldFrame ? (
+        <View style={styles.cardInnerRule} pointerEvents="none" accessible={false} />
+      ) : null}
       <View style={styles.header}>
         <View
           style={[
@@ -292,13 +299,28 @@ const RING_BASE_SIZE = 56;
 const makeStyles = (th: ResolvedTheme) =>
   ({
     card: {
-      borderWidth: 1,
-      borderColor: th.border,
-      borderRadius: radii.lg,
+      // Geometry and frame come from the DIRECTION, not from a fixed constant:
+      // Illuminated draws a squarer page with a gold rule around it, Refined a
+      // rounded card with a hairline. See theme/direction.ts.
+      borderWidth: th.design.cardBorderWidth,
+      borderColor: th.design.goldFrame ? th.accent : th.border,
+      borderRadius: th.design.cardRadius,
       backgroundColor: th.surface,
-      padding: spacing.md,
+      padding: th.design.goldFrame ? spacing.lg : spacing.md,
       gap: spacing.md,
       ...th.shadows.warm,
+    },
+    // Illuminated only: the inner gold hairline that makes the frame read as a
+    // ruled manuscript page rather than a thick border.
+    cardInnerRule: {
+      position: 'absolute',
+      top: spacing.xs,
+      left: spacing.xs,
+      right: spacing.xs,
+      bottom: spacing.xs,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: th.accentDim,
+      borderRadius: Math.max(th.design.cardRadius - 2, 0),
     },
     pressed: {
       opacity: 0.7,

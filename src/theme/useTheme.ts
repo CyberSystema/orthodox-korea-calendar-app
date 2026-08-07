@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { StyleSheet, useColorScheme } from 'react-native';
 
 import { useAppStore } from '../store/useAppStore';
+import { DIRECTION_DESIGN, type Direction, type DirectionDesign } from './direction';
 import {
   lightShadows,
   lightTheme,
@@ -30,6 +31,10 @@ export function normalizeThemeMode(raw: string | null | undefined): ThemeMode {
 }
 
 export type ResolvedTheme = Theme & {
+  /** TEMPORARY: the visual direction being trialled. */
+  direction: Direction;
+  /** Fonts, ornament flags and geometry for that direction. */
+  design: DirectionDesign;
   /** True when the night palette is active — for the odd branch a token can't express. */
   isDark: boolean;
   shadows: ThemeShadows;
@@ -45,13 +50,20 @@ export type ResolvedTheme = Theme & {
  */
 export function useTheme(): ResolvedTheme {
   const mode = useAppStore((state) => state.themeMode);
+  const direction = useAppStore((state) => state.direction);
   const system = useColorScheme();
 
   return useMemo(() => {
     const dark = mode === 'dark' || (mode === 'auto' && system === 'dark');
     const base = dark ? nightTheme : lightTheme;
-    return { ...base, isDark: dark, shadows: dark ? nightShadows : lightShadows };
-  }, [mode, system]);
+    return {
+      ...base,
+      isDark: dark,
+      shadows: dark ? nightShadows : lightShadows,
+      direction,
+      design: DIRECTION_DESIGN[direction],
+    };
+  }, [mode, system, direction]);
 }
 
 /**

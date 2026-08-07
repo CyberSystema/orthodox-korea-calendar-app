@@ -10,6 +10,7 @@ import {
 } from '../navigation/launchScreen';
 import { secureStorage } from '../services/storage/secureStorage';
 import { DEFAULT_THEME_MODE, normalizeThemeMode, type ThemeMode } from '../theme/useTheme';
+import { DEFAULT_DIRECTION, normalizeDirection, type Direction } from '../theme/direction';
 import { DEFAULT_FONT_SCALE, normalizeFontScale, type FontScale } from '../theme/fontScale';
 import type { SupportedLanguage } from '../types/language';
 
@@ -17,6 +18,7 @@ const LANGUAGE_KEY = 'app.language';
 const FONT_SCALE_KEY = 'app.fontScale';
 const LAUNCH_SCREEN_KEY = 'app.launchScreen';
 const THEME_MODE_KEY = 'app.themeMode';
+const DIRECTION_KEY = 'app.direction';
 // We persist only the fact that staff mode is enabled — never the raw passcode.
 // The session token (managed by the SDK) is what proves authentication.
 const STAFF_MODE_KEY = 'auth.staffModeEnabled';
@@ -32,6 +34,8 @@ type AppState = {
   launchScreen: LaunchScreen;
   /** Light / dark / follow-the-system; see theme/useTheme.ts. */
   themeMode: ThemeMode;
+  /** TEMPORARY: which visual direction is being trialled; see theme/direction.ts. */
+  direction: Direction;
   selectedDateISO: string | null;
   adminMode: boolean;
   cloudflareAdminAuthenticated: boolean;
@@ -41,6 +45,7 @@ type AppState = {
   setFontScale: (fontScale: FontScale) => void;
   setLaunchScreen: (launchScreen: LaunchScreen) => void;
   setThemeMode: (themeMode: ThemeMode) => void;
+  setDirection: (direction: Direction) => void;
   setSelectedDateISO: (dateISO: string | null) => void;
   setAdminMode: (value: boolean) => void;
   setCloudflareAdminAuthenticated: (value: boolean) => void;
@@ -53,6 +58,7 @@ export const useAppStore = create<AppState>((set) => ({
   fontScale: DEFAULT_FONT_SCALE,
   launchScreen: DEFAULT_LAUNCH_SCREEN,
   themeMode: DEFAULT_THEME_MODE,
+  direction: DEFAULT_DIRECTION,
   selectedDateISO: null,
   adminMode: false,
   cloudflareAdminAuthenticated: false,
@@ -63,6 +69,7 @@ export const useAppStore = create<AppState>((set) => ({
       savedFontScale,
       savedLaunchScreen,
       savedThemeMode,
+      savedDirection,
       hadAuthToken,
       staffModeFlag,
       legacyPasscode,
@@ -71,6 +78,7 @@ export const useAppStore = create<AppState>((set) => ({
       secureStorage.getItem(FONT_SCALE_KEY),
       secureStorage.getItem(LAUNCH_SCREEN_KEY),
       secureStorage.getItem(THEME_MODE_KEY),
+      secureStorage.getItem(DIRECTION_KEY),
       hasAdminAuthToken(),
       secureStorage.getItem(STAFF_MODE_KEY),
       secureStorage.getItem(LEGACY_STAFF_PASSCODE_KEY),
@@ -117,6 +125,7 @@ export const useAppStore = create<AppState>((set) => ({
       // Same reason again: the palette must be right on the FIRST painted frame,
       // or the app flashes light before switching to night.
       themeMode: normalizeThemeMode(savedThemeMode),
+      direction: normalizeDirection(savedDirection),
       adminMode: staffModeEnabled,
       cloudflareAdminAuthenticated,
     });
@@ -137,6 +146,10 @@ export const useAppStore = create<AppState>((set) => ({
   setThemeMode: (themeMode) => {
     void secureStorage.setItem(THEME_MODE_KEY, themeMode);
     set({ themeMode });
+  },
+  setDirection: (direction) => {
+    void secureStorage.setItem(DIRECTION_KEY, direction);
+    set({ direction });
   },
   setSelectedDateISO: (selectedDateISO) => set({ selectedDateISO }),
   setAdminMode: (value) => set({ adminMode: value }),

@@ -8,6 +8,7 @@ import Svg, { Path } from 'react-native-svg';
 import { OrnamentTitle } from '../../components/common/OrnamentTitle';
 import { Text } from '../../components/common/ScaledText';
 import { DIAGNOSTICS_ENABLED } from '../../config/features';
+import { DIRECTIONS, DIRECTION_LABELS } from '../../theme/direction';
 import { getAppVersionLabel } from '../../utils/appVersion';
 import { useAppStore } from '../../store/useAppStore';
 import {
@@ -64,8 +65,16 @@ function ChevronRight({ color }: { color: string }) {
 export function SettingsScreen({ navigation }: Props) {
   const { t: tr } = useTranslation();
   const insets = useSafeAreaInsets();
-  const { fontScale, setFontScale, launchScreen, setLaunchScreen, themeMode, setThemeMode } =
-    useAppStore();
+  const {
+    fontScale,
+    setFontScale,
+    launchScreen,
+    setLaunchScreen,
+    themeMode,
+    setThemeMode,
+    direction,
+    setDirection,
+  } = useAppStore();
   const th = useTheme();
   const styles = useThemedStyles(makeStyles);
 
@@ -178,6 +187,40 @@ export function SettingsScreen({ navigation }: Props) {
         <OrnamentTitle text={tr('settings.notifications')} />
         <Text style={styles.hint}>{tr('settings.notificationsHint')}</Text>
       </View>
+
+      {/* ═══ DIRECTION TRIAL (owner sideloads only) ═══
+          TEMPORARY. Delete this card, theme/direction.ts and the losing
+          direction once one is chosen. Switching is live and instant because
+          these directions change no navigation option — see direction.ts. */}
+      {DIAGNOSTICS_ENABLED ? (
+        <View style={styles.card}>
+          <OrnamentTitle text="Direction (trial)" />
+          <View style={styles.pillRow}>
+            {DIRECTIONS.map((d) => {
+              const selected = direction === d;
+              return (
+                <Pressable
+                  key={d}
+                  style={({ pressed }) => [
+                    styles.pill,
+                    selected && styles.pillActive,
+                    pressed && styles.pressed,
+                  ]}
+                  onPress={() => setDirection(d)}
+                  hitSlop={8}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={DIRECTION_LABELS[d]}
+                >
+                  <Text style={[styles.pillText, selected && styles.pillTextActive]}>
+                    {DIRECTION_LABELS[d]}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      ) : null}
 
       {/* ═══ QUIET ENTRIES ═══
           "Parish staff" is the only door to event editing in a store build. It is

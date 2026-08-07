@@ -1,0 +1,97 @@
+/**
+ * The two visual directions being compared before one is chosen.
+ *
+ * TEMPORARY. Once a direction is picked, the loser and the picker are deleted —
+ * this module collapses to whatever won. Nothing outside the theme should branch
+ * on `direction` directly; read the design values below instead, so deleting a
+ * direction is a change to this file rather than a hunt through screens.
+ *
+ * SAFE TO SWITCH LIVE, unlike the earlier appearance trial. That one crashed
+ * because it toggled `headerShown`, which @react-navigation/bottom-tabs/unstable
+ * snapshots and refuses to change on a mounted screen. These directions differ
+ * only in colour, type, ornament and geometry — no navigation option changes —
+ * so the flip is instant and needs no restart. Keep it that way.
+ */
+export const DIRECTIONS = ['refined', 'illuminated'] as const;
+export type Direction = (typeof DIRECTIONS)[number];
+
+/** The app as it is today, executed properly — the safe baseline. */
+export const DEFAULT_DIRECTION: Direction = 'refined';
+
+export const DIRECTION_LABELS: Record<Direction, string> = {
+  refined: 'Refined',
+  illuminated: 'Illuminated',
+};
+
+export function normalizeDirection(raw: string | null | undefined): Direction {
+  return (DIRECTIONS as readonly string[]).includes(raw ?? '')
+    ? (raw as Direction)
+    : DEFAULT_DIRECTION;
+}
+
+/**
+ * Font family names as registered with `expo-font` in RootApp.
+ *
+ * ScaledText remaps the app's two logical roles (heading / body) onto these, so
+ * screens keep saying `typography.family.heading` and get the right face for the
+ * active direction without a single stylesheet changing.
+ *
+ * KOREAN IS A SEPARATE FACE. A serif chosen for English has no Hangul, so
+ * Korean would silently fall back to the system and look unrelated. Nanum
+ * Myeongjo is the matched partner for both directions — it is the classical
+ * Korean serif and sits well beside either English face.
+ */
+export type DirectionDesign = {
+  /** Serif for headings, day names, numerals. */
+  fontHeading: string;
+  /** The same family at its heavier weight, for emphasis. */
+  fontHeadingStrong: string;
+  /**
+   * Body copy. `undefined` keeps the system sans, which stays the most legible
+   * choice at small sizes for older readers — Refined does that deliberately.
+   * Illuminated sets the serif here too, which is what makes it read as a page
+   * of a book rather than a screen.
+   */
+  fontBody?: string;
+  /** Korean text of any role. */
+  fontKorean: string;
+  /** Card corner radius — manuscript pages are squarer than app cards. */
+  cardRadius: number;
+  /** Card border weight. Illuminated draws a gold rule, refined a hairline. */
+  cardBorderWidth: number;
+  /** Draw the day card's border in gold rather than the neutral rule colour. */
+  goldFrame: boolean;
+  /** Enlarge the first letter of a commemoration into an illuminated capital. */
+  dropCap: boolean;
+  /** Ornamental headpiece above high-rank days. */
+  headpiece: boolean;
+  /** Subtle parchment texture behind the page. */
+  texture: boolean;
+};
+
+export const DIRECTION_DESIGN: Record<Direction, DirectionDesign> = {
+  refined: {
+    fontHeading: 'Spectral',
+    fontHeadingStrong: 'Spectral-SemiBold',
+    fontKorean: 'NanumMyeongjo',
+    fontBody: undefined,
+    cardRadius: 14,
+    cardBorderWidth: 1,
+    goldFrame: false,
+    dropCap: false,
+    headpiece: false,
+    texture: false,
+  },
+  illuminated: {
+    fontHeading: 'EBGaramond',
+    fontHeadingStrong: 'EBGaramond-SemiBold',
+    fontKorean: 'NanumMyeongjo',
+    fontBody: 'EBGaramond',
+    cardRadius: 4,
+    cardBorderWidth: 2,
+    goldFrame: true,
+    dropCap: true,
+    headpiece: true,
+    texture: true,
+  },
+};
