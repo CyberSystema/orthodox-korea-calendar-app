@@ -46,8 +46,39 @@ function commitCount() {
   }
 }
 
+/**
+ * Firebase config files are gitignored, and EAS only uploads what git tracks — so
+ * a build fails with "GoogleService-Info.plist is missing" unless the file is
+ * handed over some other way.
+ *
+ * iOS DOES NOT NEED ONE. No Firebase package is installed, no plugin asks for it,
+ * and iOS push goes to APNs directly (see EXPO_PUBLIC_APNS_ENV). The reference in
+ * app.json was vestigial and is dropped here rather than satisfied — supplying a
+ * file nothing reads only moves the failure.
+ *
+ * ANDROID GENUINELY NEEDS ONE: the Google Services Gradle plugin reads the package
+ * name out of google-services.json and fails the build without a match, and FCM
+ * is how announcements reach Android. On EAS it arrives as a file environment
+ * variable, whose path lands in GOOGLE_SERVICES_JSON; locally the checked-out
+ * file is used.
+ *
+ *   eas env:create --name GOOGLE_SERVICES_JSON --type file \
+ *     --value ./google-services.json --visibility secret --environment production
+ */
+function firebase(expo) {
+  const ios = { ...expo.ios };
+  delete ios.googleServicesFile;
+  return {
+    ios,
+    android: {
+      ...expo.android,
+      googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? expo.android.googleServicesFile,
+    },
+  };
+}
+
 module.exports = () => {
-  const expo = { ...base.expo };
+  const expo = { ...base.expo, ...firebase(base.expo) };
 
   // On EAS, remote versioning owns these; touching them here would fight it.
   if (process.env.EAS_BUILD) return { expo };
