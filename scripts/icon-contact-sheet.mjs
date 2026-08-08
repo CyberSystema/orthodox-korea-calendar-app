@@ -34,6 +34,29 @@ if (!fs.existsSync(CANDIDATES)) {
 }
 
 const store = JSON.parse(fs.readFileSync(CANDIDATES, 'utf8'));
+
+// saint.gr proposals are merged in as additional candidates on the same row, so
+// a reviewer compares both sources side by side rather than in two passes.
+const SAINTGR = path.join(DIR, 'candidates-saintgr.json');
+if (fs.existsSync(SAINTGR)) {
+  for (const [id, m] of Object.entries(JSON.parse(fs.readFileSync(SAINTGR, 'utf8')))) {
+    const row = (store[id] ??= { ...m, candidates: [] });
+    row.candidates = [
+      {
+        source: 'saint.gr',
+        commonsTitle: m.card.greekName,
+        pageUrl: m.card.pageUrl,
+        fileUrl: m.card.fullUrl,
+        thumbUrl: m.card.thumbUrl,
+        license: m.card.modernSubject ? 'MODERN SUBJECT — rights live' : 'no stated provenance',
+        modernSubject: !!m.card.modernSubject,
+        greekName: m.card.greekName,
+        matchScore: m.score,
+      },
+      ...(row.candidates ?? []),
+    ];
+  }
+}
 const existing = fs.existsSync(path.join(DIR, 'approved.json'))
   ? JSON.parse(fs.readFileSync(path.join(DIR, 'approved.json'), 'utf8'))
   : {};
@@ -77,10 +100,17 @@ const html = `<!doctype html>
     background: Canvas; border-top: 1px solid color-mix(in srgb, currentColor 20%, transparent);
     display: flex; gap: 16px; align-items: center; }
   button { font: inherit; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
+  .src { color: #1565c0; font-weight: 600; }
+  .warn { font-size: 10px; color: #c62828; font-weight: 700; margin-top: 2px;
+    text-transform: uppercase; letter-spacing: .04em; }
   .none { opacity: .55; font-size: 13px; margin-top: 32px; }
 </style>
 <h1>Icon contact sheet</h1>
 <p class="lede">Click an image to approve it for that commemoration; click again to withdraw.
+Two sources are shown together: <span class="src">saint.gr</span> proposals carry the Greek name,
+so you can verify the match at a glance; Commons ones carry a stated licence.
+Anything flagged <span style="color:#c62828;font-weight:700">MODERN SUBJECT</span> depicts someone who
+died after 1900, so its icon was painted recently and its rights are live — approve those only deliberately.
 <strong>Check the grey line first</strong> — it is what the match was made on, and reading
 "Archbishop of Athens" under a martyr is how you catch a wrong one without knowing the saint.
 Approve nothing you are unsure of; a blank day is fine.</p>
@@ -103,7 +133,12 @@ ${rows
           i,
         ) => `<figure data-i="${i}"${existing[r.id]?.commonsTitle === c.commonsTitle ? ' class="on"' : ''}>
       <img loading="lazy" src="${esc(c.thumbUrl)}" alt="">
-      <figcaption title="${esc(c.commonsTitle)} — ${esc(c.license)}">${esc(c.license || '?')}</figcaption>
+      <figcaption title="${esc(c.commonsTitle)} — ${esc(c.license)}">${
+        c.source === 'saint.gr'
+          ? `<span class="src">saint.gr</span> ${esc(c.greekName ?? '')}`
+          : esc(c.license || '?')
+      }</figcaption>
+      ${c.modernSubject ? '<div class="warn">modern subject — rights live</div>' : ''}
     </figure>`,
       )
       .join('')}
