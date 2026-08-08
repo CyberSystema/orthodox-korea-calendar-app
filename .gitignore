@@ -58,3 +58,7 @@ Production/
 
 # local-only beta tester guide (contains a specific opt-in link; not part of the repo)
 /docs/android-closed-beta-guide.md
+
+# Icon collection working files — candidates are proposals, not artefacts.
+# Only approved images are published, and they go to the webapp repo.
+icons/
