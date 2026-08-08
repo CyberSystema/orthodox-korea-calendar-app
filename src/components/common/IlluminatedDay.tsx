@@ -19,6 +19,7 @@ import { spacing } from '../../theme/spacing';
 import { useTheme, useThemedStyles, type ResolvedTheme } from '../../theme/useTheme';
 import { Mandorla, OrnamentalRule } from './IlluminatedOrnaments';
 import { CandleGlow, GoldLeafNumeral } from './IlluminatedSkia';
+import { LITURGICAL_MARKS, LiturgicalMark } from './LiturgicalMark';
 import { Text } from './ScaledText';
 import { SelectableText } from './SelectableText';
 
@@ -27,7 +28,20 @@ type Props = {
   dateISO: string;
   liturgicalDay: LiturgicalDay | null;
   events: LiturgicalEvent[];
-  labels: { readings: string; saints: string; events: string; tone: string; noReadings: string };
+  labels: {
+    readings: string;
+    saints: string;
+    events: string;
+    tone: string;
+    noReadings: string;
+    // The six liturgical marks. Required — see the marks band below.
+    fast: string;
+    cheese: string;
+    fish: string;
+    pres: string;
+    basil: string;
+    dl: string;
+  };
   onEventPress?: (event: LiturgicalEvent) => void;
 };
 
@@ -118,6 +132,19 @@ export function IlluminatedDay({
 
   const isFeast = celebrations.some((c) => c.highRank);
   const isFast = Boolean(liturgicalDay?.fast);
+
+  // THE SIX LITURGICAL MARKS. These are not decoration — they are what a reader
+  // checks the calendar FOR: whether the day fasts, what it permits, and which
+  // liturgy is served. An earlier pass of this composition reduced all six to a
+  // single dagger, which silently dropped divine liturgy, St Basil, fish, cheese
+  // and presanctified. Never do that again.
+  const marks = useMemo(() => {
+    if (!liturgicalDay) return [];
+    return LITURGICAL_MARKS.filter((m) => Boolean(liturgicalDay[m.flag])).map((m) => ({
+      ...m,
+      label: labels[m.key],
+    }));
+  }, [liturgicalDay, labels]);
   const heroColor = isFeast || isSunday ? th.feastAccent : th.textPrimary;
 
   // The mandorla turns only on a great feast — a whole degree of ceremony the
@@ -192,13 +219,31 @@ export function IlluminatedDay({
         <Animated.View entering={FadeInDown.delay(STEP * 2).duration(DUR)}>
           <Text style={styles.monthYear}>{monthYear}</Text>
         </Animated.View>
-
-        {isFast ? (
-          <Animated.View entering={FadeIn.delay(STEP * 3).duration(DUR)}>
-            <Text style={styles.fastMark}>†</Text>
-          </Animated.View>
-        ) : null}
       </View>
+
+      {/* ═══ THE SIX LITURGICAL MARKS ═══
+          Drawn LARGE and gilded, not cropped into 22pt circles: these hand-drawn
+          marks are the answer to the question people actually open a calendar
+          with — does today fast, what may I eat, which liturgy is served. They
+          wrap, and each carries its name, because a drawing alone is not an
+          answer and a screen reader gets nothing from it. */}
+      {marks.length > 0 ? (
+        <Animated.View style={styles.marks} entering={FadeIn.delay(STEP * 2).duration(DUR)}>
+          {marks.map((mark) => (
+            <View key={mark.key} style={styles.mark}>
+              <LiturgicalMark
+                source={mark.image}
+                size={44}
+                color={mark.key === 'fast' ? th.fastAccent : th.accent}
+                label={mark.label}
+              />
+              <Text style={styles.markLabel} numberOfLines={2}>
+                {mark.label}
+              </Text>
+            </View>
+          ))}
+        </Animated.View>
+      ) : null}
 
       {/* ═══ THE DAY'S NAME, WITH A RAISED INITIAL ═══
           The initial is INLINE — a nested Text — not a framed box beside the
@@ -317,6 +362,26 @@ const makeStyles = (th: ResolvedTheme) =>
       fontSize: 17,
       letterSpacing: 1,
       color: th.textSecondary,
+    },
+    // A mark and its name are one unit; the row wraps rather than shrinking, so
+    // a long Korean label never squeezes the drawing.
+    marks: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'center',
+      gap: spacing.lg,
+      // Clear of the mandorla's rays, which reach below the numeral — without
+      // this the first row of marks sits inside the halo and reads as clutter.
+      paddingTop: spacing.xl,
+    },
+    mark: { alignItems: 'center', gap: 4, maxWidth: 110 },
+    markLabel: {
+      fontFamily: th.design.fontHeading,
+      fontSize: 12,
+      letterSpacing: 0.8,
+      color: th.textSecondary,
+      textAlign: 'center',
+      flexShrink: 1,
     },
     fastMark: {
       fontFamily: th.design.fontHeading,
