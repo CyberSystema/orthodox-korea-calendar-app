@@ -94,6 +94,9 @@ export function useLeaf(): Leaf {
     const kt = Math.min(1 + (k - 1) * 0.28, 1.36);
     const ks = Math.sqrt(k * kt);
 
+    // No `facing` spread: the app is portrait-only on every device (see
+    // plugins/withPortraitOnly), so a landscape composition would be code that
+    // can never run.
     return { width, k, kt, ks, halo, spread: wr >= 820 };
   }, [wr, hr, chrome]);
 }
