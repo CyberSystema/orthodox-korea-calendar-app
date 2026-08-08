@@ -1,5 +1,5 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -51,6 +51,68 @@ function ChevronRight({ color }: { color: string }) {
 }
 
 /**
+ * A row of mutually exclusive choices.
+ *
+ * Every preference on this screen is the same shape, and it was written out
+ * three times with only the option list changing. One component means the pills
+ * cannot drift apart in padding, wrap behaviour or accessibility — the last of
+ * which is the one that silently rots when markup is copied.
+ */
+function Choice<T extends string | number>({
+  options,
+  selected,
+  onSelect,
+  label,
+}: {
+  options: readonly T[];
+  selected: T;
+  onSelect: (value: T) => void;
+  label: (value: T) => string;
+}) {
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <View style={styles.pillRow}>
+      {options.map((option) => {
+        const isOn = option === selected;
+        return (
+          <Pressable
+            key={String(option)}
+            style={({ pressed }) => [
+              styles.pill,
+              isOn && styles.pillActive,
+              pressed && styles.pressed,
+            ]}
+            onPress={() => onSelect(option)}
+            hitSlop={8}
+            accessibilityRole="radio"
+            accessibilityState={{ selected: isOn }}
+            accessibilityLabel={label(option)}
+          >
+            <Text style={[styles.pillText, isOn && styles.pillTextActive]}>{label(option)}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+/**
+ * A quiet heading over a cluster of cards.
+ *
+ * The screen was a flat run of five near-identical cards, which gives a reader
+ * no way to skim: everything looked equally important because everything was
+ * drawn the same. Two groups — how the page looks, and what the app does — put
+ * one level of structure above the cards without adding a single control.
+ *
+ * Deliberately quieter than a card's own title: it is a signpost, not a heading
+ * competing with the ornamented ones beneath it.
+ */
+function GroupLabel({ text }: { text: string }) {
+  const styles = useThemedStyles(makeStyles);
+  return <Text style={styles.groupLabel}>{text.toUpperCase()}</Text>;
+}
+
+/**
  * The reader's own preferences — and NOTHING else.
  *
  * This screen is what a parishioner sees, so it deliberately contains no backend
@@ -87,7 +149,7 @@ export function SettingsScreen({ navigation }: Props) {
           child: these roots are ScrollViews, and a ground inside one would
           scroll away. absoluteFill then resolves against the navigator's own
           screen container, which fills the window. */}
-      {th.direction === 'illuminated' ? <IlluminatedGround /> : null}
+      {th.direction === 'illuminated' ? <IlluminatedGround crown={false} /> : null}
       <ScrollView
         style={styles.container}
         contentContainerStyle={[
@@ -97,102 +159,32 @@ export function SettingsScreen({ navigation }: Props) {
       >
         <StatusBar style="light" />
 
-        {/* ═══ TEXT SIZE ═══ */}
+        {/* ═══ READING — how the page looks ═══ */}
+        <GroupLabel text={tr('settings.groupReading')} />
+
         <View style={styles.card}>
           <OrnamentTitle text={tr('settings.fontSize')} />
-          <View style={styles.pillRow}>
-            {FONT_SCALE_STEPS.map((step) => {
-              const selected = fontScale === step;
-              return (
-                <Pressable
-                  key={step}
-                  style={({ pressed }) => [
-                    styles.pill,
-                    selected && styles.pillActive,
-                    pressed && styles.pressed,
-                  ]}
-                  onPress={() => setFontScale(step)}
-                  hitSlop={8}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected }}
-                  accessibilityLabel={tr(FONT_SCALE_LABEL_KEYS[step])}
-                >
-                  <Text style={[styles.pillText, selected && styles.pillTextActive]}>
-                    {tr(FONT_SCALE_LABEL_KEYS[step])}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-          {/* The preview is really the whole screen — every label re-renders at the
-              chosen size the moment a pill is tapped — but a sample line makes the
-              effect obvious without scrolling. */}
+          <Choice
+            options={FONT_SCALE_STEPS}
+            selected={fontScale}
+            onSelect={setFontScale}
+            label={(step) => tr(FONT_SCALE_LABEL_KEYS[step])}
+          />
+          {/* The preview is really the whole screen — every label re-renders at
+              the chosen size the moment a pill is tapped — but a sample line
+              makes the effect obvious without scrolling. */}
           <Text style={styles.preview}>{tr('settings.fontSizePreview')}</Text>
         </View>
 
-        {/* ═══ LAUNCH SCREEN ═══ */}
-        <View style={styles.card}>
-          <OrnamentTitle text={tr('settings.launchScreen')} />
-          <View style={styles.pillRow}>
-            {LAUNCH_SCREENS.map((screen) => {
-              const selected = launchScreen === screen;
-              return (
-                <Pressable
-                  key={screen}
-                  style={({ pressed }) => [
-                    styles.pill,
-                    selected && styles.pillActive,
-                    pressed && styles.pressed,
-                  ]}
-                  onPress={() => setLaunchScreen(screen)}
-                  hitSlop={8}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected }}
-                  accessibilityLabel={tr(LAUNCH_SCREEN_LABEL_KEYS[screen])}
-                >
-                  <Text style={[styles.pillText, selected && styles.pillTextActive]}>
-                    {tr(LAUNCH_SCREEN_LABEL_KEYS[screen])}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
-
-        {/* ═══ APPEARANCE ═══ */}
         <View style={styles.card}>
           <OrnamentTitle text={tr('settings.theme')} />
-          <View style={styles.pillRow}>
-            {THEME_MODES.map((mode) => {
-              const selected = themeMode === mode;
-              return (
-                <Pressable
-                  key={mode}
-                  style={({ pressed }) => [
-                    styles.pill,
-                    selected && styles.pillActive,
-                    pressed && styles.pressed,
-                  ]}
-                  onPress={() => setThemeMode(mode)}
-                  hitSlop={8}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected }}
-                  accessibilityLabel={tr(THEME_MODE_LABEL_KEYS[mode])}
-                >
-                  <Text style={[styles.pillText, selected && styles.pillTextActive]}>
-                    {tr(THEME_MODE_LABEL_KEYS[mode])}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
+          <Choice
+            options={THEME_MODES}
+            selected={themeMode}
+            onSelect={setThemeMode}
+            label={(mode) => tr(THEME_MODE_LABEL_KEYS[mode])}
+          />
           <Text style={styles.hint}>{tr('settings.themeHint')}</Text>
-        </View>
-
-        {/* ═══ NOTIFICATIONS ═══ */}
-        <View style={styles.card}>
-          <OrnamentTitle text={tr('settings.notifications')} />
-          <Text style={styles.hint}>{tr('settings.notificationsHint')}</Text>
         </View>
 
         {/* ═══ THEME (owner sideloads only) ═══
@@ -201,45 +193,49 @@ export function SettingsScreen({ navigation }: Props) {
             the two candidate designs. Switching is live and instant because these
             change no navigation option — see direction.ts.
 
-            Note this sits beside "Appearance", which chooses light or dark. The
-            two are orthogonal: Appearance picks the palette, Theme picks the
-            design that palette is applied to. */}
+            It sits under Reading, beside Appearance, because the two are
+            orthogonal: Appearance picks the palette, Theme picks the design that
+            palette is applied to. */}
         {DIAGNOSTICS_ENABLED ? (
           <View style={styles.card}>
             <OrnamentTitle text="Theme" />
-            <View style={styles.pillRow}>
-              {DIRECTIONS.map((d) => {
-                const selected = direction === d;
-                return (
-                  <Pressable
-                    key={d}
-                    style={({ pressed }) => [
-                      styles.pill,
-                      selected && styles.pillActive,
-                      pressed && styles.pressed,
-                    ]}
-                    onPress={() => setDirection(d)}
-                    hitSlop={8}
-                    accessibilityRole="radio"
-                    accessibilityState={{ selected }}
-                    accessibilityLabel={DIRECTION_LABELS[d]}
-                  >
-                    <Text style={[styles.pillText, selected && styles.pillTextActive]}>
-                      {DIRECTION_LABELS[d]}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
+            <Choice
+              options={DIRECTIONS}
+              selected={direction}
+              onSelect={setDirection}
+              label={(d) => DIRECTION_LABELS[d]}
+            />
           </View>
         ) : null}
 
-        {/* ═══ QUIET ENTRIES ═══
-            "Parish staff" is the only door to event editing in a store build. It is
-            a plain word rather than a hidden gesture so staff can find it without
-            being told a trick, and it says nothing that would puzzle a reader who
-            opens it out of curiosity. Diagnostics is owner-only and simply absent
-            from store builds. */}
+        {/* ═══ BEHAVIOUR — what the app does ═══ */}
+        <GroupLabel text={tr('settings.groupBehaviour')} />
+
+        <View style={styles.card}>
+          <OrnamentTitle text={tr('settings.launchScreen')} />
+          <Choice
+            options={LAUNCH_SCREENS}
+            selected={launchScreen}
+            onSelect={setLaunchScreen}
+            label={(screen) => tr(LAUNCH_SCREEN_LABEL_KEYS[screen])}
+          />
+        </View>
+
+        {/* Notifications were a title and a sentence with nothing to press — a
+            card that told the reader to go somewhere else and then made them
+            find it. It takes them there. */}
+        <View style={styles.card}>
+          <OrnamentTitle text={tr('settings.notifications')} />
+          <Text style={styles.hint}>{tr('settings.notificationsHint')}</Text>
+          <Pressable
+            style={({ pressed }) => [styles.action, pressed && styles.pressed]}
+            onPress={() => void Linking.openSettings()}
+            accessibilityRole="button"
+          >
+            <Text style={styles.actionText}>{tr('settings.notificationsOpen')}</Text>
+          </Pressable>
+        </View>
+
         <View style={styles.linkGroup}>
           <Pressable
             style={({ pressed }) => [
@@ -298,6 +294,38 @@ const makeStyles = (th: ResolvedTheme) =>
     },
     pressed: { opacity: 0.7 },
 
+    // A signpost over a cluster, deliberately quieter than the cards' own
+    // ornamented titles so it reads as one level up rather than as competition.
+    groupLabel: {
+      fontFamily: typography.family.heading,
+      fontSize: typography.size.xxs,
+      letterSpacing: 2.2,
+      // textSecondary, not textFaint: this is 11pt letterspaced type, which needs
+      // AA like any other reading text. textFaint measures 3.07:1 on the page and
+      // is for ornament and version strings, not labels a reader must parse.
+      color: th.textSecondary,
+      // Clears the header band's own gradient, which the first label ran into.
+      marginTop: spacing.md,
+      marginBottom: -spacing.sm,
+      paddingHorizontal: spacing.xs,
+    },
+    // A card's own call to action: ruled, not filled, so it never outweighs the
+    // preference pills above it.
+    action: {
+      alignSelf: 'flex-start',
+      marginTop: spacing.xs,
+      paddingVertical: spacing.xs,
+      paddingHorizontal: spacing.md,
+      borderRadius: th.design.controlRadius,
+      borderWidth: 1,
+      borderColor: th.accentLine,
+    },
+    actionText: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.xs,
+      color: th.accentText,
+      letterSpacing: 0.4,
+    },
     card: {
       borderWidth: 1,
       borderColor: th.border,

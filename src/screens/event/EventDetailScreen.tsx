@@ -149,7 +149,7 @@ export function EventDetailScreen({ route }: Props) {
         {/* The leaf continues onto pushed screens too — without this the
             translucent Illuminated surfaces would sit on a plain background
             and blend with nothing. See IlluminatedGround. */}
-        {th.direction === 'illuminated' ? <IlluminatedGround /> : null}
+        {th.direction === 'illuminated' ? <IlluminatedGround crown={false} /> : null}
         <View style={styles.emptyCard}>
           <ActivityIndicator size="small" color={th.accentBright} />
           <Text style={styles.emptyTitle}>{t('common.loading')}</Text>

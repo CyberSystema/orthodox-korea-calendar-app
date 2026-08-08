@@ -150,7 +150,7 @@ export function DiagnosticsScreen() {
           child: these roots are ScrollViews, and a ground inside one would
           scroll away. absoluteFill then resolves against the navigator's own
           screen container, which fills the window. */}
-      {th.direction === 'illuminated' ? <IlluminatedGround /> : null}
+      {th.direction === 'illuminated' ? <IlluminatedGround crown={false} /> : null}
       <ScrollView
         style={styles.container}
         contentContainerStyle={[

@@ -161,7 +161,7 @@ export function StaffScreen() {
           child: this root is a scroll container, and a ground inside one would
           scroll away. absoluteFill then resolves against the navigator's own
           screen container, which fills the window. */}
-      {th.direction === 'illuminated' ? <IlluminatedGround /> : null}
+      {th.direction === 'illuminated' ? <IlluminatedGround crown={false} /> : null}
       <KeyboardSafeView style={styles.flex} keyboardVerticalOffset={insets.top}>
         <ScrollView
           style={styles.container}

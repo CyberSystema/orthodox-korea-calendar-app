@@ -27,7 +27,7 @@ import { useTheme } from '../../theme/useTheme';
  * Pointer-transparent and hidden from screen readers; it must be the FIRST child
  * of a screen's container so everything else sits on it.
  */
-export function IlluminatedGround() {
+export function IlluminatedGround({ crown = true }: { crown?: boolean } = {}) {
   const th = useTheme();
   const { width } = useWindowDimensions();
 
@@ -36,7 +36,16 @@ export function IlluminatedGround() {
       {/* The wash. Deep wine at the very top so the headpiece has nothing to butt
           against, then the page, then a slightly deeper foot. */}
       <LinearGradient
-        colors={[th.primaryDeep, th.background, th.background, th.backgroundDeep]}
+        // The wine CROWN exists so the app's own headpiece band has nothing to
+        // butt against. Screens carrying the PLATFORM's header — Settings, Staff,
+        // Diagnostics, the detail screens — already have wine above them, so a
+        // second one only bleeds down over their first rows of content and takes
+        // the contrast with it. Those pass crown={false}.
+        colors={
+          crown
+            ? [th.primaryDeep, th.background, th.background, th.backgroundDeep]
+            : [th.background, th.background, th.background, th.backgroundDeep]
+        }
         // The wine must finish ABOVE the content, not across it. The headpiece
         // occupies roughly the top 13% of the window; ending the transition at
         // 22% left the action pills sitting on a muted #CABAAC rather than the
