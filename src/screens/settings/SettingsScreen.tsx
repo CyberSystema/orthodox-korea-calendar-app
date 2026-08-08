@@ -10,7 +10,7 @@ import { OrnamentTitle } from '../../components/common/OrnamentTitle';
 import { Text } from '../../components/common/ScaledText';
 import { DIAGNOSTICS_ENABLED, SECRET_MENU_ENABLED } from '../../config/features';
 import { useOwnerSurfaces } from '../../config/ownerSurfaces';
-import { DIRECTIONS, DIRECTION_LABEL_KEYS } from '../../theme/direction';
+import { AVAILABLE_DIRECTIONS, DIRECTION_LABEL_KEYS } from '../../theme/direction';
 import { getAppVersionLabel } from '../../utils/appVersion';
 import { useAppStore } from '../../store/useAppStore';
 import {
@@ -194,17 +194,25 @@ export function SettingsScreen({ navigation }: Props) {
             EVERY reader sees this, not just the owner. Gilded is the default, and
             a default nobody can escape from is not a default — it is an
             imposition. Some readers will want the quieter layout, and older eyes
-            in particular may simply find it easier. */}
-        <View style={styles.card}>
-          <OrnamentTitle text={tr('settings.direction')} />
-          <Choice
-            options={DIRECTIONS}
-            selected={direction}
-            onSelect={setDirection}
-            label={(d) => tr(DIRECTION_LABEL_KEYS[d])}
-          />
-          <Text style={styles.hint}>{tr('settings.directionHint')}</Text>
-        </View>
+            in particular may simply find it easier.
+
+            HIDDEN ON A TABLET, where only one design is offered until the tablet
+            composition is finished (see IS_TABLET in theme/direction). A picker
+            with a single option is not a choice, it is a control that does
+            nothing — and this screen is a parishioner's, so it carries only what
+            a reader can act on. */}
+        {AVAILABLE_DIRECTIONS.length > 1 ? (
+          <View style={styles.card}>
+            <OrnamentTitle text={tr('settings.direction')} />
+            <Choice
+              options={AVAILABLE_DIRECTIONS}
+              selected={direction}
+              onSelect={setDirection}
+              label={(d) => tr(DIRECTION_LABEL_KEYS[d])}
+            />
+            <Text style={styles.hint}>{tr('settings.directionHint')}</Text>
+          </View>
+        ) : null}
 
         {/* ═══ BEHAVIOUR — what the app does ═══ */}
         <GroupLabel text={tr('settings.groupBehaviour')} />

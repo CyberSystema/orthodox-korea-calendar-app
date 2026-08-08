@@ -1,3 +1,5 @@
+import { Dimensions, Platform } from 'react-native';
+
 /**
  * The app's two visual designs — what Settings calls the Theme.
  *
@@ -20,6 +22,46 @@ export type Direction = (typeof DIRECTIONS)[number];
 
 /** Gilded is what the app looks like unless a reader says otherwise. */
 export const DEFAULT_DIRECTION: Direction = 'gilded';
+
+/**
+ * TABLETS ARE HELD ON ELEGANT — TEMPORARY, AND MEANT TO BE DELETED.
+ *
+ * Gilded was drawn for a 393pt phone and it is genuinely good there. On a 1032pt
+ * page it is not finished: the wine crown fades over a fraction of the WINDOW, so
+ * it overshoots a tablet's shorter band by ~115pt and lays a mauve smear across
+ * the leaf; the branded band is 6.6% of a tablet window against 13.9% of a
+ * phone's, so the headpiece reads as a strip; and the day navigator's hairlines
+ * are flex:1 inside an uncapped row, which flings its two arrows ~900pt apart.
+ * (All three measured on an iPad Pro 13" against an iPhone 17, same build.)
+ *
+ * Elegant has none of those problems, because it never assumed a phone-sized
+ * page: it is rows and cards that simply get wider. So until the tablet
+ * composition is finished, a tablet gets Elegant and the Theme picker is not
+ * offered there — one wrong-looking design is worse than one design.
+ *
+ * WHEN THE REDESIGN LANDS: delete this constant and the two places that read it
+ * (useTheme's `direction` resolution and the Settings Theme card). Nothing else
+ * knows about it, which is the point of putting it here.
+ *
+ * A reader's SAVED CHOICE IS NOT TOUCHED. This overrides what is shown, not what
+ * is stored, so someone who picked Gilded on their phone still has Gilded on
+ * their phone, and gets it back on the tablet the day this is removed.
+ *
+ * WHAT COUNTS AS A TABLET: iPadOS answers directly. Android has no such flag, so
+ * this uses the conventional 600dp shortest-side threshold — read from `screen`
+ * rather than `window`, since a window can be a fraction of the display, and the
+ * app is portrait-only on every device so the shortest side is the width.
+ */
+const { width: screenW, height: screenH } = Dimensions.get('screen');
+export const IS_TABLET = Platform.OS === 'ios' ? Platform.isPad : Math.min(screenW, screenH) >= 600;
+
+/** The designs a reader may actually choose on this device. */
+export const AVAILABLE_DIRECTIONS: readonly Direction[] = IS_TABLET ? ['elegant'] : DIRECTIONS;
+
+/** What `direction` resolves to for rendering, whatever is stored. */
+export function displayDirection(stored: Direction): Direction {
+  return IS_TABLET ? 'elegant' : stored;
+}
 
 /** i18n keys, beside the values so they cannot drift. */
 export const DIRECTION_LABEL_KEYS: Record<Direction, string> = {

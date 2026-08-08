@@ -5,6 +5,7 @@ import { useAppStore } from '../store/useAppStore';
 import {
   DIRECTION_DESIGN,
   directionPalette,
+  displayDirection,
   type Direction,
   type DirectionDesign,
 } from './direction';
@@ -55,7 +56,9 @@ export type ResolvedTheme = Theme & {
  */
 export function useTheme(): ResolvedTheme {
   const mode = useAppStore((state) => state.themeMode);
-  const direction = useAppStore((state) => state.direction);
+  // A tablet is held on Elegant until the tablet composition is finished — see
+  // displayDirection. This changes what is DRAWN, never what is stored.
+  const direction = displayDirection(useAppStore((state) => state.direction));
   const system = useColorScheme();
 
   return useMemo(() => {
