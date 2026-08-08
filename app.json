@@ -2,7 +2,7 @@
   "expo": {
     "name": "OK Calendar",
     "slug": "orthodox-korea-calendar-app",
-    "version": "1.2",
+    "version": "1.3",
     "scheme": "okncalendar",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
