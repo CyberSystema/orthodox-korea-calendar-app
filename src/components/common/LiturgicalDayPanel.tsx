@@ -44,7 +44,34 @@ type Props = {
   onEventPress: (event: LiturgicalEvent) => void;
 };
 
-export function LiturgicalDayPanel({
+/**
+ * Picks the composition for the active direction.
+ *
+ * A DISPATCHER WITH NO STATE OF ITS OWN, and it has to stay that way. This began
+ * as one component that returned <IlluminatedDay/> early and then called seven
+ * more hooks below the return — which is fine while the direction never changes
+ * and fatal the moment it does: React saw a different number of hooks between
+ * renders and threw "Rendered more hooks than during the previous render",
+ * crashing the app on the theme switch. React only tolerates a changing hook
+ * count across a component BOUNDARY, where it can unmount one tree and mount the
+ * other.
+ *
+ * So the branch lives here, above every hook, and each composition owns its own.
+ * If a third direction ever appears, add it here — never as an early return
+ * inside a component that has hooks after it.
+ */
+export function LiturgicalDayPanel(props: Props) {
+  const th = useTheme();
+  // The Illuminated direction is a DIFFERENT COMPOSITION, not this layout
+  // restyled — hero numeral, ruled sections, no card.
+  return th.direction === 'illuminated' ? (
+    <IlluminatedDay {...props} />
+  ) : (
+    <RefinedDayPanel {...props} />
+  );
+}
+
+function RefinedDayPanel({
   language,
   dateISO,
   liturgicalDay,
@@ -54,22 +81,6 @@ export function LiturgicalDayPanel({
 }: Props) {
   const th = useTheme();
   const styles = useThemedStyles(makeStyles);
-
-  // The Illuminated direction is a DIFFERENT COMPOSITION, not this layout
-  // restyled — hero numeral, ruled sections, no card. Branch wholesale rather
-  // than smuggling two designs through one tree of conditionals.
-  if (th.direction === 'illuminated') {
-    return (
-      <IlluminatedDay
-        language={language}
-        dateISO={dateISO}
-        liturgicalDay={liturgicalDay}
-        events={events}
-        labels={labels}
-        onEventPress={onEventPress}
-      />
-    );
-  }
   const { isSunday, isSaturday, dayNum, dayName, monthYear } = useMemo(() => {
     const d = new Date(`${dateISO}T00:00:00`);
     const locale = language === 'ko' ? 'ko' : 'en';
