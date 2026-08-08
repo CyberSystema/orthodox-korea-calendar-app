@@ -49,10 +49,21 @@ export type DirectionDesign = {
   /**
    * Body copy. `undefined` keeps the system sans, which stays the most legible
    * choice at small sizes for older readers — Refined does that deliberately.
-   * Illuminated sets the serif here too, which is what makes it read as a page
-   * of a book rather than a screen.
+   *
+   * Illuminated sets a serif here so the page reads as a book rather than a
+   * screen, but NOT the same serif it uses for display. EB Garamond is an
+   * old-style face with high stroke contrast, fine hairlines and a small
+   * x-height: superb at 24pt and up, and exactly the wrong thing at 12–17pt for
+   * readers with reduced contrast sensitivity, which is most of this app's
+   * audience. Spectral was drawn for screen text — larger x-height, sturdier
+   * stems, lower contrast — and sits beside Garamond without argument.
+   *
+   * So the direction keeps Garamond where it is admired (the numeral, the
+   * versal, the day's name) and sets Spectral where it is read.
    */
   fontBody?: string;
+  /** The body face at its heavier weight, for an event title or a lead-in. */
+  fontBodyStrong?: string;
   /** Korean text of any role. */
   fontKorean: string;
   /** Card corner radius — manuscript pages are squarer than app cards. */
@@ -85,6 +96,7 @@ export const DIRECTION_DESIGN: Record<Direction, DirectionDesign> = {
     fontHeadingStrong: 'Spectral-SemiBold',
     fontKorean: 'NanumMyeongjo',
     fontBody: undefined,
+    fontBodyStrong: undefined,
     cardRadius: 14,
     controlRadius: 999,
     cardBorderWidth: 1,
@@ -97,7 +109,8 @@ export const DIRECTION_DESIGN: Record<Direction, DirectionDesign> = {
     fontHeading: 'EBGaramond',
     fontHeadingStrong: 'EBGaramond-SemiBold',
     fontKorean: 'NanumMyeongjo',
-    fontBody: 'EBGaramond',
+    fontBody: 'Spectral',
+    fontBodyStrong: 'Spectral-SemiBold',
     cardRadius: 4,
     controlRadius: 6,
     cardBorderWidth: 2,
@@ -140,10 +153,19 @@ export function directionPalette(
     surface: `rgba(${veil}, 0.62)`,
     card: `rgba(${veil}, 0.72)`,
     cardRaised: `rgba(${veil}, 0.82)`,
-    // Rules on the leaf are gold, never grey — this is what ties a card's edge
-    // to the headpiece, the grid and the ornament without touching a screen.
-    border: base.accentLine,
-    borderLight: base.accentLine,
-    rule: base.accentLine,
+    // THREE RANKS OF RULE, not one.
+    //
+    // Pointing all three of these at `accentLine` re-tinted every hairline in
+    // the app — 43 sites read `border` alone — so a modal divider, a card edge
+    // and a section rule were drawn identically and the eye was given no way to
+    // tell structure from ornament. Everything gold is the same as nothing gold.
+    //
+    //   ornament  drawn explicitly in accent/accentBright by the piece that
+    //             means it (the headpiece, the ornamental rules, the grid)
+    //   edge      a card or control's own outline: warm, clearly subordinate
+    //   structure a divider that is merely there: neutral, and it stays neutral
+    border: dark ? 'rgba(212,175,82,0.16)' : 'rgba(184,148,46,0.22)',
+    borderLight: base.borderLight,
+    rule: base.rule,
   };
 }

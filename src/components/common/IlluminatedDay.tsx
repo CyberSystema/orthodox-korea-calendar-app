@@ -499,7 +499,7 @@ const makeStyles = (th: ResolvedTheme) =>
     },
     mark: { alignItems: 'center', gap: 4, maxWidth: 110 },
     markLabel: {
-      fontFamily: th.design.fontHeading,
+      fontFamily: th.design.fontBody,
       fontSize: 12,
       letterSpacing: 0.8,
       color: th.textSecondary,
@@ -529,6 +529,8 @@ const makeStyles = (th: ResolvedTheme) =>
       paddingTop: 3,
     },
 
+    // Running text is set in the BODY face, display type in the heading face —
+    // see DirectionDesign.fontBody for why they are not the same serif.
     // ── Bands ───────────────────────────────────────────────────────────────
     band: { gap: spacing.sm, alignItems: 'center' },
     bandLabel: {
@@ -541,7 +543,7 @@ const makeStyles = (th: ResolvedTheme) =>
     },
     bandBody: { gap: spacing.sm, alignSelf: 'stretch' },
     reading: {
-      fontFamily: th.design.fontHeading,
+      fontFamily: th.design.fontBody,
       fontSize: 21,
       lineHeight: 30,
       color: th.textBody,
@@ -554,28 +556,28 @@ const makeStyles = (th: ResolvedTheme) =>
     // lines with no grouping.
     commemorationBlock: { gap: 2, alignItems: 'center' },
     meta: {
-      fontFamily: th.design.fontHeading,
+      fontFamily: th.design.fontBody,
       fontSize: 14,
       lineHeight: 21,
       color: th.textSecondary,
       textAlign: 'center',
     },
     commemoration: {
-      fontFamily: th.design.fontHeading,
+      fontFamily: th.design.fontBody,
       fontSize: 17,
       lineHeight: 26,
       color: th.textBody,
       textAlign: 'center',
     },
     muted: {
-      fontFamily: th.design.fontHeading,
+      fontFamily: th.design.fontBody,
       fontSize: 15,
       color: th.textFaint,
       textAlign: 'center',
     },
     event: { paddingVertical: spacing.xs },
     eventTitle: {
-      fontFamily: th.design.fontHeadingStrong,
+      fontFamily: th.design.fontBodyStrong,
       fontSize: 17,
       color: th.primary,
       textAlign: 'center',
