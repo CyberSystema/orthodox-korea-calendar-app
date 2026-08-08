@@ -32,8 +32,11 @@ type Props = {
     readings: string;
     saints: string;
     events: string;
-    tone: string;
     noReadings: string;
+    /** "Tone" and "Matins Gospel" — real per-commemoration data, not decoration. */
+    tone: string;
+    matins: string;
+    itemReadings: string;
     // The six liturgical marks. Required — see the marks band below.
     fast: string;
     cheese: string;
@@ -120,15 +123,21 @@ export function IlluminatedDay({
 
   // One focal point: a high-rank entry, else the first celebration, else the
   // first saint. It is then removed from the list so it is never said twice.
-  const headline = useMemo(() => {
-    const ranked = celebrations.find((c) => c.highRank) ?? celebrations[0] ?? saints[0];
-    return ranked ? localized(ranked.title, language) : null;
-  }, [celebrations, saints, language]);
+  // The ENTRY, not just its title: each commemoration carries its own readings,
+  // tone and matins gospel, and an earlier pass rendered only the title — so a
+  // day that had plenty to say looked empty. Keep the object.
+  const headlineEntry = useMemo(
+    () => celebrations.find((c) => c.highRank) ?? celebrations[0] ?? saints[0] ?? null,
+    [celebrations, saints],
+  );
+  const headline = headlineEntry ? localized(headlineEntry.title, language) : null;
 
+  // Filtered by identity rather than by title, so two entries that happen to
+  // share a title are not both removed.
   const rest = useMemo(() => {
     const all = [...celebrations, ...saints];
-    return headline ? all.filter((c) => localized(c.title, language) !== headline) : all;
-  }, [celebrations, saints, headline, language]);
+    return headlineEntry ? all.filter((c) => c !== headlineEntry) : all;
+  }, [celebrations, saints, headlineEntry]);
 
   const isFeast = celebrations.some((c) => c.highRank);
   const isFast = Boolean(liturgicalDay?.fast);
@@ -166,7 +175,10 @@ export function IlluminatedDay({
     void Haptics.selectionAsync().catch(() => {});
   }, [dateISO]);
 
-  const halo = Math.min(width * 0.72, 300);
+  // The halo was 0.72 of the screen with full-length rays, which on a feast took
+  // over the page — the same "noisy" failure the grain had. It is ornament behind
+  // the figure, not the subject: smaller, and it stops well short of the margins.
+  const halo = Math.min(width * 0.56, 232);
   const capital = headline?.trim()?.[0] ?? '';
   const headlineRest = headline ? headline.trim().slice(1) : '';
 
@@ -198,8 +210,15 @@ export function IlluminatedDay({
           {/* On a feast the numeral is GILDED: a Skia specular band travels across
               the glyph, which is what makes gold read as metal rather than as
               yellow paint. Ordinary days keep plain type — the gilding has to
-              mean something. */}
-          {isFeast ? (
+              mean something.
+
+              DARK GROUND ONLY. Gold leaf is light-on-dark by nature; on the
+              parchment palette the gilded numeral came out gold on cream and was
+              barely legible — the display figure of the whole page, lost. The
+              light palette gets the plain numeral in the feast colour, which is
+              what a real manuscript does on a pale leaf anyway: it writes the
+              figure in red, not gold. */}
+          {isFeast && th.isDark ? (
             <View accessible accessibilityLabel={String(dayNum)}>
               <GoldLeafNumeral
                 value={String(dayNum)}
@@ -262,6 +281,11 @@ export function IlluminatedDay({
             <Text style={[styles.versal, { color: heroColor }]}>{capital}</Text>
             {headlineRest}
           </Text>
+          {headlineEntry ? (
+            <View style={styles.headlineMeta}>
+              <Meta entry={headlineEntry} labels={labels} style={styles.meta} />
+            </View>
+          ) : null}
         </Animated.View>
       ) : null}
 
@@ -282,9 +306,12 @@ export function IlluminatedDay({
       {rest.length ? (
         <Band title={labels.saints} delay={STEP * 5} width={width}>
           {rest.map((c, i) => (
-            <SelectableText key={`${c.id}-${i}`} style={styles.commemoration}>
-              {localized(c.title, language)}
-            </SelectableText>
+            <View key={`${c.id}-${i}`} style={styles.commemorationBlock}>
+              <SelectableText style={styles.commemoration}>
+                {localized(c.title, language)}
+              </SelectableText>
+              <Meta entry={c} labels={labels} style={styles.meta} />
+            </View>
           ))}
         </Band>
       ) : null}
@@ -304,7 +331,56 @@ export function IlluminatedDay({
           ))}
         </Band>
       ) : null}
+
+      {/* ═══ COLOPHON ═══
+          A leaf ends; it does not simply stop. On a sparse day — one name, two
+          readings — the page used to run out a third of the way down and leave
+          void beneath, which read as unfinished rather than as quiet. A closing
+          ornament is how a manuscript actually resolves a page, and it costs no
+          invented content: it says nothing, which is exactly why it can sit under
+          a day that has little to say. */}
+      <Animated.View
+        style={styles.colophon}
+        entering={FadeIn.delay(STEP * 7).duration(DUR * 1.4)}
+        pointerEvents="none"
+        accessible={false}
+      >
+        <OrnamentalRule width={width * 0.5} color={th.accentDim} />
+      </Animated.View>
     </View>
+  );
+}
+
+/**
+ * The lines a commemoration carries besides its name: its own appointed
+ * readings, its tone, its matins gospel.
+ *
+ * These exist in the data for most entries and were simply not being rendered,
+ * which is a large part of why a day looked empty — the page was showing a title
+ * and discarding three fields under it.
+ */
+function Meta({
+  entry,
+  labels,
+  style,
+}: {
+  entry: { readings?: string[]; tone?: string; matinsGospel?: string };
+  labels: { tone: string; matins: string; itemReadings: string };
+  style: object;
+}) {
+  const lines: string[] = [];
+  if (entry.readings?.length) lines.push(`${labels.itemReadings}: ${entry.readings.join(', ')}`);
+  if (entry.tone) lines.push(`${labels.tone} ${entry.tone}`);
+  if (entry.matinsGospel) lines.push(`${labels.matins} ${entry.matinsGospel}`);
+  if (!lines.length) return null;
+  return (
+    <>
+      {lines.map((line) => (
+        <SelectableText key={line} style={style}>
+          {line}
+        </SelectableText>
+      ))}
+    </>
   );
 }
 
@@ -420,6 +496,19 @@ const makeStyles = (th: ResolvedTheme) =>
       fontSize: 21,
       lineHeight: 30,
       color: th.textBody,
+      textAlign: 'center',
+    },
+    colophon: { alignItems: 'center', paddingTop: spacing.md, opacity: 0.55 },
+    headlineMeta: { paddingTop: spacing.sm, gap: 2 },
+    // A commemoration and its meta are one unit, so the gap between entries is
+    // larger than the gap inside one — otherwise the list reads as a flat run of
+    // lines with no grouping.
+    commemorationBlock: { gap: 2, alignItems: 'center' },
+    meta: {
+      fontFamily: th.design.fontHeading,
+      fontSize: 14,
+      lineHeight: 21,
+      color: th.textSecondary,
       textAlign: 'center',
     },
     commemoration: {

@@ -58,7 +58,9 @@ export function Mandorla({
       <Circle cx={c} cy={c} r={c} fill="url(#halo)" />
 
       {/* Rays. Alternating long/short is what stops it reading as a bicycle wheel. */}
-      <G opacity={intense ? 0.85 : 0.4}>
+      {/* 0.55, not 0.85: at feast intensity with 24 rays the mandorla read as a
+          starburst competing with the numeral rather than haloing it. */}
+      <G opacity={intense ? 0.55 : 0.32}>
         {Array.from({ length: rays }).map((_, i) => {
           const angle = (i / rays) * Math.PI * 2;
           const long = i % 2 === 0;
