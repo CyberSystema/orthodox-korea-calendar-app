@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from 'react';
+import Svg, { Path } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { Pressable, useWindowDimensions, View } from 'react-native';
 import Animated, {
@@ -338,7 +339,7 @@ export function IlluminatedDay({
       ) : null}
 
       {/* ═══ READINGS ═══ */}
-      <Band title={labels.readings} delay={STEP * 4} width={width}>
+      <Band title={labels.readings} delay={STEP * 4}>
         {readings.length ? (
           readings.map((r) => (
             <SelectableText key={r} style={styles.reading}>
@@ -352,7 +353,7 @@ export function IlluminatedDay({
 
       {/* ═══ COMMEMORATIONS ═══ */}
       {rest.length ? (
-        <Band title={labels.saints} delay={STEP * 5} width={width}>
+        <Band title={labels.saints} delay={STEP * 5}>
           {rest.map((c, i) => (
             <View key={`${c.id}-${i}`} style={styles.commemorationBlock}>
               <SelectableText style={styles.commemoration}>
@@ -366,7 +367,7 @@ export function IlluminatedDay({
 
       {/* ═══ PARISH EVENTS ═══ */}
       {events.length ? (
-        <Band title={labels.events} delay={STEP * 6} width={width}>
+        <Band title={labels.events} delay={STEP * 6}>
           {events.map((e) => (
             <Pressable
               key={e.id}
@@ -432,28 +433,56 @@ function Meta({
   );
 }
 
-/** A ruled band: ornamental divider, letterspaced label, then its content. */
+/**
+ * A section of the leaf: a RUBRIC and its content.
+ *
+ * It used to draw an OrnamentalRule of its own, and with three or four sections
+ * plus the headpiece and the colophon a single page carried five identical
+ * lozenge-and-pips motifs at a near-regular interval. Ornament earns its charge
+ * from scarcity; repeated on a fixed pitch it stops being ornament and becomes a
+ * border print — and a divider was being asked to do a heading's job, so it
+ * carried no meaning either.
+ *
+ * A manuscript does not divide every section. The page is opened by a headpiece,
+ * its parts are marked by RUBRICS — a heading set apart by colour, letterspacing
+ * and space — and it is closed by a tailpiece. That is now exactly the structure:
+ * the header band above, rubrics here, the colophon at the foot, and no repeated
+ * motif in between. The space the rule used to occupy does its separating work
+ * instead, which is what space is for.
+ *
+ * The lozenge survives as a single small mark beside the rubric, so the sections
+ * still belong to the same hand as the headpiece without restating it.
+ */
 function Band({
   title,
   delay,
-  width,
   children,
 }: {
   title: string;
   delay: number;
-  width: number;
   children: React.ReactNode;
 }) {
   const th = useTheme();
   const styles = useThemedStyles(makeStyles);
   return (
     <Animated.View style={styles.band} entering={FadeInDown.delay(delay).duration(DUR)}>
-      <View pointerEvents="none" accessible={false}>
-        <OrnamentalRule width={width - spacing.lg * 2} color={th.accent} />
+      <View style={styles.rubric}>
+        <RubricMark color={th.accent} />
+        <Text style={styles.bandLabel}>{title.toUpperCase()}</Text>
+        <RubricMark color={th.accent} />
       </View>
-      <Text style={styles.bandLabel}>{title.toUpperCase()}</Text>
       <View style={styles.bandBody}>{children}</View>
     </Animated.View>
+  );
+}
+
+/** The headpiece's centre lozenge, reduced to a single pip — the same hand at a
+ *  quieter volume, and the only ornament a section gets. */
+function RubricMark({ color }: { color: string }) {
+  return (
+    <Svg width={7} height={7} viewBox="0 0 8 8">
+      <Path d="M4 0 L8 4 L4 8 L0 4 Z" fill={color} opacity={0.85} />
+    </Svg>
   );
 }
 
@@ -546,7 +575,10 @@ const makeStyles = (th: ResolvedTheme) =>
     // Running text is set in the BODY face, display type in the heading face —
     // see DirectionDesign.fontBody for why they are not the same serif.
     // ── Bands ───────────────────────────────────────────────────────────────
-    band: { gap: spacing.sm, alignItems: 'center' },
+    // Generous, because the space IS the separator now. Ornament was doing this
+    // job badly; whitespace does it silently.
+    band: { gap: spacing.md, alignItems: 'center', paddingTop: spacing.lg },
+    rubric: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
     bandLabel: {
       fontFamily: th.design.fontHeading,
       fontSize: 11,
