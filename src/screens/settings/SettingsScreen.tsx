@@ -195,13 +195,18 @@ export function SettingsScreen({ navigation }: Props) {
           <Text style={styles.hint}>{tr('settings.notificationsHint')}</Text>
         </View>
 
-        {/* ═══ DIRECTION TRIAL (owner sideloads only) ═══
-            TEMPORARY. Delete this card, theme/direction.ts and the losing
-            direction once one is chosen. Switching is live and instant because
-            these directions change no navigation option — see direction.ts. */}
+        {/* ═══ THEME (owner sideloads only) ═══
+            Shown to the owner as "Theme" because that is what it is to a reader;
+            the code still calls it a direction, which is the trial's own word for
+            the two candidate designs. Switching is live and instant because these
+            change no navigation option — see direction.ts.
+
+            Note this sits beside "Appearance", which chooses light or dark. The
+            two are orthogonal: Appearance picks the palette, Theme picks the
+            design that palette is applied to. */}
         {DIAGNOSTICS_ENABLED ? (
           <View style={styles.card}>
-            <OrnamentTitle text="Direction (trial)" />
+            <OrnamentTitle text="Theme" />
             <View style={styles.pillRow}>
               {DIRECTIONS.map((d) => {
                 const selected = direction === d;
