@@ -1,23 +1,35 @@
 #!/usr/bin/env node
 /**
- * Render the collected candidates as a contact sheet for review.
+ * Build the review tool for proposed icons.
  *
- * NOTHING IS PUBLISHED WITHOUT PASSING THROUGH HERE. `collect-icons.mjs` guesses;
+ * NOTHING REACHES THE APP WITHOUT PASSING THROUGH HERE. The collectors guess;
  * this is where a person decides. Automated matching produces confident wrong
- * answers — "Theophilos the Martyr" resolved to a modern Archbishop of Athens,
- * "Gordius of Cappadocia" to an assassin — and a stranger presented to a
- * parishioner as their saint is a worse failure than an empty day.
+ * answers — "Gordius of Cappadocia" resolved to an assassin, "Gregory Bishop of
+ * Nyssa" to Pope Gregory I, "Diomedes, Apostolos the Martyrs" to a different
+ * saint who merely shares a name — and a stranger presented to a parishioner as
+ * their saint is a worse failure than an empty day.
  *
- * So each row shows the WHY as well as the picture: the Wikidata description the
- * match was made on is printed beside the title, because reading "Archbishop of
- * Athens" under a martyr is how you catch it in a second without knowing the
- * saint. Clicking a thumbnail approves that image for that commemoration;
- * clicking it again withdraws it. One image per commemoration.
+ * It is built for reviewing HUNDREDS of rows, which is a different problem from
+ * looking at a dozen:
  *
- * The sheet writes approvals into your clipboard as JSON, to be saved as
- * icons/approved.json — the only file the publish step will read.
+ *   - Keyboard first. j/k move, 1-9 approve that candidate, 0 rejects the row
+ *     outright, u undoes. A mouse works too, but nobody clicks through 590 rows.
+ *   - Progress survives. Every decision is written to localStorage immediately,
+ *     so review can be done in several sittings and a closed tab costs nothing.
+ *   - Licence is a first-class column, not a footnote, and the tier decides
+ *     whether a candidate is offered at all. `--allow` widens that gate
+ *     deliberately rather than by accident.
+ *   - The evidence for each match is on screen: the Wikidata description, or the
+ *     Greek name, whichever the match was made on. Reading "Archbishop of Athens"
+ *     under a martyr is how a bad match is caught in a second by someone who does
+ *     not know the saint.
  *
- *   node scripts/icon-contact-sheet.mjs && open icons/contact-sheet.html
+ * Reads every icons/candidates*.json the collectors have written and merges them,
+ * so a new source can be added without touching this file.
+ *
+ *   node scripts/icon-contact-sheet.mjs                 public domain and CC0 only
+ *   node scripts/icon-contact-sheet.mjs --allow ccby    also offer CC BY
+ *   node scripts/icon-contact-sheet.mjs --allow any     offer everything, flagged
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -25,172 +37,274 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DIR = path.join(ROOT, 'icons');
-const CANDIDATES = path.join(DIR, 'candidates.json');
 const OUT = path.join(DIR, 'contact-sheet.html');
 
-if (!fs.existsSync(CANDIDATES)) {
-  console.error('No candidates yet. Run: node scripts/collect-icons.mjs --limit 40');
+const args = process.argv.slice(2);
+const allowArg = args.indexOf('--allow');
+const ALLOW = allowArg >= 0 ? args[allowArg + 1] : 'pd';
+
+/**
+ * Licence tiers, in the order we would rather have them.
+ *
+ *   free   public domain, PD-old, PD-art, CC0, "no known copyright restrictions"
+ *   ccby   attribution required but no share-alike — publishable if credited
+ *   other  ShareAlike, NonCommercial, NoDerivs: not shippable in this app
+ *   none   no stated provenance at all, which is NOT the same as free
+ */
+function tierOf(c) {
+  const s = `${c.license ?? ''} ${c.usageTerms ?? ''}`.toLowerCase();
+  if (/public domain|cc0|pd-|no known copyright/.test(s)) return 'free';
+  if (/cc by|attribution/.test(s) && !/share|-sa\b|noncommercial|\bnc\b|noderiv/.test(s))
+    return 'ccby';
+  if (!s.trim() || /no stated provenance|unknown/.test(s)) return 'none';
+  return 'other';
+}
+const TIER_RANK = { free: 0, ccby: 1, none: 2, other: 3 };
+const allowed = new Set(
+  ALLOW === 'any'
+    ? ['free', 'ccby', 'none', 'other']
+    : ALLOW === 'ccby'
+      ? ['free', 'ccby']
+      : ['free'],
+);
+
+if (!fs.existsSync(DIR)) {
+  console.error('No icons/ directory. Run a collector first.');
+  process.exit(1);
+}
+const stores = fs.readdirSync(DIR).filter((f) => /^candidates.*\.json$/.test(f));
+if (!stores.length) {
+  console.error('No candidates. Run: node scripts/collect-icons.mjs --limit 40');
   process.exit(1);
 }
 
-const store = JSON.parse(fs.readFileSync(CANDIDATES, 'utf8'));
-
-// saint.gr proposals are merged in as additional candidates on the same row, so
-// a reviewer compares both sources side by side rather than in two passes.
-const SAINTGR = path.join(DIR, 'candidates-saintgr.json');
-if (fs.existsSync(SAINTGR)) {
-  for (const [id, m] of Object.entries(JSON.parse(fs.readFileSync(SAINTGR, 'utf8')))) {
-    const row = (store[id] ??= { ...m, candidates: [] });
-    row.candidates = [
-      {
+/** Merge every collector's output onto one row per commemoration. */
+const rows = new Map();
+for (const file of stores) {
+  const data = JSON.parse(fs.readFileSync(path.join(DIR, file), 'utf8'));
+  for (const [id, rec] of Object.entries(data)) {
+    const row = rows.get(id) ?? {
+      id,
+      title: rec.title,
+      date: rec.date,
+      highRank: !!rec.highRank,
+      evidence: [],
+      candidates: [],
+    };
+    if (rec.entity) {
+      row.evidence.push(`${rec.entity.label} — ${rec.entity.description} (${rec.entity.qid})`);
+    }
+    // saint.gr records nest under `card`; Commons ones are already flat.
+    if (rec.card) {
+      row.evidence.push(`saint.gr: ${rec.card.greekName}`);
+      row.candidates.push({
         source: 'saint.gr',
-        commonsTitle: m.card.greekName,
-        pageUrl: m.card.pageUrl,
-        fileUrl: m.card.fullUrl,
-        thumbUrl: m.card.thumbUrl,
-        license: m.card.modernSubject ? 'MODERN SUBJECT — rights live' : 'no stated provenance',
-        modernSubject: !!m.card.modernSubject,
-        greekName: m.card.greekName,
-        matchScore: m.score,
-      },
-      ...(row.candidates ?? []),
-    ];
+        label: rec.card.greekName,
+        pageUrl: rec.card.pageUrl,
+        fileUrl: rec.card.fullUrl,
+        thumbUrl: rec.card.thumbUrl,
+        license: rec.card.modernSubject ? 'modern subject — rights live' : '',
+        modernSubject: !!rec.card.modernSubject,
+      });
+    }
+    for (const c of rec.candidates ?? []) {
+      row.candidates.push({
+        source: c.source ?? 'commons',
+        label: c.commonsTitle ?? c.label ?? '',
+        pageUrl: c.pageUrl,
+        fileUrl: c.fileUrl,
+        thumbUrl: c.thumbUrl,
+        license: c.license || c.usageTerms || '',
+        author: c.author ?? '',
+        modernSubject: !!c.modernSubject,
+      });
+    }
+    rows.set(id, row);
   }
 }
-const existing = fs.existsSync(path.join(DIR, 'approved.json'))
-  ? JSON.parse(fs.readFileSync(path.join(DIR, 'approved.json'), 'utf8'))
-  : {};
 
-const rows = Object.values(store)
-  .filter((s) => s.candidates?.length)
-  .sort((a, b) => a.date.localeCompare(b.date));
-const empty = Object.values(store).filter((s) => !s.candidates?.length);
+for (const row of rows.values()) {
+  const byUrl = new Map();
+  for (const c of row.candidates) {
+    c.tier = tierOf(c);
+    if (c.thumbUrl && !byUrl.has(c.thumbUrl)) byUrl.set(c.thumbUrl, c);
+  }
+  row.candidates = [...byUrl.values()]
+    .filter((c) => allowed.has(c.tier))
+    .sort((a, b) => TIER_RANK[a.tier] - TIER_RANK[b.tier]);
+}
 
-const esc = (s) =>
-  String(s ?? '').replace(
-    /[&<>"]/g,
-    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c],
-  );
+const all = [...rows.values()].sort((a, b) => (a.date ?? '').localeCompare(b.date ?? ''));
+const withCandidates = all.filter((r) => r.candidates.length);
+const without = all.length - withCandidates.length;
+
+const payload = withCandidates.map((r) => ({
+  id: r.id,
+  title: r.title,
+  date: r.date,
+  highRank: r.highRank,
+  evidence: [...new Set(r.evidence)],
+  candidates: r.candidates,
+}));
 
 const html = `<!doctype html>
 <meta charset="utf-8">
-<title>Icon contact sheet — ${rows.length} commemorations</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Icon review — ${withCandidates.length} commemorations</title>
 <style>
-  :root { color-scheme: light dark; }
-  body { font: 15px/1.5 -apple-system, system-ui, sans-serif; margin: 0; padding: 24px 28px 120px; }
-  h1 { font-size: 20px; margin: 0 0 4px; }
-  .lede { opacity: .7; margin: 0 0 24px; max-width: 60ch; }
-  .row { padding: 16px 0; border-top: 1px solid color-mix(in srgb, currentColor 15%, transparent); }
-  .head { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
-  .date { opacity: .5; font-variant-numeric: tabular-nums; font-size: 13px; }
-  .title { font-weight: 600; }
-  .rank { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #b8860b; }
-  .why { opacity: .65; font-size: 13px; margin: 2px 0 10px; }
-  .why a { color: inherit; }
-  .strip { display: flex; gap: 10px; flex-wrap: wrap; }
-  figure { margin: 0; width: 150px; cursor: pointer; }
-  figure img { width: 150px; height: 150px; object-fit: contain;
-    background: color-mix(in srgb, currentColor 6%, transparent);
-    border: 3px solid transparent; border-radius: 4px; display: block; }
-  figure.on img { border-color: #2e7d32; }
-  figcaption { font-size: 11px; opacity: .6; margin-top: 4px;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  figure.on figcaption { opacity: 1; color: #2e7d32; font-weight: 600; }
-  .bar { position: fixed; left: 0; right: 0; bottom: 0; padding: 12px 28px;
-    background: Canvas; border-top: 1px solid color-mix(in srgb, currentColor 20%, transparent);
-    display: flex; gap: 16px; align-items: center; }
-  button { font: inherit; padding: 8px 16px; border-radius: 6px; cursor: pointer; }
-  .src { color: #1565c0; font-weight: 600; }
-  .warn { font-size: 10px; color: #c62828; font-weight: 700; margin-top: 2px;
-    text-transform: uppercase; letter-spacing: .04em; }
-  .none { opacity: .55; font-size: 13px; margin-top: 32px; }
+  :root{color-scheme:light dark;--free:#2e7d32;--ccby:#1565c0;--warn:#c62828;--dim:#8a8a8a}
+  *{box-sizing:border-box}
+  body{font:15px/1.5 -apple-system,system-ui,sans-serif;margin:0;padding:0 0 90px}
+  header{position:sticky;top:0;z-index:5;background:Canvas;padding:14px 24px 10px;
+    border-bottom:1px solid color-mix(in srgb,currentColor 18%,transparent)}
+  h1{font-size:17px;margin:0 0 6px}
+  .meta{font-size:13px;color:var(--dim);display:flex;gap:18px;flex-wrap:wrap;align-items:center}
+  .keys code{background:color-mix(in srgb,currentColor 10%,transparent);padding:1px 5px;border-radius:3px}
+  input[type=search]{font:inherit;padding:5px 10px;border-radius:6px;
+    border:1px solid color-mix(in srgb,currentColor 25%,transparent);background:transparent;color:inherit}
+  .row{padding:14px 24px;border-bottom:1px solid color-mix(in srgb,currentColor 10%,transparent);scroll-margin-top:96px}
+  .row.cur{background:color-mix(in srgb,currentColor 6%,transparent)}
+  .row.done{opacity:.5}
+  .row.skip{opacity:.35}
+  .head{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+  .date{color:var(--dim);font-variant-numeric:tabular-nums;font-size:12px;min-width:82px}
+  .title{font-weight:600}
+  .rank{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#b8860b}
+  .ev{font-size:12.5px;color:var(--dim);margin:3px 0 9px}
+  .strip{display:flex;gap:12px;flex-wrap:wrap}
+  figure{margin:0;width:132px;cursor:pointer;position:relative}
+  figure img{width:132px;height:132px;object-fit:contain;display:block;border-radius:4px;
+    border:3px solid transparent;background:color-mix(in srgb,currentColor 7%,transparent)}
+  figure.on img{border-color:var(--free)}
+  .num{position:absolute;top:3px;left:3px;font-size:10px;font-weight:700;padding:1px 5px;
+    border-radius:3px;background:color-mix(in srgb,Canvas 80%,currentColor);color:CanvasText}
+  .lic{font-size:10px;margin-top:3px;font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+  .lic.free{color:var(--free)} .lic.ccby{color:var(--ccby)}
+  .lic.none,.lic.other{color:var(--warn)}
+  .cap{font-size:10.5px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .modern{font-size:9.5px;color:var(--warn);font-weight:700;text-transform:uppercase}
+  footer{position:fixed;left:0;right:0;bottom:0;background:Canvas;padding:10px 24px;
+    border-top:1px solid color-mix(in srgb,currentColor 20%,transparent);display:flex;gap:14px;align-items:center}
+  button{font:inherit;padding:7px 14px;border-radius:6px;cursor:pointer;color:inherit;
+    border:1px solid color-mix(in srgb,currentColor 25%,transparent);background:transparent}
+  button.go{background:var(--free);color:#fff;border-color:transparent;font-weight:600}
+  .bar{flex:1;height:6px;border-radius:3px;background:color-mix(in srgb,currentColor 15%,transparent);overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--free);width:0}
 </style>
-<h1>Icon contact sheet</h1>
-<p class="lede">Click an image to approve it for that commemoration; click again to withdraw.
-Two sources are shown together: <span class="src">saint.gr</span> proposals carry the Greek name,
-so you can verify the match at a glance; Commons ones carry a stated licence.
-Anything flagged <span style="color:#c62828;font-weight:700">MODERN SUBJECT</span> depicts someone who
-died after 1900, so its icon was painted recently and its rights are live — approve those only deliberately.
-<strong>Check the grey line first</strong> — it is what the match was made on, and reading
-"Archbishop of Athens" under a martyr is how you catch a wrong one without knowing the saint.
-Approve nothing you are unsure of; a blank day is fine.</p>
-
-${rows
-  .map(
-    (r) => `<div class="row" data-id="${esc(r.id)}">
-  <div class="head">
-    <span class="date">${esc(r.date)}</span>
-    <span class="title">${esc(r.title)}</span>
-    ${r.highRank ? '<span class="rank">high rank</span>' : ''}
+<header>
+  <h1>Icon review <span style="font-weight:400;color:var(--dim)">— licence gate: <b>${ALLOW}</b></span></h1>
+  <div class="meta">
+    <span>${withCandidates.length} to review · ${without} with no candidate</span>
+    <span class="keys"><code>j</code>/<code>k</code> move · <code>1</code>–<code>9</code> approve · <code>0</code> none · <code>u</code> undo</span>
+    <input type="search" id="q" placeholder="filter by name or date…">
   </div>
-  <div class="why">matched: ${esc(r.entity?.label ?? '?')} — ${esc(r.entity?.description ?? 'no description')}
-    ${r.entity ? `· <a href="https://www.wikidata.org/wiki/${esc(r.entity.qid)}" target="_blank">${esc(r.entity.qid)}</a>` : ''}</div>
-  <div class="strip">
-    ${r.candidates
-      .map(
-        (
-          c,
-          i,
-        ) => `<figure data-i="${i}"${existing[r.id]?.commonsTitle === c.commonsTitle ? ' class="on"' : ''}>
-      <img loading="lazy" src="${esc(c.thumbUrl)}" alt="">
-      <figcaption title="${esc(c.commonsTitle)} — ${esc(c.license)}">${
-        c.source === 'saint.gr'
-          ? `<span class="src">saint.gr</span> ${esc(c.greekName ?? '')}`
-          : esc(c.license || '?')
-      }</figcaption>
-      ${c.modernSubject ? '<div class="warn">modern subject — rights live</div>' : ''}
-    </figure>`,
-      )
-      .join('')}
-  </div>
-</div>`,
-  )
-  .join('\n')}
-
-<p class="none">${empty.length} commemorations found no public-domain candidate and are not shown.
-They will simply have no icon — the day falls back to ornament.</p>
-
-<div class="bar">
-  <button id="copy">Copy approvals as JSON</button>
+</header>
+<main id="list"></main>
+<footer>
+  <div class="bar"><i id="fill"></i></div>
   <span id="count"></span>
-  <span style="opacity:.6">then save as <code>icons/approved.json</code></span>
-</div>
+  <button id="jump">Next undecided</button>
+  <button class="go" id="save">Download approved.json</button>
+</footer>
 <script>
-const DATA = ${JSON.stringify(
-  Object.fromEntries(
-    rows.map((r) => [r.id, { title: r.title, date: r.date, candidates: r.candidates }]),
-  ),
-)};
-const approved = ${JSON.stringify(existing)};
-function refresh() {
-  document.getElementById('count').textContent =
-    Object.keys(approved).length + ' of ' + ${rows.length} + ' approved';
+const ROWS = ${JSON.stringify(payload)};
+const KEY = 'okn-icon-review-v1';
+let state = JSON.parse(localStorage.getItem(KEY) || '{}');
+let cur = 0;
+const list = document.getElementById('list');
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function render(filter = '') {
+  const f = filter.trim().toLowerCase();
+  list.innerHTML = ROWS.map((r, i) => {
+    if (f && !((r.title + ' ' + r.date + ' ' + r.evidence.join(' ')).toLowerCase().includes(f))) return '';
+    const d = state[r.id];
+    const cls = d === 'none' ? 'skip' : d ? 'done' : '';
+    return '<div class="row ' + cls + '" data-i="' + i + '" id="r' + i + '">' +
+      '<div class="head"><span class="date">' + (r.date || '') + '</span>' +
+      '<span class="title">' + esc(r.title) + '</span>' +
+      (r.highRank ? '<span class="rank">high rank</span>' : '') + '</div>' +
+      (r.evidence.length ? '<div class="ev">' + r.evidence.map(esc).join(' · ') + '</div>' : '') +
+      '<div class="strip">' + r.candidates.map((c, n) =>
+        '<figure data-i="' + i + '" data-n="' + n + '" class="' +
+          (d && d !== 'none' && d.thumbUrl === c.thumbUrl ? 'on' : '') + '">' +
+        '<img loading="lazy" src="' + esc(c.thumbUrl) + '" alt="">' +
+        '<span class="num">' + (n + 1) + '</span>' +
+        '<div class="lic ' + c.tier + '">' +
+          (c.tier === 'free' ? 'public domain' : c.tier === 'ccby' ? 'cc by'
+            : c.tier === 'none' ? 'no provenance' : esc(c.license)) + '</div>' +
+        (c.modernSubject ? '<div class="modern">modern subject</div>' : '') +
+        '<div class="cap" title="' + esc(c.label) + '">' + esc(c.label) + '</div>' +
+        '</figure>').join('') + '</div></div>';
+  }).join('');
+  paint();
 }
-document.querySelectorAll('.row').forEach((row) => {
-  const id = row.dataset.id;
-  row.querySelectorAll('figure').forEach((fig) => {
-    fig.addEventListener('click', () => {
-      const c = DATA[id].candidates[Number(fig.dataset.i)];
-      const already = fig.classList.contains('on');
-      row.querySelectorAll('figure').forEach((f) => f.classList.remove('on'));
-      if (already) { delete approved[id]; }
-      else {
-        fig.classList.add('on');
-        approved[id] = { title: DATA[id].title, date: DATA[id].date, ...c };
-      }
-      refresh();
-    });
-  });
+function paint() {
+  document.querySelectorAll('.row').forEach((el) => el.classList.toggle('cur', Number(el.dataset.i) === cur));
+  const decided = Object.keys(state).length;
+  const approved = Object.values(state).filter((v) => v !== 'none').length;
+  document.getElementById('count').textContent = approved + ' approved · ' + decided + '/' + ROWS.length + ' decided';
+  document.getElementById('fill').style.width = (100 * decided / ROWS.length) + '%';
+}
+function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
+function decide(i, n) {
+  const r = ROWS[i];
+  if (n === null) state[r.id] = 'none';
+  else { const c = r.candidates[n]; if (!c) return; state[r.id] = Object.assign({ title: r.title, date: r.date }, c); }
+  save(); render(document.getElementById('q').value);
+}
+function move(d) {
+  const vis = [...document.querySelectorAll('.row')].map((e) => Number(e.dataset.i));
+  if (!vis.length) return;
+  const at = vis.indexOf(cur);
+  cur = vis[Math.max(0, Math.min(vis.length - 1, (at < 0 ? 0 : at) + d))];
+  paint();
+  document.getElementById('r' + cur)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+}
+addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === 'j') { move(1); e.preventDefault(); }
+  else if (e.key === 'k') { move(-1); e.preventDefault(); }
+  else if (e.key >= '1' && e.key <= '9') { decide(cur, Number(e.key) - 1); move(1); }
+  else if (e.key === '0') { decide(cur, null); move(1); }
+  else if (e.key === 'u') { delete state[ROWS[cur].id]; save(); render(document.getElementById('q').value); }
 });
-document.getElementById('copy').addEventListener('click', async () => {
-  await navigator.clipboard.writeText(JSON.stringify(approved, null, 2));
-  document.getElementById('copy').textContent = 'Copied — save as icons/approved.json';
+list.addEventListener('click', (e) => {
+  const fig = e.target.closest('figure'); if (!fig) return;
+  cur = Number(fig.dataset.i); decide(cur, Number(fig.dataset.n));
 });
-refresh();
+document.getElementById('q').addEventListener('input', (e) => render(e.target.value));
+document.getElementById('jump').addEventListener('click', () => {
+  const next = ROWS.findIndex((r, i) => i > cur && !state[r.id]);
+  cur = next >= 0 ? next : cur; paint();
+  document.getElementById('r' + cur)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+});
+document.getElementById('save').addEventListener('click', () => {
+  const out = {};
+  for (const [k, v] of Object.entries(state)) if (v !== 'none') out[k] = v;
+  const blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'approved.json'; a.click();
+});
+render();
 </script>
 `;
 
+fs.mkdirSync(DIR, { recursive: true });
 fs.writeFileSync(OUT, html);
-console.log(`${rows.length} commemorations with candidates, ${empty.length} without.`);
-console.log(`wrote ${path.relative(ROOT, OUT)}`);
-console.log(`\n  open ${path.relative(ROOT, OUT)}`);
+
+const tiers = {};
+for (const r of withCandidates)
+  for (const c of r.candidates) tiers[c.tier] = (tiers[c.tier] ?? 0) + 1;
+console.log(`sources merged     : ${stores.join(', ')}`);
+console.log(`licence gate       : ${ALLOW}  (${[...allowed].join(', ')})`);
+console.log(`rows to review     : ${withCandidates.length}`);
+console.log(`no candidate       : ${without}`);
+console.log(
+  `candidates by tier : ${
+    Object.entries(tiers)
+      .map(([k, v]) => `${k} ${v}`)
+      .join(', ') || 'none'
+  }`,
+);
+console.log(`\nwrote ${path.relative(ROOT, OUT)}`);
