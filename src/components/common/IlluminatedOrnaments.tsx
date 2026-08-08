@@ -55,6 +55,10 @@ export function Mandorla({
   const c = size / 2;
   const inner = size * 0.17;
   const outer = size * 0.47;
+  // Stroke weights were chosen against a 232pt halo — the phone cap. Left fixed,
+  // a 440pt tablet mandorla draws the same hairlines at twice the diameter and
+  // reads as cobweb rather than as gilding. Everything scales with the figure.
+  const w = size / 232;
 
   return (
     <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
@@ -83,7 +87,7 @@ export function Mandorla({
                 c + Math.cos(angle) * r2
               } ${c + Math.sin(angle) * r2}`}
               stroke={color}
-              strokeWidth={long ? 1.4 : 0.8}
+              strokeWidth={(long ? 1.4 : 0.8) * w}
               strokeLinecap="round"
               opacity={long ? 1 : 0.7}
             />
@@ -96,7 +100,7 @@ export function Mandorla({
         cy={c}
         r={inner * 1.5}
         stroke={color}
-        strokeWidth={0.8}
+        strokeWidth={0.8 * w}
         opacity={0.5}
         fill="none"
       />
@@ -108,10 +112,21 @@ export function Mandorla({
  * A ruled section divider with a lozenge at its centre — the manuscript's way of
  * starting a new part, in place of a 1px grey line.
  */
-export function OrnamentalRule({ width, color }: { width: number; color: string }) {
-  const h = 14;
+export function OrnamentalRule({
+  width,
+  color,
+  scale = 1,
+}: {
+  width: number;
+  color: string;
+  /** Grows the lozenge, pips and rule weight together on larger screens. */
+  scale?: number;
+}) {
+  const h = 14 * scale;
   const mid = width / 2;
-  const gap = 26;
+  const gap = 26 * scale;
+  const d = 6 * scale;
+  const pip = 2 * scale;
 
   return (
     <Svg width={width} height={h} viewBox={`0 0 ${width} ${h}`}>
@@ -125,17 +140,21 @@ export function OrnamentalRule({ width, color }: { width: number; color: string 
       </Defs>
 
       {/* The rule fades at both ends so it never collides with the screen edge. */}
-      <Path d={`M 0 ${h / 2} L ${mid - gap} ${h / 2}`} stroke="url(#fade)" strokeWidth={1} />
-      <Path d={`M ${mid + gap} ${h / 2} L ${width} ${h / 2}`} stroke="url(#fade)" strokeWidth={1} />
+      <Path d={`M 0 ${h / 2} L ${mid - gap} ${h / 2}`} stroke="url(#fade)" strokeWidth={scale} />
+      <Path
+        d={`M ${mid + gap} ${h / 2} L ${width} ${h / 2}`}
+        stroke="url(#fade)"
+        strokeWidth={scale}
+      />
 
       {/* Centre lozenge, flanked by two pips. */}
       <Path
-        d={`M ${mid} ${h / 2 - 6} L ${mid + 6} ${h / 2} L ${mid} ${h / 2 + 6} L ${mid - 6} ${h / 2} Z`}
+        d={`M ${mid} ${h / 2 - d} L ${mid + d} ${h / 2} L ${mid} ${h / 2 + d} L ${mid - d} ${h / 2} Z`}
         fill={color}
         opacity={0.9}
       />
-      <Circle cx={mid - 14} cy={h / 2} r={2} fill={color} opacity={0.65} />
-      <Circle cx={mid + 14} cy={h / 2} r={2} fill={color} opacity={0.65} />
+      <Circle cx={mid - 14 * scale} cy={h / 2} r={pip} fill={color} opacity={0.65} />
+      <Circle cx={mid + 14 * scale} cy={h / 2} r={pip} fill={color} opacity={0.65} />
     </Svg>
   );
 }
