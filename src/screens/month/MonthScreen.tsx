@@ -518,7 +518,7 @@ export function MonthScreen({ navigation, route }: Props) {
       <StatusBar style="light" />
       {/* ONE ground for the whole screen — see IlluminatedGround. Must come
           first so the headpiece and the page both sit on it. */}
-      {th.direction === 'gilded' ? <IlluminatedGround /> : null}
+      {th.direction === 'gilded' ? <IlluminatedGround crown={!USES_NATIVE_HEADER} /> : null}
       {/* ═══ BRANDED HEADER (fixed) ═══
           Skipped on iPad — the platform's header carries these instead. */}
       {USES_NATIVE_HEADER ? null : th.direction === 'gilded' ? (

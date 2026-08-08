@@ -203,7 +203,7 @@ export function AnnouncementsScreen({ navigation }: Props) {
       <StatusBar style="light" />
       {/* ONE ground for the whole screen — see IlluminatedGround. Must come
           first so the headpiece and the page both sit on it. */}
-      {th.direction === 'gilded' ? <IlluminatedGround /> : null}
+      {th.direction === 'gilded' ? <IlluminatedGround crown={!USES_NATIVE_HEADER} /> : null}
       {/* ═══ BRANDED HEADER ═══
           Skipped on iPad, where the platform's header shows this same title. */}
       {USES_NATIVE_HEADER ? null : th.direction === 'gilded' ? (

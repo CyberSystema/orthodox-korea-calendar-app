@@ -201,6 +201,13 @@ export function IlluminatedDay({
   // over the page — the same "noisy" failure the grain had. It is ornament behind
   // the figure, not the subject: smaller, and it stops well short of the margins.
   const halo = Math.min(width * 0.56, 232);
+  // A LEAF HAS A MEASURE. Letting the page fill an iPad meant a line of type
+  // running the better part of 700pt — unreadable — while two thirds of the
+  // screen stayed empty, because the composition was designed and judged at
+  // phone width. Bound the leaf and centre it, then put the sections side by
+  // side once there is room for two of them: the width gets used by CONTENT
+  // rather than by stretching the same column.
+  const wide = width >= 820;
   // Gilding is a dark-ground effect and a feast-day one; both conditions in a
   // single value so the Text, its accessibility and the overlay agree.
   // Gilding runs on BOTH palettes; only the metal changes. On near-black, gold
@@ -355,66 +362,72 @@ export function IlluminatedDay({
         </Animated.View>
       ) : null}
 
-      {/* ═══ READINGS ═══ */}
-      <Band title={labels.readings} delay={STEP * 4}>
-        {readings.length ? (
-          readings.map((r) => (
-            <SelectableText key={r} style={styles.reading}>
-              {r}
-            </SelectableText>
-          ))
-        ) : (
-          <Text style={styles.muted}>{labels.noReadings}</Text>
-        )}
-      </Band>
-
-      {/* ═══ COMMEMORATIONS ═══ */}
-      {restSaints.length ? (
-        <Band title={labels.saints} delay={STEP * 5}>
-          {restSaints.map((c, i) => (
-            <View key={`${c.id}-${i}`} style={styles.commemorationBlock}>
-              <SelectableText style={styles.commemoration}>
-                {localized(c.title, language)}
+      <View style={[styles.bands, wide && styles.bandsWide]}>
+        {/* ═══ READINGS ═══ */}
+        <Band title={labels.readings} delay={STEP * 4} style={wide ? styles.bandColumn : undefined}>
+          {readings.length ? (
+            readings.map((r) => (
+              <SelectableText key={r} style={styles.reading}>
+                {r}
               </SelectableText>
-              <Meta entry={c} labels={labels} style={styles.meta} />
-            </View>
-          ))}
+            ))
+          ) : (
+            <Text style={styles.muted}>{labels.noReadings}</Text>
+          )}
         </Band>
-      ) : null}
 
-      {/* ═══ CIVIL OBSERVANCES ═══
-          National Liberation Day, Independence Movement Day and the like. They
-          belong on the calendar and they are NOT saints, so they get their own
-          band rather than being appended to the commemorations — which is what
-          the Elegant layout has always done. */}
-      {restObservances.length ? (
-        <Band title={labels.celebrations} delay={STEP * 5.5}>
-          {restObservances.map((c, i) => (
-            <View key={`${c.id}-${i}`} style={styles.commemorationBlock}>
-              <SelectableText style={styles.commemoration}>
-                {localized(c.title, language)}
-              </SelectableText>
-              <Meta entry={c} labels={labels} style={styles.meta} />
-            </View>
-          ))}
-        </Band>
-      ) : null}
+        {/* ═══ COMMEMORATIONS ═══ */}
+        {restSaints.length ? (
+          <Band title={labels.saints} delay={STEP * 5} style={wide ? styles.bandColumn : undefined}>
+            {restSaints.map((c, i) => (
+              <View key={`${c.id}-${i}`} style={styles.commemorationBlock}>
+                <SelectableText style={styles.commemoration}>
+                  {localized(c.title, language)}
+                </SelectableText>
+                <Meta entry={c} labels={labels} style={styles.meta} />
+              </View>
+            ))}
+          </Band>
+        ) : null}
 
-      {/* ═══ PARISH EVENTS ═══ */}
-      {events.length ? (
-        <Band title={labels.events} delay={STEP * 6}>
-          {events.map((e) => (
-            <Pressable
-              key={e.id}
-              onPress={() => onEventPress?.(e)}
-              style={({ pressed }) => [styles.event, pressed && styles.pressed]}
-              accessibilityRole="button"
-            >
-              <Text style={styles.eventTitle}>{localized(e.title, language)}</Text>
-            </Pressable>
-          ))}
-        </Band>
-      ) : null}
+        {/* ═══ CIVIL OBSERVANCES ═══
+            National Liberation Day, Independence Movement Day and the like. They
+            belong on the calendar and they are NOT saints, so they get their own
+            band rather than being appended to the commemorations — which is what
+            the Elegant layout has always done. */}
+        {restObservances.length ? (
+          <Band
+            title={labels.celebrations}
+            delay={STEP * 5.5}
+            style={wide ? styles.bandColumn : undefined}
+          >
+            {restObservances.map((c, i) => (
+              <View key={`${c.id}-${i}`} style={styles.commemorationBlock}>
+                <SelectableText style={styles.commemoration}>
+                  {localized(c.title, language)}
+                </SelectableText>
+                <Meta entry={c} labels={labels} style={styles.meta} />
+              </View>
+            ))}
+          </Band>
+        ) : null}
+
+        {/* ═══ PARISH EVENTS ═══ */}
+        {events.length ? (
+          <Band title={labels.events} delay={STEP * 6} style={wide ? styles.bandColumn : undefined}>
+            {events.map((e) => (
+              <Pressable
+                key={e.id}
+                onPress={() => onEventPress?.(e)}
+                style={({ pressed }) => [styles.event, pressed && styles.pressed]}
+                accessibilityRole="button"
+              >
+                <Text style={styles.eventTitle}>{localized(e.title, language)}</Text>
+              </Pressable>
+            ))}
+          </Band>
+        ) : null}
+      </View>
 
       {/* ═══ COLOPHON ═══
           A leaf ends; it does not simply stop. On a sparse day — one name, two
@@ -491,16 +504,18 @@ function Meta({
 function Band({
   title,
   delay,
+  style,
   children,
 }: {
   title: string;
   delay: number;
+  style?: object;
   children: React.ReactNode;
 }) {
   const th = useTheme();
   const styles = useThemedStyles(makeStyles);
   return (
-    <Animated.View style={styles.band} entering={FadeInDown.delay(delay).duration(DUR)}>
+    <Animated.View style={[styles.band, style]} entering={FadeInDown.delay(delay).duration(DUR)}>
       <View style={styles.rubric}>
         <RubricMark color={th.accent} />
         <Text style={styles.bandLabel}>{title.toUpperCase()}</Text>
@@ -527,7 +542,23 @@ const makeStyles = (th: ResolvedTheme) =>
       paddingHorizontal: spacing.lg,
       paddingBottom: spacing.xl,
       gap: spacing.xl,
+      // The leaf itself, centred on the desk. 860 keeps the longest reading and
+      // the widest saint name on one comfortable line without the measure
+      // running away.
+      width: '100%',
+      maxWidth: 860,
+      alignSelf: 'center',
     },
+    // Sections stack on a phone and sit two-up on a tablet. minWidth is what
+    // makes it fall back to one column rather than crushing both.
+    bands: { gap: spacing.xl },
+    bandsWide: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'flex-start',
+      columnGap: spacing.xl,
+    },
+    bandColumn: { flexGrow: 1, flexBasis: 340, minWidth: 340 },
     pressed: { opacity: 0.6 },
 
     // ── Hero ────────────────────────────────────────────────────────────────
@@ -598,6 +629,10 @@ const makeStyles = (th: ResolvedTheme) =>
       fontSize: 38,
     },
     headline: {
+      // Centred like everything else on the leaf. It never showed on a phone,
+      // where the name fills the measure anyway; at iPad width it sat hard left
+      // while the rules and readings above and below it were centred.
+      textAlign: 'center',
       flexShrink: 1,
       fontFamily: th.design.fontHeadingStrong,
       fontSize: 24,

@@ -349,7 +349,7 @@ export function TodayScreen({ navigation }: Props) {
       <StatusBar style="light" />
       {/* ONE ground for the whole screen — see IlluminatedGround. Must come
           first so the headpiece and the page both sit on it. */}
-      {th.direction === 'gilded' ? <IlluminatedGround /> : null}
+      {th.direction === 'gilded' ? <IlluminatedGround crown={!USES_NATIVE_HEADER} /> : null}
       {/* ═══ BRANDED HEADER (fixed) ═══
           Skipped on iPad, where the platform's own header carries the title and
           these buttons instead — see USES_NATIVE_HEADER. */}
@@ -757,6 +757,13 @@ const makeStyles = (th: ResolvedTheme) =>
     },
     content: {
       gap: spacing.md,
+      // ONE MEASURE FOR THE WHOLE PAGE. The day panel bounds itself so its type
+      // does not run the width of an iPad; without the same bound here the date
+      // navigator and the action pills stretched edge to edge above it, and the
+      // page read as a wide bar sitting on a narrow leaf.
+      width: '100%',
+      maxWidth: 860,
+      alignSelf: 'center',
     },
     pressed: {
       opacity: 0.7,
