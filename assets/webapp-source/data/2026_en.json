@@ -6570,7 +6570,7 @@
     "date": "2026-08-06",
     "fast": false,
     "cheese": false,
-    "fish": false,
+    "fish": true,
     "pres": false,
     "saint_basil": false,
     "dl": true,
