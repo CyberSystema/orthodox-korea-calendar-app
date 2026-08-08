@@ -1,26 +1,25 @@
-import { Platform } from 'react-native';
-
 /** Brand name — never translated. */
 export const BRAND_TITLE = 'Orthodox Korea';
 
 /**
- * On iPad the PLATFORM owns the top chrome, so the screens must not draw theirs.
+ * Every device now draws the app's OWN branded band. Nothing uses the platform's.
  *
- * iPadOS 18+ always renders a UITabBarController's bar at the TOP of the window,
- * and no mode changes that — `tabBarControllerMode: 'tabSidebar'` only adds a
- * sidebar-toggle button beside the same top pill (verified on the iPad Pro 11"
- * simulator, iPadOS 27). That bar lands exactly where each screen draws its own
- * branded ORTHODOX KOREA band, and the two overlap.
+ * This constant exists because of a problem that has since been solved one layer
+ * down. iPadOS 18 renders a UITabBarController's bar at the TOP of the window,
+ * where it collided with each screen's branded ORTHODOX KOREA band, so the iPad
+ * used to surrender the top chrome to the platform: no gradient, no travelling
+ * sheen, no knots, no closing rule — the tablet lost the headpiece that is most
+ * of the app's character.
  *
- * Rather than stack two bars, iPad gets the native header: the screens skip
- * their branded band and hand the title, Settings and Search to the platform's
- * header instead (each screen sets its own headerLeft/headerRight via
- * `navigation.setOptions`, so the handlers stay local to it).
+ * The bar is at the top only in a REGULAR width environment, so the iPad is now
+ * given a compact one (`useCompactWidthOnPad` in plugins/withIosSceneLifecycle.js).
+ * It is still the platform's own tab bar, drawing itself with iOS 26 Liquid Glass
+ * — it simply lays out at the bottom, as it does on every other device. With the
+ * top of the window free, the iPad takes the same path as the phone.
  *
- * iPhone and Android are untouched — there the toolbar is at the bottom, so the
- * manuscript header has the top of the screen to itself.
- *
- * This lives in its own module rather than in MainTabs because the screens need
- * it and MainTabs imports the screens — importing it back would be a cycle.
+ * KEPT RATHER THAN DELETED, as a named switch instead of a scattering of
+ * `Platform.isPad` checks: if a future iPadOS forces the top bar back regardless
+ * of size class, flipping this one constant restores the platform-header layout
+ * in all three tab screens at once.
  */
-export const USES_NATIVE_HEADER = Platform.OS === 'ios' && Platform.isPad;
+export const USES_NATIVE_HEADER: boolean = false;

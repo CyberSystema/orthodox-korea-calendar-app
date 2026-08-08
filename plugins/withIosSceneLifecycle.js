@@ -113,6 +113,53 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
   }
 
+  /**
+   * WHY THE iPad IS TOLD IT IS NARROW.
+   *
+   * iPadOS 18 moved a UITabBarController's bar to the TOP of the window. That is
+   * not a style we opted into and no option turns it off: 'UITabBarController.mode'
+   * offers only automatic / tabBar / tabSidebar, and the sidebar mode merely adds
+   * a toggle button beside the very same top pill. The bar lands exactly where
+   * every screen draws its branded ORTHODOX KOREA band, so the two collide, and
+   * the tablet had to give up its headpiece — gradient, travelling sheen, knots,
+   * closing rule — to the platform's plain header.
+   *
+   * But that top bar is not a property of the iPad, it is a property of a REGULAR
+   * width environment. In COMPACT width UIKit renders the classic bottom bar, which
+   * is why an iPad Split View window shows its tabs at the foot. react-native-screens
+   * already reads 'horizontalSizeClass' for exactly this reason (RNSTabBarController
+   * treats compact as the configuration that has a More controller) — it just never
+   * writes it.
+   *
+   * So we write it. This is still the platform's own UITabBarController drawing its
+   * own bar with iOS 26 Liquid Glass; only the environment it lays itself out for
+   * changes. Nothing is reimplemented, so nothing can look nearly-native.
+   *
+   * SET ON THE WINDOW, not the root view controller, because expo-updates swaps the
+   * root controller out after its update check — the same reason the launch cover
+   * needs its own window. Overrides on the window survive that swap.
+   *
+   * VERTICAL is left alone: compact width + regular height is precisely an iPhone
+   * in portrait, which is the arrangement the whole design was drawn for. The app
+   * is portrait-only on every device (plugins/withPortraitOnly.js), so this is the
+   * only combination that can occur.
+   *
+   * 'traitOverrides' is iOS 17+, and that is exactly the right floor: the top bar
+   * arrived in iPadOS 18, and every earlier iPadOS already draws it at the bottom.
+   * So the versions that cannot take the override are the versions that never
+   * needed it.
+   *
+   * This does NOT shrink the layout. React Native sizes from the window, not from
+   * the size class, so 'useWindowDimensions' still reports the full iPad width and
+   * the tablet composition (src/theme/useLeaf.ts) is untouched.
+   */
+  private func useCompactWidthOnPad(_ window: UIWindow) {
+    guard UIDevice.current.userInterfaceIdiom == .pad else { return }
+    if #available(iOS 17.0, *) {
+      window.traitOverrides.horizontalSizeClass = .compact
+    }
+  }
+
   func scene(
     _ scene: UIScene,
     willConnectTo session: UISceneSession,
@@ -128,6 +175,10 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     window.backgroundColor = SceneDelegate.brandBackground
     self.window = window
     appDelegate.window = window
+
+    // Before React Native builds anything: give the iPad a compact width
+    // environment so the platform puts its tab bar at the BOTTOM (see above).
+    useCompactWidthOnPad(window)
 
     // Bring up the cover window BEFORE startReactNative (which calls makeKeyAndVisible on
     // the app window), so brand color is painted on frame 0. Its higher windowLevel keeps
