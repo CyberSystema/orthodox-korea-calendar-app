@@ -64,11 +64,7 @@ export function LiturgicalDayPanel(props: Props) {
   const th = useTheme();
   // The Illuminated direction is a DIFFERENT COMPOSITION, not this layout
   // restyled — hero numeral, ruled sections, no card.
-  return th.direction === 'illuminated' ? (
-    <IlluminatedDay {...props} />
-  ) : (
-    <RefinedDayPanel {...props} />
-  );
+  return th.direction === 'gilded' ? <IlluminatedDay {...props} /> : <RefinedDayPanel {...props} />;
 }
 
 function RefinedDayPanel({

@@ -502,10 +502,10 @@ export function MonthScreen({ navigation, route }: Props) {
       <StatusBar style="light" />
       {/* ONE ground for the whole screen — see IlluminatedGround. Must come
           first so the headpiece and the page both sit on it. */}
-      {th.direction === 'illuminated' ? <IlluminatedGround /> : null}
+      {th.direction === 'gilded' ? <IlluminatedGround /> : null}
       {/* ═══ BRANDED HEADER (fixed) ═══
           Skipped on iPad — the platform's header carries these instead. */}
-      {USES_NATIVE_HEADER ? null : th.direction === 'illuminated' ? (
+      {USES_NATIVE_HEADER ? null : th.direction === 'gilded' ? (
         <IlluminatedHeader
           title={BRAND_TITLE}
           topInset={insets.top}
@@ -1261,9 +1261,9 @@ const makeStyles = (th: ResolvedTheme) =>
       width: '14.2857%',
       // Illuminated rules the grid in gold and gives each cell more room, so the
       // month reads as a ruled table in a manuscript rather than a spreadsheet.
-      minHeight: th.direction === 'illuminated' ? 64 : 56,
+      minHeight: th.direction === 'gilded' ? 64 : 56,
       borderWidth: 0.5,
-      borderColor: th.direction === 'illuminated' ? th.accentLine : th.borderLight,
+      borderColor: th.direction === 'gilded' ? th.accentLine : th.borderLight,
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: th.surfaceWhite,
@@ -1287,12 +1287,12 @@ const makeStyles = (th: ResolvedTheme) =>
       backgroundColor: th.fillStrong,
       // The selected day is GILDED in Illuminated — a gold rule around wine,
       // which is the same pairing the headpiece uses.
-      borderColor: th.direction === 'illuminated' ? th.accentBright : th.primaryDeep,
-      borderWidth: th.direction === 'illuminated' ? 2 : 1.5,
+      borderColor: th.direction === 'gilded' ? th.accentBright : th.primaryDeep,
+      borderWidth: th.direction === 'gilded' ? 2 : 1.5,
     },
     cellDay: {
       fontFamily: typography.family.body,
-      fontSize: th.direction === 'illuminated' ? typography.size.md : typography.size.sm,
+      fontSize: th.direction === 'gilded' ? typography.size.md : typography.size.sm,
       color: th.textPrimary,
     },
     cellDayHigh: {

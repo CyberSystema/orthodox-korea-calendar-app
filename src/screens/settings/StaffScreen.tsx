@@ -161,7 +161,7 @@ export function StaffScreen() {
           child: this root is a scroll container, and a ground inside one would
           scroll away. absoluteFill then resolves against the navigator's own
           screen container, which fills the window. */}
-      {th.direction === 'illuminated' ? <IlluminatedGround crown={false} /> : null}
+      {th.direction === 'gilded' ? <IlluminatedGround crown={false} /> : null}
       <KeyboardSafeView style={styles.flex} keyboardVerticalOffset={insets.top}>
         <ScrollView
           style={styles.container}
@@ -237,7 +237,7 @@ const makeStyles = (th: ResolvedTheme) =>
     flex: { flex: 1 },
     container: {
       flex: 1,
-      backgroundColor: th.direction === 'illuminated' ? 'transparent' : th.background,
+      backgroundColor: th.direction === 'gilded' ? 'transparent' : th.background,
       // Transparent under Illuminated: the ground is a sibling BEHIND this
       // scroll view, so an opaque background here would paint over the leaf.
     },

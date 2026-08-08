@@ -9,7 +9,7 @@ import { IlluminatedGround } from '../../components/common/IlluminatedGround';
 import { OrnamentTitle } from '../../components/common/OrnamentTitle';
 import { Text } from '../../components/common/ScaledText';
 import { DIAGNOSTICS_ENABLED } from '../../config/features';
-import { DIRECTIONS, DIRECTION_LABELS } from '../../theme/direction';
+import { DIRECTIONS, DIRECTION_LABEL_KEYS } from '../../theme/direction';
 import { getAppVersionLabel } from '../../utils/appVersion';
 import { useAppStore } from '../../store/useAppStore';
 import {
@@ -149,7 +149,7 @@ export function SettingsScreen({ navigation }: Props) {
           child: these roots are ScrollViews, and a ground inside one would
           scroll away. absoluteFill then resolves against the navigator's own
           screen container, which fills the window. */}
-      {th.direction === 'illuminated' ? <IlluminatedGround crown={false} /> : null}
+      {th.direction === 'gilded' ? <IlluminatedGround crown={false} /> : null}
       <ScrollView
         style={styles.container}
         contentContainerStyle={[
@@ -187,26 +187,21 @@ export function SettingsScreen({ navigation }: Props) {
           <Text style={styles.hint}>{tr('settings.themeHint')}</Text>
         </View>
 
-        {/* ═══ THEME (owner sideloads only) ═══
-            Shown to the owner as "Theme" because that is what it is to a reader;
-            the code still calls it a direction, which is the trial's own word for
-            the two candidate designs. Switching is live and instant because these
-            change no navigation option — see direction.ts.
-
-            It sits under Reading, beside Appearance, because the two are
-            orthogonal: Appearance picks the palette, Theme picks the design that
-            palette is applied to. */}
-        {DIAGNOSTICS_ENABLED ? (
-          <View style={styles.card}>
-            <OrnamentTitle text="Theme" />
-            <Choice
-              options={DIRECTIONS}
-              selected={direction}
-              onSelect={setDirection}
-              label={(d) => DIRECTION_LABELS[d]}
-            />
-          </View>
-        ) : null}
+        {/* ═══ THEME ═══
+            EVERY reader sees this, not just the owner. Gilded is the default, and
+            a default nobody can escape from is not a default — it is an
+            imposition. Some readers will want the quieter layout, and older eyes
+            in particular may simply find it easier. */}
+        <View style={styles.card}>
+          <OrnamentTitle text={tr('settings.direction')} />
+          <Choice
+            options={DIRECTIONS}
+            selected={direction}
+            onSelect={setDirection}
+            label={(d) => tr(DIRECTION_LABEL_KEYS[d])}
+          />
+          <Text style={styles.hint}>{tr('settings.directionHint')}</Text>
+        </View>
 
         {/* ═══ BEHAVIOUR — what the app does ═══ */}
         <GroupLabel text={tr('settings.groupBehaviour')} />
@@ -282,7 +277,7 @@ const makeStyles = (th: ResolvedTheme) =>
   ({
     container: {
       flex: 1,
-      backgroundColor: th.direction === 'illuminated' ? 'transparent' : th.background,
+      backgroundColor: th.direction === 'gilded' ? 'transparent' : th.background,
       // Transparent under Illuminated: the ground is a sibling BEHIND this
       // scroll view, so an opaque background here would paint over the leaf.
     },

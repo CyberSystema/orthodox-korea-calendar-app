@@ -203,10 +203,10 @@ export function AnnouncementsScreen({ navigation }: Props) {
       <StatusBar style="light" />
       {/* ONE ground for the whole screen — see IlluminatedGround. Must come
           first so the headpiece and the page both sit on it. */}
-      {th.direction === 'illuminated' ? <IlluminatedGround /> : null}
+      {th.direction === 'gilded' ? <IlluminatedGround /> : null}
       {/* ═══ BRANDED HEADER ═══
           Skipped on iPad, where the platform's header shows this same title. */}
-      {USES_NATIVE_HEADER ? null : th.direction === 'illuminated' ? (
+      {USES_NATIVE_HEADER ? null : th.direction === 'gilded' ? (
         /* No brand tap and no buttons here — this screen's title is the section
            name, not the brand, so the secret-menu counter does not belong. */
         <IlluminatedHeader title={t('announcements.title')} topInset={insets.top} />

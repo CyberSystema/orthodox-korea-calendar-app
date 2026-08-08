@@ -149,7 +149,7 @@ export function EventDetailScreen({ route }: Props) {
         {/* The leaf continues onto pushed screens too — without this the
             translucent Illuminated surfaces would sit on a plain background
             and blend with nothing. See IlluminatedGround. */}
-        {th.direction === 'illuminated' ? <IlluminatedGround crown={false} /> : null}
+        {th.direction === 'gilded' ? <IlluminatedGround crown={false} /> : null}
         <View style={styles.emptyCard}>
           <ActivityIndicator size="small" color={th.accentBright} />
           <Text style={styles.emptyTitle}>{t('common.loading')}</Text>
@@ -260,7 +260,7 @@ const makeStyles = (th: ResolvedTheme) =>
   ({
     container: {
       flex: 1,
-      backgroundColor: th.direction === 'illuminated' ? 'transparent' : th.background,
+      backgroundColor: th.direction === 'gilded' ? 'transparent' : th.background,
       // Transparent under Illuminated: the ground is a sibling BEHIND this
       // scroll view, so an opaque background here would paint over the leaf.
     },

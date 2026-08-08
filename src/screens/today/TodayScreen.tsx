@@ -333,11 +333,11 @@ export function TodayScreen({ navigation }: Props) {
       <StatusBar style="light" />
       {/* ONE ground for the whole screen — see IlluminatedGround. Must come
           first so the headpiece and the page both sit on it. */}
-      {th.direction === 'illuminated' ? <IlluminatedGround /> : null}
+      {th.direction === 'gilded' ? <IlluminatedGround /> : null}
       {/* ═══ BRANDED HEADER (fixed) ═══
           Skipped on iPad, where the platform's own header carries the title and
           these buttons instead — see USES_NATIVE_HEADER. */}
-      {USES_NATIVE_HEADER ? null : th.direction === 'illuminated' ? (
+      {USES_NATIVE_HEADER ? null : th.direction === 'gilded' ? (
         /* The Illuminated direction replaces the flat band with a manuscript
            headpiece — gradient, travelling sheen, vines and a closing rule. */
         <IlluminatedHeader
@@ -816,9 +816,9 @@ const makeStyles = (th: ResolvedTheme) =>
       // On the illuminated leaf nothing is a filled capsule: a control is a
       // gold-ruled square that sits ON the parchment, so the page keeps one
       // material throughout instead of white chips floating on it.
-      borderColor: th.direction === 'illuminated' ? th.accentLine : th.border,
+      borderColor: th.direction === 'gilded' ? th.accentLine : th.border,
       borderRadius: th.design.controlRadius,
-      backgroundColor: th.direction === 'illuminated' ? 'transparent' : th.surfaceWhite,
+      backgroundColor: th.direction === 'gilded' ? 'transparent' : th.surfaceWhite,
       paddingVertical: spacing.xs,
       paddingHorizontal: spacing.md,
     },
@@ -826,21 +826,21 @@ const makeStyles = (th: ResolvedTheme) =>
       fontFamily: typography.family.body,
       fontSize: typography.size.xs,
       // Gold on parchment, matching the headpiece's own lettering.
-      color: th.direction === 'illuminated' ? th.accentText : th.primary,
-      letterSpacing: th.direction === 'illuminated' ? 0.6 : 0,
+      color: th.direction === 'gilded' ? th.accentText : th.primary,
+      letterSpacing: th.direction === 'gilded' ? 0.6 : 0,
     },
     actionPillAccent: {
       borderWidth: 1,
       borderColor: th.accent,
       borderRadius: th.design.controlRadius,
-      backgroundColor: th.direction === 'illuminated' ? 'transparent' : th.accentGlow,
+      backgroundColor: th.direction === 'gilded' ? 'transparent' : th.accentGlow,
       paddingVertical: spacing.xs,
       paddingHorizontal: spacing.md,
     },
     actionPillAccentText: {
       fontFamily: typography.family.body,
       fontSize: typography.size.xs,
-      color: th.direction === 'illuminated' ? th.accentText : th.onAccent,
+      color: th.direction === 'gilded' ? th.accentText : th.onAccent,
       fontWeight: typography.weight.semibold,
     },
 

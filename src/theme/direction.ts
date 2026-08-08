@@ -1,10 +1,13 @@
 /**
- * The two visual directions being compared before one is chosen.
+ * The app's two visual designs — what Settings calls the Theme.
  *
- * TEMPORARY. Once a direction is picked, the loser and the picker are deleted —
- * this module collapses to whatever won. Nothing outside the theme should branch
- * on `direction` directly; read the design values below instead, so deleting a
- * direction is a change to this file rather than a hunt through screens.
+ * GILDED is the default: the manuscript leaf, with the gilded numeral, the
+ * drawn liturgical marks and the ruled sections. ELEGANT is the earlier layout,
+ * kept because it is quieter and some readers will prefer it, and because a
+ * design nobody can escape from is a worse design.
+ *
+ * Nothing outside the theme should branch on `direction` directly; read the
+ * design values below instead.
  *
  * SAFE TO SWITCH LIVE, unlike the earlier appearance trial. That one crashed
  * because it toggled `headerShown`, which @react-navigation/bottom-tabs/unstable
@@ -12,21 +15,34 @@
  * only in colour, type, ornament and geometry — no navigation option changes —
  * so the flip is instant and needs no restart. Keep it that way.
  */
-export const DIRECTIONS = ['refined', 'illuminated'] as const;
+export const DIRECTIONS = ['gilded', 'elegant'] as const;
 export type Direction = (typeof DIRECTIONS)[number];
 
-/** The app as it is today, executed properly — the safe baseline. */
-export const DEFAULT_DIRECTION: Direction = 'refined';
+/** Gilded is what the app looks like unless a reader says otherwise. */
+export const DEFAULT_DIRECTION: Direction = 'gilded';
 
-export const DIRECTION_LABELS: Record<Direction, string> = {
-  refined: 'Refined',
-  illuminated: 'Illuminated',
+/** i18n keys, beside the values so they cannot drift. */
+export const DIRECTION_LABEL_KEYS: Record<Direction, string> = {
+  gilded: 'settings.directionGilded',
+  elegant: 'settings.directionElegant',
+};
+
+/**
+ * Names these designs went by while they were an unnamed trial.
+ *
+ * A phone that has already run this app has one of them written to secure
+ * storage. Without this the reader's saved choice would be silently discarded on
+ * upgrade — they would open the app one morning and find it had changed its mind.
+ */
+const LEGACY_NAMES: Record<string, Direction> = {
+  illuminated: 'gilded',
+  refined: 'elegant',
 };
 
 export function normalizeDirection(raw: string | null | undefined): Direction {
-  return (DIRECTIONS as readonly string[]).includes(raw ?? '')
-    ? (raw as Direction)
-    : DEFAULT_DIRECTION;
+  const value = raw ?? '';
+  if ((DIRECTIONS as readonly string[]).includes(value)) return value as Direction;
+  return LEGACY_NAMES[value] ?? DEFAULT_DIRECTION;
 }
 
 /**
@@ -91,7 +107,7 @@ export type DirectionDesign = {
 };
 
 export const DIRECTION_DESIGN: Record<Direction, DirectionDesign> = {
-  refined: {
+  elegant: {
     fontHeading: 'Spectral',
     fontHeadingStrong: 'Spectral-SemiBold',
     fontKorean: 'NanumMyeongjo',
@@ -105,7 +121,7 @@ export const DIRECTION_DESIGN: Record<Direction, DirectionDesign> = {
     headpiece: false,
     texture: false,
   },
-  illuminated: {
+  gilded: {
     fontHeading: 'EBGaramond',
     fontHeadingStrong: 'EBGaramond-SemiBold',
     fontKorean: 'NanumMyeongjo',
@@ -144,7 +160,7 @@ export function directionPalette(
   base: Record<string, string>,
   dark: boolean,
 ): Record<string, string> {
-  if (direction !== 'illuminated') return {};
+  if (direction !== 'gilded') return {};
 
   // Deep wine-black on night, warm ink-on-parchment on light.
   const veil = dark ? '18, 10, 10' : '255, 251, 243';
