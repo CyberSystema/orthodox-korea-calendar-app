@@ -23,8 +23,12 @@ npm run ios / npm run android  # local native run (expo run:*) — triggers a pr
 npm run sync:calendar-data   # regenerate the bundled offline seed from the source of truth
 npm run check:calendar-data  # fail if the seed has drifted (build:* run this first)
 
-# EAS builds — appVersionSource is "local" (version + build come from app.json;
-# NOT auto-incremented — bump ios.buildNumber / android.versionCode by hand)
+# EAS builds — build numbers are AUTOMATIC and independent of `version`.
+# `version` ("1.3") is a human decision in app.json. ios.buildNumber and
+# android.versionCode are not: EAS assigns them (appVersionSource "remote" +
+# autoIncrement), and local builds derive them from `git rev-list --count HEAD`
+# via app.config.js. The values still in app.json are only the fallback used when
+# git is unavailable — a builder gets the tree without .git. Do not bump by hand.
 npm run build:ios:preview        # → staging backend  (runs check:calendar-data first)
 npm run build:ios:production     # → production backend
 npm run build:android:preview / :production
