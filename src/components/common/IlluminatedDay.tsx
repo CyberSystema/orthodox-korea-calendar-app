@@ -32,6 +32,8 @@ type Props = {
   labels: {
     readings: string;
     saints: string;
+    /** Civil and national days — NOT saints. See `observances` below. */
+    celebrations: string;
     events: string;
     noReadings: string;
     /** "Tone" and "Matins Gospel" — real per-commemoration data, not decoration. */
@@ -128,21 +130,36 @@ export function IlluminatedDay({
 
   // One focal point: a high-rank entry, else the first celebration, else the
   // first saint. It is then removed from the list so it is never said twice.
+  // `celebrations` is everything flagged feast OR highRank OR celeb, and `celeb`
+  // means a CIVIL day — National Liberation Day, Independence Movement Day. Those
+  // are not saints and must never be listed as though they were.
+  const observances = useMemo(() => celebrations.filter((c) => c.celeb), [celebrations]);
+  const liturgical = useMemo(() => celebrations.filter((c) => !c.celeb), [celebrations]);
+
   // The ENTRY, not just its title: each commemoration carries its own readings,
   // tone and matins gospel, and an earlier pass rendered only the title — so a
   // day that had plenty to say looked empty. Keep the object.
+  //
+  // A civil day is the LAST resort for the headline, never the first. Without
+  // that ordering, a saint's day that happens to coincide with a national holiday
+  // would put the holiday in the illuminated capital and the saint in a list
+  // below it.
   const headlineEntry = useMemo(
-    () => celebrations.find((c) => c.highRank) ?? celebrations[0] ?? saints[0] ?? null,
-    [celebrations, saints],
+    () =>
+      liturgical.find((c) => c.highRank) ?? liturgical[0] ?? saints[0] ?? observances[0] ?? null,
+    [liturgical, saints, observances],
   );
   const headline = headlineEntry ? localized(headlineEntry.title, language) : null;
 
   // Filtered by identity rather than by title, so two entries that happen to
   // share a title are not both removed.
-  const rest = useMemo(() => {
-    const all = [...celebrations, ...saints];
-    return headlineEntry ? all.filter((c) => c !== headlineEntry) : all;
-  }, [celebrations, saints, headlineEntry]);
+  const drop = (list: typeof saints) =>
+    headlineEntry ? list.filter((c) => c !== headlineEntry) : list;
+  const restSaints = useMemo(
+    () => drop([...liturgical, ...saints]),
+    [liturgical, saints, headlineEntry],
+  );
+  const restObservances = useMemo(() => drop(observances), [observances, headlineEntry]);
 
   const isFeast = celebrations.some((c) => c.highRank);
   const isFast = Boolean(liturgicalDay?.fast);
@@ -352,9 +369,27 @@ export function IlluminatedDay({
       </Band>
 
       {/* ═══ COMMEMORATIONS ═══ */}
-      {rest.length ? (
+      {restSaints.length ? (
         <Band title={labels.saints} delay={STEP * 5}>
-          {rest.map((c, i) => (
+          {restSaints.map((c, i) => (
+            <View key={`${c.id}-${i}`} style={styles.commemorationBlock}>
+              <SelectableText style={styles.commemoration}>
+                {localized(c.title, language)}
+              </SelectableText>
+              <Meta entry={c} labels={labels} style={styles.meta} />
+            </View>
+          ))}
+        </Band>
+      ) : null}
+
+      {/* ═══ CIVIL OBSERVANCES ═══
+          National Liberation Day, Independence Movement Day and the like. They
+          belong on the calendar and they are NOT saints, so they get their own
+          band rather than being appended to the commemorations — which is what
+          the Elegant layout has always done. */}
+      {restObservances.length ? (
+        <Band title={labels.celebrations} delay={STEP * 5.5}>
+          {restObservances.map((c, i) => (
             <View key={`${c.id}-${i}`} style={styles.commemorationBlock}>
               <SelectableText style={styles.commemoration}>
                 {localized(c.title, language)}
