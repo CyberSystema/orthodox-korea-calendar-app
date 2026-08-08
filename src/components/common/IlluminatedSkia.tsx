@@ -10,8 +10,8 @@ import {
   Shadow,
   Skia,
   Text as SkText,
-  matchFont,
   useClock,
+  useFont,
   vec,
 } from '@shopify/react-native-skia';
 import { useMemo } from 'react';
@@ -36,63 +36,76 @@ import { useDerivedValue } from 'react-native-reanimated';
  * which is what makes gilding read as metal instead of yellow paint: real gold
  * leaf has a highlight that MOVES as the page tilts. The sweep is slow and
  * continuous, timed so it reads as light rather than as an animation.
+ *
+ * GEOMETRY. This draws the SAME face at the SAME size as the plain numeral it
+ * stands in for — the app's own EB Garamond, loaded from the bundled file rather
+ * than `matchFont('serif')`, which resolved to the system serif and gave the
+ * gilded figure a visibly different shape from the ungilded one.
+ *
+ * The glyph is centred by its INK BOUNDS, not by an advance width.
+ * `font.measureText()` returns an SkRect of the ink, whose origin carries the
+ * left side bearing and whose `y` is negative (ink rises above the baseline).
+ * Centring on `width` alone therefore left the figure off-centre inside its halo
+ * by the bearing, and a hand-picked baseline (`height * 0.78`) put it off-centre
+ * vertically as well. Solving both from the bounds is exact:
+ *
+ *     inkCentre = origin + bounds.origin + bounds.size / 2   ==>   box / 2
+ *
+ * `box` only has to be large enough to contain the ink plus the glow's blur —
+ * it takes no part in layout, because the caller draws this as a centred overlay
+ * on top of the real text node.
  */
 export function GoldLeafNumeral({
   value,
-  size,
+  box,
   fontSize,
   base,
   highlight,
 }: {
   value: string;
-  size: { width: number; height: number };
+  box: { width: number; height: number };
   fontSize: number;
   base: string;
   highlight: string;
 }) {
   const clock = useClock();
+  const font = useFont(require('../../../assets/fonts/EBGaramond-Regular.ttf'), fontSize);
 
-  const font = useMemo(() => {
-    // Skia needs a concrete font; the system serif is the closest match to the
-    // app's headings and always present, so the numeral never fails to draw.
-    return matchFont({ fontFamily: 'serif', fontSize, fontWeight: 'normal' });
-  }, [fontSize]);
-
-  const glyphWidth = useMemo(
-    () => font?.measureText?.(value)?.width ?? fontSize * 0.6,
-    [font, value],
-  );
-  const x = (size.width - glyphWidth) / 2;
-  const y = size.height * 0.78;
+  const placement = useMemo(() => {
+    if (!font) return null;
+    const b = font.measureText(value);
+    return {
+      x: box.width / 2 - b.x - b.width / 2,
+      y: box.height / 2 - b.y - b.height / 2,
+    };
+  }, [font, value, box.width, box.height]);
 
   // The highlight travels a little wider than the glyph so it fully enters and
   // fully leaves rather than popping at the edges.
   const sweep = useDerivedValue(() => {
     const period = 5200;
     const t = (clock.value % period) / period;
-    const travel = size.width * 1.6;
-    return vec(-size.width * 0.3 + t * travel, 0);
-  }, [clock, size.width]);
+    return vec(-box.width * 0.3 + t * (box.width * 1.6), 0);
+  }, [clock, box.width]);
 
   const sweepEnd = useDerivedValue(() => {
     const period = 5200;
     const t = (clock.value % period) / period;
-    const travel = size.width * 1.6;
-    return vec(-size.width * 0.3 + t * travel + size.width * 0.42, size.height);
-  }, [clock, size.width, size.height]);
+    return vec(-box.width * 0.3 + t * (box.width * 1.6) + box.width * 0.42, box.height);
+  }, [clock, box.width, box.height]);
 
-  if (!font) return null;
+  if (!font || !placement) return null;
 
   return (
-    <Canvas style={{ width: size.width, height: size.height }}>
+    <Canvas style={{ width: box.width, height: box.height }}>
       <Group>
-        <SkText x={x} y={y} text={value} font={font} color={base}>
-          {/* Soft inner glow so the figure sits in light rather than on top of it. */}
+        <SkText x={placement.x} y={placement.y} text={value} font={font} color={base}>
+          {/* Soft outer glow so the figure sits in light rather than on top of it. */}
           <Shadow dx={0} dy={0} blur={18} color={highlight} inner={false} />
         </SkText>
         {/* The travelling specular band, clipped to the glyph by drawing the
             same text again with a moving gradient. */}
-        <SkText x={x} y={y} text={value} font={font}>
+        <SkText x={placement.x} y={placement.y} text={value} font={font}>
           <LinearGradient
             start={sweep}
             end={sweepEnd}

@@ -51,6 +51,10 @@ type Props = {
 /** Entrance timings. Each band arrives just after the one above it, so the page
  *  assembles downward like a leaf being written rather than all at once. */
 const STEP = 90;
+/** The numeral's metrics, shared by the plain Text and the gilded overlay so the
+ *  two cannot drift apart in size the way they had. */
+const NUMERAL_SIZE = 86;
+const NUMERAL_LINE_HEIGHT = 96;
 const DUR = 520;
 
 /**
@@ -179,6 +183,9 @@ export function IlluminatedDay({
   // over the page — the same "noisy" failure the grain had. It is ornament behind
   // the figure, not the subject: smaller, and it stops well short of the margins.
   const halo = Math.min(width * 0.56, 232);
+  // Gilding is a dark-ground effect and a feast-day one; both conditions in a
+  // single value so the Text, its accessibility and the overlay agree.
+  const gilded = isFeast && th.isDark;
   const capital = headline?.trim()?.[0] ?? '';
   const headlineRest = headline ? headline.trim().slice(1) : '';
 
@@ -188,63 +195,78 @@ export function IlluminatedDay({
     <View style={styles.page} key={dateISO}>
       {/* ═══ HERO ═══ */}
       <View style={styles.hero}>
-        {/* Three stacked light layers: a wide candle pool, the turning mandorla,
-            and the gilded figure itself. */}
-        {/* DARK GROUND ONLY, like the gold leaf. A pool of candlelight is a
-            light-on-dark effect; over cream it adds no visible warmth and only
-            raises the local ground, which measurably cost the weekday and the
-            month-year their contrast (1.76:1 and 2.61:1 before this pass). */}
-        {th.isDark ? (
-          <View style={styles.glow} pointerEvents="none" accessible={false}>
-            <CandleGlow size={halo * 1.35} color={th.accent} intense={isFeast} />
-          </View>
-        ) : null}
-        <Animated.View
-          style={[styles.halo, spinStyle]}
-          pointerEvents="none"
-          accessible={false}
-          entering={FadeIn.duration(900)}
-        >
-          <Mandorla
-            size={halo}
-            color={th.accent}
-            intense={isFeast}
-            rays={isFeast ? 24 : 12}
-            wash={th.isDark ? 1 : 0.3}
-          />
-        </Animated.View>
-
         <Animated.View entering={FadeInDown.duration(DUR)}>
           <Text style={styles.weekday}>{weekday.toUpperCase()}</Text>
         </Animated.View>
 
-        <Animated.View entering={ZoomIn.delay(STEP).duration(680)}>
-          {/* On a feast the numeral is GILDED: a Skia specular band travels across
-              the glyph, which is what makes gold read as metal rather than as
-              yellow paint. Ordinary days keep plain type — the gilding has to
-              mean something.
+        {/* ═══ THE NUMERAL AND ITS LIGHT ═══
+            The ornament is CONCENTRIC WITH THE NUMERAL BY CONSTRUCTION. It used
+            to hang off the hero at a hand-picked `top: -10`, which meant its
+            centre depended on whatever the weekday's line box happened to
+            measure — so it drifted with the font, the language and the text
+            scale, and the figure sat off-centre inside its own halo.
 
-              DARK GROUND ONLY. Gold leaf is light-on-dark by nature; on the
-              parchment palette the gilded numeral came out gold on cream and was
-              barely legible — the display figure of the whole page, lost. The
-              light palette gets the plain numeral in the feast colour, which is
-              what a real manuscript does on a pale leaf anyway: it writes the
-              figure in red, not gold. */}
-          {isFeast && th.isDark ? (
-            <View accessible accessibilityLabel={String(dayNum)}>
+            Now both light layers absolutely fill THIS box and centre their
+            children, so the halo's centre is the numeral's centre by definition.
+            They overflow it freely, which is the point: the halo is much larger
+            than the figure it haloes.
+
+            The plain Text always renders and always defines the geometry, in
+            both palettes. When the figure is gilded the Text turns transparent
+            and the Skia canvas is laid over it, centred on the same box — so
+            light and dark occupy identical space and the gilded figure lands
+            exactly where the plain one would. */}
+        <Animated.View style={styles.numeralStack} entering={ZoomIn.delay(STEP).duration(680)}>
+          <View style={styles.ornamentLayer} pointerEvents="none" accessible={false}>
+            {th.isDark ? (
+              <CandleGlow size={halo * 1.35} color={th.accent} intense={isFeast} />
+            ) : null}
+          </View>
+          <Animated.View
+            style={styles.ornamentLayer}
+            pointerEvents="none"
+            accessible={false}
+            entering={FadeIn.duration(900)}
+          >
+            <Animated.View style={spinStyle}>
+              <Mandorla
+                size={halo}
+                color={th.accent}
+                intense={isFeast}
+                rays={isFeast ? 24 : 12}
+                wash={th.isDark ? 1 : 0.3}
+              />
+            </Animated.View>
+          </Animated.View>
+
+          <Text
+            style={[styles.numeral, gilded ? styles.numeralGilded : { color: heroColor }]}
+            allowFontScaling={false}
+            accessibilityElementsHidden={gilded}
+          >
+            {dayNum}
+          </Text>
+
+          {/* Gold leaf is light-on-dark by nature: on the parchment palette the
+              gilded numeral came out gold on cream and was barely legible — the
+              display figure of the whole page, lost. Light writes the figure in
+              red instead, which is what a manuscript does on a pale leaf. */}
+          {gilded ? (
+            <View
+              style={styles.ornamentLayer}
+              pointerEvents="none"
+              accessible
+              accessibilityLabel={String(dayNum)}
+            >
               <GoldLeafNumeral
                 value={String(dayNum)}
-                size={{ width: halo, height: 120 }}
-                fontSize={96}
+                box={{ width: halo, height: NUMERAL_LINE_HEIGHT * 1.7 }}
+                fontSize={NUMERAL_SIZE}
                 base={th.accent}
                 highlight={th.accentPale}
               />
             </View>
-          ) : (
-            <Text style={[styles.numeral, { color: heroColor }]} allowFontScaling={false}>
-              {dayNum}
-            </Text>
-          )}
+          ) : null}
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(STEP * 2).duration(DUR)}>
@@ -432,19 +454,32 @@ const makeStyles = (th: ResolvedTheme) =>
 
     // ── Hero ────────────────────────────────────────────────────────────────
     hero: { alignItems: 'center', paddingTop: spacing.xxl, gap: spacing.xs },
-    halo: { position: 'absolute', top: -10, alignItems: 'center', justifyContent: 'center' },
-    glow: { position: 'absolute', top: -60, alignItems: 'center', justifyContent: 'center' },
     weekday: {
       fontFamily: th.design.fontHeading,
       fontSize: 13,
       letterSpacing: 5,
       color: th.accentText,
     },
+    numeralStack: { alignItems: 'center', justifyContent: 'center' },
+    // Fills the numeral's box and centres whatever it holds, so every light
+    // layer is concentric with the figure no matter how large it is.
+    ornamentLayer: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     numeral: {
       fontFamily: th.design.fontHeading,
-      fontSize: 86,
-      lineHeight: 96,
+      fontSize: NUMERAL_SIZE,
+      lineHeight: NUMERAL_LINE_HEIGHT,
     },
+    // Transparent, not unmounted: the Text still defines the box the gilded
+    // overlay is centred on, so both palettes lay out identically.
+    numeralGilded: { color: 'transparent' },
     monthYear: {
       fontFamily: th.design.fontHeading,
       fontSize: 17,
