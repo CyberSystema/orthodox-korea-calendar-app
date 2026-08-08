@@ -100,6 +100,7 @@ export function TodayScreen({ navigation }: Props) {
     setLanguage,
     adminMode,
     setSecretMenuUnlocked,
+    cloudflareAdminAuthenticated,
     setCloudflareAdminAuthenticated,
   } = useAppStore();
   const [activeDateISO, setActiveDateISO] = useState(dayjs().format('YYYY-MM-DD'));
@@ -134,9 +135,21 @@ export function TodayScreen({ navigation }: Props) {
     ref.lastTap = now;
     if (ref.count >= 7) {
       ref.count = 0;
-      setAdminPromptVisible(true);
+      // NO PASSWORD WHEN A SESSION ALREADY EXISTS. This build only reaches a
+      // phone by cable, so seven taps is challenge enough for day-to-day use.
+      //
+      // The prompt is not a lock in front of the login — it IS the login: what it
+      // collects goes straight to Cloudflare. So it cannot simply be deleted, or
+      // the console would open onto a terminal whose every command 401s with no
+      // way to sign in. It is asked for only when there is no session to use.
+      if (cloudflareAdminAuthenticated) {
+        setSecretMenuUnlocked(true);
+        navigation.navigate('SecretMenu');
+      } else {
+        setAdminPromptVisible(true);
+      }
     }
-  }, []);
+  }, [cloudflareAdminAuthenticated, navigation, setSecretMenuUnlocked]);
   const submitAdminPassword = useCallback(
     async (password: string) => {
       setAdminPromptVisible(false);
