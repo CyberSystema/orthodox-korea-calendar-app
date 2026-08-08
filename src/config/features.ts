@@ -26,8 +26,16 @@ export const SECRET_MENU_ENABLED = process.env.EXPO_PUBLIC_ENABLE_SECRET_MENU ==
  * app is doing, for debugging. Anything that answers "what is the app doing right
  * now" belongs behind this flag.
  *
- * Because `EXPO_PUBLIC_*` is inlined at build time this folds to a literal, so a
- * store build does not merely hide these screens — their code is dead and the
- * routes are never registered.
+ * Because `EXPO_PUBLIC_*` is inlined at build time this folds to a literal, so
+ * the routes are never registered and the 7-tap trigger does nothing: in a public
+ * build these screens are UNREACHABLE.
+ *
+ * They are not, however, ABSENT — a claim this comment used to make. Verified by
+ * exporting both bundles and reading the Hermes string table: "Orthodox Korea
+ * Backend Terminal" appears in the public bundle too. Metro follows static
+ * imports, and RootNavigator imports the screens at the top of the file whatever
+ * the flag says, so their code ships either way. Removing it would need a
+ * separate entry point, not a conditional. Unreachable is the guarantee; absent
+ * is not.
  */
 export const DIAGNOSTICS_ENABLED = SECRET_MENU_ENABLED;
