@@ -185,7 +185,14 @@ export function IlluminatedDay({
   const halo = Math.min(width * 0.56, 232);
   // Gilding is a dark-ground effect and a feast-day one; both conditions in a
   // single value so the Text, its accessibility and the overlay agree.
-  const gilded = isFeast && th.isDark;
+  // Gilding runs on BOTH palettes; only the metal changes. On near-black, gold
+  // leaf is a bright figure with a brighter sheen. On parchment, real gilding is
+  // DARKER than the paper and catches a lighter highlight — so the two colours
+  // swap roles rather than the effect being dropped, which is what "gold on
+  // cream is illegible" actually called for.
+  const gilded = isFeast;
+  const giltBase = th.isDark ? th.accent : th.accentText;
+  const giltHighlight = th.isDark ? th.accentPale : th.accent;
   const capital = headline?.trim()?.[0] ?? '';
   const headlineRest = headline ? headline.trim().slice(1) : '';
 
@@ -218,9 +225,16 @@ export function IlluminatedDay({
             exactly where the plain one would. */}
         <Animated.View style={styles.numeralStack} entering={ZoomIn.delay(STEP).duration(680)}>
           <View style={styles.ornamentLayer} pointerEvents="none" accessible={false}>
-            {th.isDark ? (
-              <CandleGlow size={halo * 1.35} color={th.accent} intense={isFeast} />
-            ) : null}
+            {/* Candlelight on BOTH palettes. It is simply worth less alpha on
+                parchment, where the dark palette's value washes the page instead
+                of lighting it and lifts the ground under the type inside the
+                halo. Tuned against measured contrast, not by eye. */}
+            <CandleGlow
+              size={halo * 1.35}
+              color={th.accent}
+              intense={isFeast}
+              strength={th.isDark ? 1 : 0.35}
+            />
           </View>
           <Animated.View
             style={styles.ornamentLayer}
@@ -234,7 +248,7 @@ export function IlluminatedDay({
                 color={th.accent}
                 intense={isFeast}
                 rays={isFeast ? 24 : 12}
-                wash={th.isDark ? 1 : 0.3}
+                wash={th.isDark ? 1 : 0.5}
               />
             </Animated.View>
           </Animated.View>
@@ -262,8 +276,8 @@ export function IlluminatedDay({
                 value={String(dayNum)}
                 box={{ width: halo, height: NUMERAL_LINE_HEIGHT * 1.7 }}
                 fontSize={NUMERAL_SIZE}
-                base={th.accent}
-                highlight={th.accentPale}
+                base={giltBase}
+                highlight={giltHighlight}
               />
             </View>
           ) : null}

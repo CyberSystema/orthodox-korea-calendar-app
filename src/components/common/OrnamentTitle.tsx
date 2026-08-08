@@ -44,7 +44,7 @@ const makeStyles = (th: ResolvedTheme) =>
     text: {
       fontFamily: typography.family.heading,
       fontSize: typography.size.xs,
-      color: th.accent,
+      color: th.accentText,
       letterSpacing: 0.8,
       textTransform: 'uppercase',
       // Sits between two flex:1 rules — let it wrap rather than squeeze them out.

@@ -305,7 +305,7 @@ const makeStyles = (th: ResolvedTheme) =>
     sectionLabel: {
       fontFamily: typography.family.body,
       fontSize: typography.size.xxs,
-      color: th.accent,
+      color: th.accentText,
       textTransform: 'uppercase',
       letterSpacing: 0.8,
       marginLeft: spacing.xs,

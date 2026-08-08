@@ -35,13 +35,14 @@ const lightBase = {
    * eyes and the Illuminated direction leans on secondary text far more than the
    * previous layout did.
    *
-   * The values carry HEADROOM (4.97:1 and 3.07:1 against a bare page) rather than
-   * sitting exactly on 4.5, because this type is often composited over the
-   * mandorla's halo, which lifts the local ground. Measured on the simulator
-   * rather than assumed: at exactly-4.5 tokens the weekday still came out 4.39:1
-   * on screen.
+   * The values carry HEADROOM (5.64:1 and 3.07:1 against a bare page) rather
+   * than sitting on 4.5, because this type is composited over BOTH the
+   * mandorla's halo and the candle pool, each of which lifts the local ground.
+   * Every step of that headroom was measured on the simulator, not assumed: at
+   * exactly-4.5 tokens the weekday came out 4.39:1 on screen, and it fell to
+   * 4.19:1 again once the candle pool was enabled on this palette.
    */
-  textSecondary: '#6C6151',
+  textSecondary: '#63594A',
   textFaint: '#8D8372',
 
   // ── Semantic additions (both themes define these) ──
@@ -91,11 +92,11 @@ const lightBase = {
    *
    * So the two roles are split, exactly as `fillStrong`/`onAccent` split their
    * overloaded tokens. This value clears 4.5:1 against the page background, the
-   * worst case, with headroom for the halo it is usually drawn over — 4.96:1 on
-   * a bare page, 4.6:1 measured on screen. In the night palette gold on
+   * worst case, with headroom for the halo AND the candle pool it is drawn over
+   * — 5.63:1 on a bare page. In the night palette gold on
    * near-black already measures 9:1, so there it simply stays the bright accent.
    */
-  accentText: '#77601E',
+  accentText: '#6D581C',
 };
 
 /**

@@ -403,7 +403,7 @@ const makeStyles = (th: ResolvedTheme) =>
     viewEventArrow: {
       fontFamily: typography.family.heading,
       fontSize: typography.size.lg,
-      color: th.accent,
+      color: th.accentText,
       marginTop: -2,
     },
 

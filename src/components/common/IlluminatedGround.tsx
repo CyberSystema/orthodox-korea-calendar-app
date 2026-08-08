@@ -37,7 +37,13 @@ export function IlluminatedGround() {
           against, then the page, then a slightly deeper foot. */}
       <LinearGradient
         colors={[th.primaryDeep, th.background, th.background, th.backgroundDeep]}
-        locations={[0, 0.22, 0.72, 1]}
+        // The wine must finish ABOVE the content, not across it. The headpiece
+        // occupies roughly the top 13% of the window; ending the transition at
+        // 22% left the action pills sitting on a muted #CABAAC rather than the
+        // cream page, which measured 3.20:1 for their gold lettering. Ending at
+        // 0.15 keeps the band dissolving into the page without tinting the first
+        // row of controls.
+        locations={[0, 0.15, 0.72, 1]}
         style={StyleSheet.absoluteFill}
       />
 

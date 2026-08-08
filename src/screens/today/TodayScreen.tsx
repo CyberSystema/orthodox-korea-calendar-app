@@ -826,7 +826,7 @@ const makeStyles = (th: ResolvedTheme) =>
       fontFamily: typography.family.body,
       fontSize: typography.size.xs,
       // Gold on parchment, matching the headpiece's own lettering.
-      color: th.direction === 'illuminated' ? th.accent : th.primary,
+      color: th.direction === 'illuminated' ? th.accentText : th.primary,
       letterSpacing: th.direction === 'illuminated' ? 0.6 : 0,
     },
     actionPillAccent: {
@@ -840,7 +840,7 @@ const makeStyles = (th: ResolvedTheme) =>
     actionPillAccentText: {
       fontFamily: typography.family.body,
       fontSize: typography.size.xs,
-      color: th.direction === 'illuminated' ? th.accentBright : th.onAccent,
+      color: th.direction === 'illuminated' ? th.accentText : th.onAccent,
       fontWeight: typography.weight.semibold,
     },
 
@@ -987,7 +987,7 @@ const makeStyles = (th: ResolvedTheme) =>
     searchResultKind: {
       fontFamily: typography.family.body,
       fontSize: typography.size.xxs,
-      color: th.accent,
+      color: th.accentText,
       textTransform: 'uppercase',
       letterSpacing: 0.5,
       flexShrink: 0,

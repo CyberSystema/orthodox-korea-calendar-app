@@ -1760,7 +1760,7 @@ const makeStyles = (th: ResolvedTheme) =>
     searchResultKind: {
       fontFamily: typography.family.body,
       fontSize: typography.size.xxs,
-      color: th.accent,
+      color: th.accentText,
       textTransform: 'uppercase',
       letterSpacing: 0.5,
       flexShrink: 0,

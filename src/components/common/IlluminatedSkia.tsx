@@ -176,15 +176,25 @@ export function CandleGlow({
   size,
   color,
   intense = false,
+  strength = 1,
 }: {
   size: number;
   color: string;
   intense?: boolean;
+  /**
+   * Scales the pool's opacity, 0..1.
+   *
+   * A pale ground needs far less of it than a dark one: the same alpha that
+   * reads as candlelight on near-black merely washes parchment, and it lifts the
+   * local background under the type that sits inside the halo. The effect still
+   * belongs on both palettes — it just cannot be the same number on both.
+   */
+  strength?: number;
 }) {
   const c = size / 2;
   return (
     <Canvas style={{ width: size, height: size }}>
-      <Circle cx={c} cy={c} r={c} opacity={intense ? 0.3 : 0.16}>
+      <Circle cx={c} cy={c} r={c} opacity={(intense ? 0.3 : 0.16) * strength}>
         <RadialGradient c={vec(c, c)} r={c} colors={[color, 'transparent']} positions={[0, 1]} />
       </Circle>
     </Canvas>

@@ -265,7 +265,7 @@ const makeStyles = (th: ResolvedTheme) =>
     refreshText: {
       fontFamily: typography.family.heading,
       fontSize: typography.size.sm,
-      color: th.accent,
+      color: th.accentText,
     },
     card: {
       borderWidth: 1,
@@ -278,7 +278,7 @@ const makeStyles = (th: ResolvedTheme) =>
     cardTitle: {
       fontFamily: typography.family.heading,
       fontSize: typography.size.sm,
-      color: th.accent,
+      color: th.accentText,
       letterSpacing: 1,
       textTransform: 'uppercase',
     },

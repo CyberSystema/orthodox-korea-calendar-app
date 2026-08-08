@@ -300,7 +300,7 @@ const makeStyles = (th: ResolvedTheme) =>
     buttonOutlineText: {
       fontFamily: typography.family.heading,
       fontSize: typography.size.sm,
-      color: th.accent,
+      color: th.accentText,
     },
     statusText: {
       fontFamily: typography.family.body,
