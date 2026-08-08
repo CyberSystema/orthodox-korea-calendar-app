@@ -13,6 +13,7 @@ import {
   ScrollView,
   StyleSheet,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -26,6 +27,7 @@ import Svg, { Circle, Path } from 'react-native-svg';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 
 import { IlluminatedGround } from '../../components/common/IlluminatedGround';
+import { MAX_LEAF_WIDTH } from '../../theme/useLeaf';
 import { ByzantineArrow } from '../../components/common/ByzantineArrow';
 import { ByzantineKnot } from '../../components/common/ByzantineKnot';
 import { HeadpieceButton, IlluminatedHeader } from '../../components/common/IlluminatedHeader';
@@ -81,6 +83,10 @@ export function TodayScreen({ navigation }: Props) {
   const styles = useThemedStyles(makeStyles);
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  // LIVE, not captured at import. This was module-scope `Dimensions.get()`,
+  // frozen at the first import — already wrong after any rotation or Split
+  // View resize, both of which iPad has shipped all along.
+  const { height: windowHeight } = useWindowDimensions();
   const tabBottomPadding = useTabContentBottomPadding();
 
   // Drives the headpiece's parallax. Kept on the UI thread — the header reads it
@@ -94,7 +100,7 @@ export function TodayScreen({ navigation }: Props) {
   // notch — and capped to the band above the keyboard, so the WHOLE card is always on
   // screen (28 below the notch, 16 above the keyboard) no matter how long the list is.
   const searchCardMaxHeight =
-    WINDOW_HEIGHT - insets.top - 28 - Math.max(keyboardHeight, insets.bottom) - 16;
+    windowHeight - insets.top - 28 - Math.max(keyboardHeight, insets.bottom) - 16;
   const {
     language,
     setLanguage,
@@ -743,7 +749,6 @@ export function TodayScreen({ navigation }: Props) {
 // App is portrait-locked, so a window-based max height resolves reliably — unlike a
 // percentage of the modal's auto-height KeyboardAvoidingView parent (which mis-sized
 // the card and clipped the close button).
-const WINDOW_HEIGHT = Dimensions.get('window').height;
 
 const makeStyles = (th: ResolvedTheme) =>
   ({
@@ -762,7 +767,7 @@ const makeStyles = (th: ResolvedTheme) =>
       // navigator and the action pills stretched edge to edge above it, and the
       // page read as a wide bar sitting on a narrow leaf.
       width: '100%',
-      maxWidth: 860,
+      maxWidth: MAX_LEAF_WIDTH,
       alignSelf: 'center',
     },
     pressed: {
@@ -946,7 +951,7 @@ const makeStyles = (th: ResolvedTheme) =>
       borderRadius: radii.lg,
       backgroundColor: th.surface,
       overflow: 'hidden',
-      maxHeight: WINDOW_HEIGHT * 0.7,
+      maxHeight: '70%',
     },
     modalHeader: {
       backgroundColor: th.primaryDeep,

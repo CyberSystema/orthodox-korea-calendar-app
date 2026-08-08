@@ -18,6 +18,7 @@ import { localized } from '../../features/calendar/types';
 import type { SupportedLanguage } from '../../types/language';
 import { spacing } from '../../theme/spacing';
 import { useTheme, useThemedStyles, type ResolvedTheme } from '../../theme/useTheme';
+import { MAX_LEAF_WIDTH, useLeaf } from '../../theme/useLeaf';
 import { Mandorla, OrnamentalRule } from './IlluminatedOrnaments';
 import { CandleGlow, GoldLeafNumeral } from './IlluminatedSkia';
 import { LITURGICAL_MARKS, LiturgicalMark } from './LiturgicalMark';
@@ -200,14 +201,26 @@ export function IlluminatedDay({
   // The halo was 0.72 of the screen with full-length rays, which on a feast took
   // over the page — the same "noisy" failure the grain had. It is ornament behind
   // the figure, not the subject: smaller, and it stops well short of the margins.
-  const halo = Math.min(width * 0.56, 232);
+  // ONE SCALE FOR THE DRAWN PAGE — see useLeaf. `k` is exactly 1 on every phone
+  // by construction, so the phone composition below is arithmetically unchanged.
+  //
+  //   k   FIGURE  — the numeral, halo, marks, ornament. Pictures grow with the page.
+  //   kt  DISPLAY — headings. Grow, but far less, or they shout.
+  //   (1) READING — readings and commemorations NEVER scale: the measure is
+  //       already bounded, so larger body type only shortens the line. Inflating
+  //       body copy is what makes a tablet layout look amateur.
+  const leaf = useLeaf();
+  const { k, kt, halo } = leaf;
+  const fig = (base: number) => Math.round(base * k);
+  const disp = (base: number) => Math.round(base * kt);
+  const big = k > 1;
   // A LEAF HAS A MEASURE. Letting the page fill an iPad meant a line of type
   // running the better part of 700pt — unreadable — while two thirds of the
   // screen stayed empty, because the composition was designed and judged at
   // phone width. Bound the leaf and centre it, then put the sections side by
   // side once there is room for two of them: the width gets used by CONTENT
   // rather than by stretching the same column.
-  const wide = width >= 820;
+  const wide = leaf.spread;
   // Gilding is a dark-ground effect and a feast-day one; both conditions in a
   // single value so the Text, its accessibility and the overlay agree.
   // Gilding runs on BOTH palettes; only the metal changes. On near-black, gold
@@ -228,7 +241,9 @@ export function IlluminatedDay({
       {/* ═══ HERO ═══ */}
       <View style={styles.hero}>
         <Animated.View entering={FadeInDown.duration(DUR)}>
-          <Text style={styles.weekday}>{weekday.toUpperCase()}</Text>
+          <Text style={[styles.weekday, big && { fontSize: fig(13), letterSpacing: fig(5) }]}>
+            {weekday.toUpperCase()}
+          </Text>
         </Animated.View>
 
         {/* ═══ THE NUMERAL AND ITS LIGHT ═══
@@ -279,7 +294,11 @@ export function IlluminatedDay({
           </Animated.View>
 
           <Text
-            style={[styles.numeral, gilded ? styles.numeralGilded : { color: heroColor }]}
+            style={[
+              styles.numeral,
+              big && { fontSize: fig(NUMERAL_SIZE), lineHeight: fig(NUMERAL_LINE_HEIGHT) },
+              gilded ? styles.numeralGilded : { color: heroColor },
+            ]}
             allowFontScaling={false}
             accessibilityElementsHidden={gilded}
           >
@@ -299,8 +318,8 @@ export function IlluminatedDay({
             >
               <GoldLeafNumeral
                 value={String(dayNum)}
-                box={{ width: halo, height: NUMERAL_LINE_HEIGHT * 1.7 }}
-                fontSize={NUMERAL_SIZE}
+                box={{ width: halo, height: fig(NUMERAL_LINE_HEIGHT) * 1.7 }}
+                fontSize={fig(NUMERAL_SIZE)}
                 base={giltBase}
                 highlight={giltHighlight}
               />
@@ -309,7 +328,9 @@ export function IlluminatedDay({
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(STEP * 2).duration(DUR)}>
-          <Text style={styles.monthYear}>{monthYear}</Text>
+          <Text style={[styles.monthYear, big && { fontSize: fig(17), letterSpacing: fig(1) }]}>
+            {monthYear}
+          </Text>
         </Animated.View>
       </View>
 
@@ -325,11 +346,14 @@ export function IlluminatedDay({
             <View key={mark.key} style={styles.mark}>
               <LiturgicalMark
                 source={mark.image}
-                size={44}
+                size={fig(44)}
                 color={mark.key === 'fast' ? th.fastAccent : th.accent}
                 label={mark.label}
               />
-              <Text style={styles.markLabel} numberOfLines={2}>
+              <Text
+                style={[styles.markLabel, big && { fontSize: disp(12), letterSpacing: disp(0.8) }]}
+                numberOfLines={2}
+              >
                 {mark.label}
               </Text>
             </View>
@@ -350,8 +374,10 @@ export function IlluminatedDay({
           deliberately outside the selection surface (see SelectableText). */}
       {headline ? (
         <Animated.View entering={FadeInDown.delay(STEP * 3).duration(DUR)}>
-          <Text style={styles.headline}>
-            <Text style={[styles.versal, { color: heroColor }]}>{capital}</Text>
+          <Text style={[styles.headline, big && { fontSize: disp(24), lineHeight: disp(32) }]}>
+            <Text style={[styles.versal, big && { fontSize: disp(38) }, { color: heroColor }]}>
+              {capital}
+            </Text>
             {headlineRest}
           </Text>
           {headlineEntry ? (
@@ -442,7 +468,7 @@ export function IlluminatedDay({
         pointerEvents="none"
         accessible={false}
       >
-        <OrnamentalRule width={width * 0.5} color={th.accentDim} />
+        <OrnamentalRule width={leaf.width * 0.5} color={th.accentDim} scale={k} />
       </Animated.View>
     </View>
   );
@@ -514,12 +540,20 @@ function Band({
 }) {
   const th = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const { k, kt } = useLeaf();
   return (
     <Animated.View style={[styles.band, style]} entering={FadeInDown.delay(delay).duration(DUR)}>
       <View style={styles.rubric}>
-        <RubricMark color={th.accent} />
-        <Text style={styles.bandLabel}>{title.toUpperCase()}</Text>
-        <RubricMark color={th.accent} />
+        <RubricMark color={th.accent} size={Math.round(7 * k)} />
+        <Text
+          style={[
+            styles.bandLabel,
+            k > 1 && { fontSize: Math.round(11 * kt), letterSpacing: Math.round(4 * kt) },
+          ]}
+        >
+          {title.toUpperCase()}
+        </Text>
+        <RubricMark color={th.accent} size={Math.round(7 * k)} />
       </View>
       <View style={styles.bandBody}>{children}</View>
     </Animated.View>
@@ -528,9 +562,9 @@ function Band({
 
 /** The headpiece's centre lozenge, reduced to a single pip — the same hand at a
  *  quieter volume, and the only ornament a section gets. */
-function RubricMark({ color }: { color: string }) {
+function RubricMark({ color, size = 7 }: { color: string; size?: number }) {
   return (
-    <Svg width={7} height={7} viewBox="0 0 8 8">
+    <Svg width={size} height={size} viewBox="0 0 8 8">
       <Path d="M4 0 L8 4 L4 8 L0 4 Z" fill={color} opacity={0.85} />
     </Svg>
   );
@@ -546,7 +580,7 @@ const makeStyles = (th: ResolvedTheme) =>
       // the widest saint name on one comfortable line without the measure
       // running away.
       width: '100%',
-      maxWidth: 860,
+      maxWidth: MAX_LEAF_WIDTH,
       alignSelf: 'center',
     },
     // Sections stack on a phone and sit two-up on a tablet. minWidth is what

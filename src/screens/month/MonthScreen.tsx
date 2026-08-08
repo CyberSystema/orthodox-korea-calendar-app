@@ -14,6 +14,7 @@ import {
   ScrollView,
   StyleSheet,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -111,13 +112,17 @@ export function MonthScreen({ navigation, route }: Props) {
   const styles = useThemedStyles(makeStyles);
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  // LIVE, not captured at import. This was module-scope `Dimensions.get()`,
+  // frozen at the first import — already wrong after any rotation or Split
+  // View resize, both of which iPad has shipped all along.
+  const { height: windowHeight } = useWindowDimensions();
   const tabBottomPadding = useTabContentBottomPadding();
   const keyboardHeight = useKeyboardHeight();
   // The search modal is top-anchored at (insets.top + 28) — a comfortable gap below the
   // notch — and capped to the band above the keyboard, so the WHOLE card is always on
   // screen (28 below the notch, 16 above the keyboard) no matter how long the list is.
   const searchCardMaxHeight =
-    WINDOW_HEIGHT - insets.top - 28 - Math.max(keyboardHeight, insets.bottom) - 16;
+    windowHeight - insets.top - 28 - Math.max(keyboardHeight, insets.bottom) - 16;
   const {
     language,
     adminMode,
@@ -1139,7 +1144,6 @@ export function MonthScreen({ navigation, route }: Props) {
 // App is portrait-locked, so a window-based max height resolves reliably — unlike a
 // percentage of the modal's auto-height KeyboardAvoidingView parent (which mis-sized
 // the card and clipped the close button).
-const WINDOW_HEIGHT = Dimensions.get('window').height;
 
 const makeStyles = (th: ResolvedTheme) =>
   ({
@@ -1719,7 +1723,7 @@ const makeStyles = (th: ResolvedTheme) =>
       borderRadius: radii.lg,
       borderWidth: 1,
       borderColor: th.border,
-      maxHeight: WINDOW_HEIGHT * 0.7,
+      maxHeight: '70%',
       overflow: 'hidden',
     },
     searchModalHeader: {
