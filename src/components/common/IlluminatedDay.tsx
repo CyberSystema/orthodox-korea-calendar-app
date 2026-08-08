@@ -190,16 +190,28 @@ export function IlluminatedDay({
       <View style={styles.hero}>
         {/* Three stacked light layers: a wide candle pool, the turning mandorla,
             and the gilded figure itself. */}
-        <View style={styles.glow} pointerEvents="none" accessible={false}>
-          <CandleGlow size={halo * 1.35} color={th.accent} intense={isFeast} />
-        </View>
+        {/* DARK GROUND ONLY, like the gold leaf. A pool of candlelight is a
+            light-on-dark effect; over cream it adds no visible warmth and only
+            raises the local ground, which measurably cost the weekday and the
+            month-year their contrast (1.76:1 and 2.61:1 before this pass). */}
+        {th.isDark ? (
+          <View style={styles.glow} pointerEvents="none" accessible={false}>
+            <CandleGlow size={halo * 1.35} color={th.accent} intense={isFeast} />
+          </View>
+        ) : null}
         <Animated.View
           style={[styles.halo, spinStyle]}
           pointerEvents="none"
           accessible={false}
           entering={FadeIn.duration(900)}
         >
-          <Mandorla size={halo} color={th.accent} intense={isFeast} rays={isFeast ? 24 : 12} />
+          <Mandorla
+            size={halo}
+            color={th.accent}
+            intense={isFeast}
+            rays={isFeast ? 24 : 12}
+            wash={th.isDark ? 1 : 0.3}
+          />
         </Animated.View>
 
         <Animated.View entering={FadeInDown.duration(DUR)}>
@@ -426,7 +438,7 @@ const makeStyles = (th: ResolvedTheme) =>
       fontFamily: th.design.fontHeading,
       fontSize: 13,
       letterSpacing: 5,
-      color: th.accent,
+      color: th.accentText,
     },
     numeral: {
       fontFamily: th.design.fontHeading,
@@ -488,7 +500,9 @@ const makeStyles = (th: ResolvedTheme) =>
       fontFamily: th.design.fontHeading,
       fontSize: 11,
       letterSpacing: 4,
-      color: th.accent,
+      // 11pt letterspaced gold is the smallest type on the page — it needs the
+      // text-role gold, not the ornament one. See accentText.
+      color: th.accentText,
     },
     bandBody: { gap: spacing.sm, alignSelf: 'stretch' },
     reading: {

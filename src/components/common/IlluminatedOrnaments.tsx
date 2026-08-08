@@ -35,11 +35,22 @@ export function Mandorla({
   color,
   rays = 16,
   intense = false,
+  wash = 1,
 }: {
   size: number;
   color: string;
   rays?: number;
   intense?: boolean;
+  /**
+   * Strength of the radial halo behind the rays, 0..1.
+   *
+   * The rays are lines and cost the text under them almost nothing; the radial
+   * is a WASH, and on a pale ground it lifts the local background under the
+   * weekday and the month-year — measured as the difference between 4.3:1 and
+   * AA. Light palettes pass a fraction here; the dark palette passes 1, where
+   * the same wash is what makes the halo read at all.
+   */
+  wash?: number;
 }) {
   const c = size / 2;
   const inner = size * 0.17;
@@ -49,8 +60,8 @@ export function Mandorla({
     <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
       <Defs>
         <RadialGradient id="halo" cx="50%" cy="50%" r="50%">
-          <Stop offset="0%" stopColor={color} stopOpacity={intense ? 0.34 : 0.18} />
-          <Stop offset="55%" stopColor={color} stopOpacity={intense ? 0.12 : 0.06} />
+          <Stop offset="0%" stopColor={color} stopOpacity={(intense ? 0.34 : 0.18) * wash} />
+          <Stop offset="55%" stopColor={color} stopOpacity={(intense ? 0.12 : 0.06) * wash} />
           <Stop offset="100%" stopColor={color} stopOpacity={0} />
         </RadialGradient>
       </Defs>

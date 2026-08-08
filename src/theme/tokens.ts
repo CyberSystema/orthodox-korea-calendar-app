@@ -23,6 +23,27 @@ import { colors } from './colors';
 const lightBase = {
   ...colors,
 
+  /**
+   * Two overrides of the base palette, both measured against the page
+   * background #F0E8D8 rather than against a card, because the page is the
+   * darker ground and therefore the worst case.
+   *
+   *   textSecondary #8A7C68 -> 3.34:1, below AA for body text
+   *   textFaint     #B0A48E -> 2.02:1, below every threshold
+   *
+   * These are long-standing values, not new ones, but this app is read by older
+   * eyes and the Illuminated direction leans on secondary text far more than the
+   * previous layout did.
+   *
+   * The values carry HEADROOM (4.97:1 and 3.07:1 against a bare page) rather than
+   * sitting exactly on 4.5, because this type is often composited over the
+   * mandorla's halo, which lifts the local ground. Measured on the simulator
+   * rather than assumed: at exactly-4.5 tokens the weekday still came out 4.39:1
+   * on screen.
+   */
+  textSecondary: '#6C6151',
+  textFaint: '#8D8372',
+
   // ── Semantic additions (both themes define these) ──
   /** Page background behind cards. */
   canvas: colors.background,
@@ -58,6 +79,23 @@ const lightBase = {
    * wine; text on a dark gold pill must go light or it is unreadable.
    */
   onAccent: colors.primaryDeep,
+  /**
+   * GOLD USED AS TEXT — not the same value as gold used as ornament.
+   *
+   * `accent` (#B8942E) measures 2.36:1 on the light page background: fine for a
+   * hairline rule or a drawn ornament, and a failure for lettering. The
+   * Illuminated direction sets far more small type in gold than Refined ever did
+   * (the letterspaced weekday, the section labels, the mark captions), which
+   * turned a latent palette weakness into a real one — measured at 1.76:1 for
+   * "SUNDAY" over the halo.
+   *
+   * So the two roles are split, exactly as `fillStrong`/`onAccent` split their
+   * overloaded tokens. This value clears 4.5:1 against the page background, the
+   * worst case, with headroom for the halo it is usually drawn over — 4.96:1 on
+   * a bare page, 4.6:1 measured on screen. In the night palette gold on
+   * near-black already measures 9:1, so there it simply stays the bright accent.
+   */
+  accentText: '#77601E',
 };
 
 /**
@@ -86,6 +124,9 @@ export const lightTheme: Theme = lightBase;
  */
 export const nightTheme: Theme = {
   ...lightTheme,
+  // Gold on near-black measures 9:1, so the night palette needs no darkened
+  // text-gold: the bright accent IS the legible choice there.
+  accentText: colors.accentBright,
 
   // ── Surfaces: warm, not neutral ──
   background: '#14100C',
