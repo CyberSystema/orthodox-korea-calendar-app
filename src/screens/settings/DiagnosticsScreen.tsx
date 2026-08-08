@@ -106,6 +106,8 @@ export function DiagnosticsScreen() {
   const { fontScale: osScale } = useWindowDimensions();
 
   const appScale = useAppStore((s) => s.fontScale);
+  const previewPublic = useAppStore((s) => s.previewPublic);
+  const setPreviewPublic = useAppStore((s) => s.setPreviewPublic);
   const language = useAppStore((s) => s.language);
   const launchScreen = useAppStore((s) => s.launchScreen);
   const adminMode = useAppStore((s) => s.adminMode);
@@ -167,6 +169,38 @@ export function DiagnosticsScreen() {
         >
           <Text style={styles.refreshText}>{'Refresh'}</Text>
         </Pressable>
+
+        {/* ═══ PREVIEW AS A PARISHIONER ═══
+            Hides every owner surface — this screen's own entry row in Settings
+            and the 7-tap console trigger — so the app presents exactly as a
+            public build does, without installing a second copy or losing this
+            one.
+
+            Faithful for judging the public UI, because the only difference
+            between the builds IS which surfaces appear. It does NOT prove the
+            console is unreachable in a real public build: that is a property of
+            the compiled flag, checked by building the public bundle and reading
+            it.
+
+            Turning it on hides the way back, so the way back is a long press on
+            the version string in Settings. */}
+        <Section title={'Preview'}>
+          <Pressable
+            style={({ pressed }) => [styles.previewToggle, pressed && { opacity: 0.6 }]}
+            onPress={() => setPreviewPublic(!previewPublic)}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: previewPublic }}
+          >
+            <Text style={styles.previewLabel}>
+              {previewPublic ? 'presenting as PUBLIC' : 'presenting as OWNER'}
+            </Text>
+            <Text style={styles.previewHint}>
+              {previewPublic
+                ? 'long-press the version in Settings to come back'
+                : 'tap to hide every owner surface'}
+            </Text>
+          </Pressable>
+        </Section>
 
         <Section title={'Build'}>
           <Row label="version" value={getAppVersionLabel()} />
@@ -294,6 +328,25 @@ const makeStyles = (th: ResolvedTheme) =>
       flexShrink: 0,
       fontFamily: typography.family.body,
       fontSize: typography.size.xs,
+      color: th.textSecondary,
+    },
+    previewToggle: {
+      borderWidth: 1,
+      borderColor: th.accentLine,
+      borderRadius: radii.sm,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.md,
+      gap: 2,
+    },
+    previewLabel: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.sm,
+      color: th.textPrimary,
+      fontWeight: typography.weight.bold,
+    },
+    previewHint: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.xxs,
       color: th.textSecondary,
     },
     rowValue: {

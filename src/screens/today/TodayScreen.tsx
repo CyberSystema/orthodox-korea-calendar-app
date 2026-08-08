@@ -19,7 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useKeyboardHeight } from '../../hooks/useKeyboardHeight';
 import { useTabContentBottomPadding } from '../../hooks/useTabContentBottomPadding';
 import { BRAND_TITLE, USES_NATIVE_HEADER } from '../../navigation/nativeHeader';
-import { SECRET_MENU_ENABLED } from '../../config/features';
+import { useOwnerSurfaces } from '../../config/ownerSurfaces';
 import { useTranslation } from 'react-i18next';
 import Svg, { Circle, Path } from 'react-native-svg';
 
@@ -77,6 +77,7 @@ function SearchSvgIcon({ size = 20, color }: { size?: number; color?: string }) 
 
 export function TodayScreen({ navigation }: Props) {
   const th = useTheme();
+  const ownerSurfaces = useOwnerSurfaces();
   const styles = useThemedStyles(makeStyles);
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -123,7 +124,9 @@ export function TodayScreen({ navigation }: Props) {
   const secretTapRef = useRef({ count: 0, lastTap: 0 });
   const handleBrandTap = useCallback(() => {
     // Owner-only: disabled (no-op) in all EAS/store builds; on only in local sideloads.
-    if (!SECRET_MENU_ENABLED) return;
+    // Preview mode hides the console's own door, so the owner sees exactly
+    // what a parishioner would: seven taps on the title doing nothing.
+    if (!ownerSurfaces) return;
     const now = Date.now();
     const ref = secretTapRef.current;
     if (now - ref.lastTap > 1200) ref.count = 0;

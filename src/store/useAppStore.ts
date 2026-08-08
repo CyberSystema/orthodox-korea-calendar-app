@@ -19,6 +19,10 @@ const FONT_SCALE_KEY = 'app.fontScale';
 const LAUNCH_SCREEN_KEY = 'app.launchScreen';
 const THEME_MODE_KEY = 'app.themeMode';
 const DIRECTION_KEY = 'app.direction';
+// Owner builds only: hide every owner surface so the app presents exactly as a
+// parishioner's copy does. Persisted, so a restart does not quietly restore the
+// owner's view mid-test.
+const PREVIEW_PUBLIC_KEY = 'app.previewPublic';
 // We persist only the fact that staff mode is enabled — never the raw passcode.
 // The session token (managed by the SDK) is what proves authentication.
 const STAFF_MODE_KEY = 'auth.staffModeEnabled';
@@ -34,8 +38,15 @@ type AppState = {
   launchScreen: LaunchScreen;
   /** Light / dark / follow-the-system; see theme/useTheme.ts. */
   themeMode: ThemeMode;
-  /** TEMPORARY: which visual direction is being trialled; see theme/direction.ts. */
+  /** Which visual design is active; see theme/direction.ts. */
   direction: Direction;
+  /**
+   * Owner builds only: present as the public app.
+   *
+   * Never true in a public build, because nothing there can set it — the toggle
+   * lives behind the owner flag. See config/ownerSurfaces.
+   */
+  previewPublic: boolean;
   selectedDateISO: string | null;
   adminMode: boolean;
   cloudflareAdminAuthenticated: boolean;
@@ -46,6 +57,7 @@ type AppState = {
   setLaunchScreen: (launchScreen: LaunchScreen) => void;
   setThemeMode: (themeMode: ThemeMode) => void;
   setDirection: (direction: Direction) => void;
+  setPreviewPublic: (value: boolean) => void;
   setSelectedDateISO: (dateISO: string | null) => void;
   setAdminMode: (value: boolean) => void;
   setCloudflareAdminAuthenticated: (value: boolean) => void;
@@ -59,6 +71,7 @@ export const useAppStore = create<AppState>((set) => ({
   launchScreen: DEFAULT_LAUNCH_SCREEN,
   themeMode: DEFAULT_THEME_MODE,
   direction: DEFAULT_DIRECTION,
+  previewPublic: false,
   selectedDateISO: null,
   adminMode: false,
   cloudflareAdminAuthenticated: false,
@@ -70,6 +83,7 @@ export const useAppStore = create<AppState>((set) => ({
       savedLaunchScreen,
       savedThemeMode,
       savedDirection,
+      savedPreviewPublic,
       hadAuthToken,
       staffModeFlag,
       legacyPasscode,
@@ -79,6 +93,7 @@ export const useAppStore = create<AppState>((set) => ({
       secureStorage.getItem(LAUNCH_SCREEN_KEY),
       secureStorage.getItem(THEME_MODE_KEY),
       secureStorage.getItem(DIRECTION_KEY),
+      secureStorage.getItem(PREVIEW_PUBLIC_KEY),
       hasAdminAuthToken(),
       secureStorage.getItem(STAFF_MODE_KEY),
       secureStorage.getItem(LEGACY_STAFF_PASSCODE_KEY),
@@ -126,6 +141,7 @@ export const useAppStore = create<AppState>((set) => ({
       // or the app flashes light before switching to night.
       themeMode: normalizeThemeMode(savedThemeMode),
       direction: normalizeDirection(savedDirection),
+      previewPublic: savedPreviewPublic === 'true',
       adminMode: staffModeEnabled,
       cloudflareAdminAuthenticated,
     });
@@ -150,6 +166,10 @@ export const useAppStore = create<AppState>((set) => ({
   setDirection: (direction) => {
     void secureStorage.setItem(DIRECTION_KEY, direction);
     set({ direction });
+  },
+  setPreviewPublic: (previewPublic) => {
+    void secureStorage.setItem(PREVIEW_PUBLIC_KEY, String(previewPublic));
+    set({ previewPublic });
   },
   setSelectedDateISO: (selectedDateISO) => set({ selectedDateISO }),
   setAdminMode: (value) => set({ adminMode: value }),

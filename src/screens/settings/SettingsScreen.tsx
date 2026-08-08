@@ -8,7 +8,8 @@ import Svg, { Path } from 'react-native-svg';
 import { IlluminatedGround } from '../../components/common/IlluminatedGround';
 import { OrnamentTitle } from '../../components/common/OrnamentTitle';
 import { Text } from '../../components/common/ScaledText';
-import { DIAGNOSTICS_ENABLED } from '../../config/features';
+import { DIAGNOSTICS_ENABLED, SECRET_MENU_ENABLED } from '../../config/features';
+import { useOwnerSurfaces } from '../../config/ownerSurfaces';
 import { DIRECTIONS, DIRECTION_LABEL_KEYS } from '../../theme/direction';
 import { getAppVersionLabel } from '../../utils/appVersion';
 import { useAppStore } from '../../store/useAppStore';
@@ -137,9 +138,11 @@ export function SettingsScreen({ navigation }: Props) {
     setThemeMode,
     direction,
     setDirection,
+    setPreviewPublic,
   } = useAppStore();
   const th = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const ownerSurfaces = useOwnerSurfaces();
 
   const versionLabel = getAppVersionLabel();
 
@@ -237,7 +240,7 @@ export function SettingsScreen({ navigation }: Props) {
               styles.linkRow,
               // In a store build this is the ONLY row, so it must not draw a
               // divider under itself.
-              !DIAGNOSTICS_ENABLED && styles.linkRowLast,
+              !ownerSurfaces && styles.linkRowLast,
               pressed && styles.pressed,
             ]}
             onPress={() => navigation.navigate('Staff')}
@@ -247,7 +250,7 @@ export function SettingsScreen({ navigation }: Props) {
             <ChevronRight color={th.textFaint} />
           </Pressable>
 
-          {DIAGNOSTICS_ENABLED ? (
+          {ownerSurfaces ? (
             <Pressable
               style={({ pressed }) => [
                 styles.linkRow,
@@ -263,10 +266,25 @@ export function SettingsScreen({ navigation }: Props) {
           ) : null}
         </View>
 
+        {/* THE WAY BACK OUT OF PREVIEW MODE.
+            Preview hides Diagnostics, which is where the toggle lives, so
+            without this the owner would have to reinstall to get their own build
+            back. A long press on the version string restores it — invisible to a
+            parishioner, and inert in a public build because SECRET_MENU_ENABLED
+            folds to false there. */}
         {versionLabel ? (
-          <Text style={styles.versionText}>
-            {tr('settings.version', { version: versionLabel })}
-          </Text>
+          <Pressable
+            onLongPress={() => {
+              if (!SECRET_MENU_ENABLED) return;
+              setPreviewPublic(false);
+            }}
+            delayLongPress={900}
+            accessibilityRole="text"
+          >
+            <Text style={styles.versionText}>
+              {tr('settings.version', { version: versionLabel })}
+            </Text>
+          </Pressable>
         ) : null}
       </ScrollView>
     </>
