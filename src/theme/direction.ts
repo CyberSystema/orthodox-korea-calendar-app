@@ -123,8 +123,16 @@ export type DirectionDesign = {
   /** The same family at its heavier weight, for emphasis. */
   fontHeadingStrong: string;
   /**
-   * Body copy. `undefined` keeps the system sans, which stays the most legible
-   * choice at small sizes for older readers — Refined does that deliberately.
+   * Body copy. BOTH directions set a real face here; leaving it `undefined`
+   * falls back to the system sans, and that is a worse default than it sounds:
+   * "the system sans" is San Francisco on iOS and Roboto on Android, so one
+   * build renders its body copy in two different typefaces depending on the
+   * phone it is installed on — a difference nobody chose and no reader can
+   * explain. Elegant used to do that deliberately, on the argument that a sans
+   * is the most legible choice at small sizes for older readers. The argument is
+   * sound about SANS versus a display serif; it is not sound about Spectral,
+   * which was drawn for exactly this job (see below). So Elegant now sets
+   * Spectral too, and the app has ONE body face on every device.
    *
    * Illuminated sets a serif here so the page reads as a book rather than a
    * screen, but NOT the same serif it uses for display. EB Garamond is an
@@ -171,8 +179,10 @@ export const DIRECTION_DESIGN: Record<Direction, DirectionDesign> = {
     fontHeading: 'Spectral',
     fontHeadingStrong: 'Spectral-SemiBold',
     fontKorean: 'NanumMyeongjo',
-    fontBody: undefined,
-    fontBodyStrong: undefined,
+    // Elegant sets its display face for body too. It is one family at two
+    // roles rather than two families — which is what "quieter" should mean.
+    fontBody: 'Spectral',
+    fontBodyStrong: 'Spectral-SemiBold',
     cardRadius: 14,
     controlRadius: 999,
     cardBorderWidth: 1,

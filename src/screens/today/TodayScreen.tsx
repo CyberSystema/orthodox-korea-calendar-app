@@ -494,7 +494,12 @@ export function TodayScreen({ navigation }: Props) {
           //
           // Gated on the ramp, which is 0 at every phone width, so the phone
           // never reaches this branch at all.
-          leaf.page > 0 && { flexGrow: 1, justifyContent: 'center' },
+          // GILDED ONLY. A leaf is an object that sits on the desk, so centring
+          // it in a taller viewport is right. Elegant is not a leaf — it is a
+          // document of cards, and a document starts at the top. Centring it
+          // left the card floating with dead space above AND below, which is
+          // worse than the empty foot it was meant to cure.
+          leaf.page > 0 && th.direction === 'gilded' && { flexGrow: 1, justifyContent: 'center' },
         ]}
       >
         {/* ═══ ACTION PILLS ═══ */}
