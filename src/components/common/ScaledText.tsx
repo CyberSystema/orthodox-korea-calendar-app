@@ -51,6 +51,10 @@ const HANGUL = /[가-힣ᄀ-ᇿ㄰-㆏ꥠ-꥿ힰ-퟿ﾠ-ￜ]/;
  * make an outer run adopt the Korean face because of a child that had already
  * handled itself — which is the "everything becomes Korean" bug in miniature.
  */
+export function containsHangul(text: string): boolean {
+  return HANGUL.test(text);
+}
+
 function hasHangul(node: React.ReactNode): boolean {
   if (typeof node === 'string') return HANGUL.test(node);
   if (Array.isArray(node)) return node.some(hasHangul);

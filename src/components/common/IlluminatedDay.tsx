@@ -22,7 +22,7 @@ import { MAX_LEAF_WIDTH, useLeaf } from '../../theme/useLeaf';
 import { Mandorla, OrnamentalRule } from './IlluminatedOrnaments';
 import { CandleGlow, GoldLeafNumeral } from './IlluminatedSkia';
 import { LITURGICAL_MARKS, LiturgicalMark } from './LiturgicalMark';
-import { Text } from './ScaledText';
+import { containsHangul, Text } from './ScaledText';
 import { SelectableText } from './SelectableText';
 
 type Props = {
@@ -241,6 +241,15 @@ export function IlluminatedDay({
   const giltBase = th.isDark ? th.accent : th.accentText;
   const giltHighlight = th.isDark ? th.accentPale : th.accent;
   const capital = headline?.trim()?.[0] ?? '';
+  // THE VERSAL IS A RUN OF ONE CHARACTER, so the content-based face rule would
+  // decide for that character ALONE — and a Korean title may open with a digit.
+  // Real case: 30 June 2026 in Korean is "12사도 연관 축일", whose capital is "1",
+  // so the initial took EB Garamond while the rest of its own word took Nanum
+  // Myeongjo — two typefaces inside one word.
+  //
+  // A drop cap belongs to the word it opens, so it follows the WHOLE title's
+  // script rather than its own single glyph.
+  const headlineKorean = containsHangul(headline ?? '');
   const headlineRest = headline ? headline.trim().slice(1) : '';
 
   return (
@@ -399,7 +408,14 @@ export function IlluminatedDay({
       {headline ? (
         <Animated.View entering={FadeInDown.delay(STEP * 3).duration(DUR)}>
           <Text style={[styles.headline, big && { fontSize: disp(24), lineHeight: disp(32) }]}>
-            <Text style={[styles.versal, big && { fontSize: disp(38) }, { color: heroColor }]}>
+            <Text
+              style={[
+                styles.versal,
+                big && { fontSize: disp(38) },
+                { color: heroColor },
+                headlineKorean ? { fontFamily: th.design.fontKorean } : null,
+              ]}
+            >
               {capital}
             </Text>
             {headlineRest}
