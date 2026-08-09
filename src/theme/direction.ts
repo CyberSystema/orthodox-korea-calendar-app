@@ -53,7 +53,25 @@ export const DEFAULT_DIRECTION: Direction = 'gilded';
  * app is portrait-only on every device so the shortest side is the width.
  */
 const { width: screenW, height: screenH } = Dimensions.get('screen');
-export const IS_TABLET = Platform.OS === 'ios' ? Platform.isPad : Math.min(screenW, screenH) >= 600;
+/**
+ * Previewing the unfinished tablet composition.
+ *
+ * Flip to `true`, build to a tablet, look, flip back. It is a local instrument,
+ * not a feature — Settings must never grow a switch for a design that is not
+ * finished, and there is no env var here because `eas update` bundles the working
+ * tree either way, so a flag would be no safer than this constant.
+ *
+ * What keeps this from shipping is not discipline, it is `npm run check:clean-tree`,
+ * which every `update:*` runs first and which refuses to publish an uncommitted
+ * tree. That guard exists because this very line nearly went out in an OTA.
+ *
+ * Delete it with the rest of the gate when the composition is finished.
+ */
+const TABLET_GILDED_PREVIEW = false;
+
+export const IS_TABLET =
+  !TABLET_GILDED_PREVIEW &&
+  (Platform.OS === 'ios' ? Platform.isPad : Math.min(screenW, screenH) >= 600);
 
 /** The designs a reader may actually choose on this device. */
 export const AVAILABLE_DIRECTIONS: readonly Direction[] = IS_TABLET ? ['elegant'] : DIRECTIONS;

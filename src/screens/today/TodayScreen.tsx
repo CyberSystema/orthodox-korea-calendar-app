@@ -27,7 +27,7 @@ import Svg, { Circle, Path } from 'react-native-svg';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 
 import { IlluminatedGround } from '../../components/common/IlluminatedGround';
-import { MAX_LEAF_WIDTH } from '../../theme/useLeaf';
+import { MAX_LEAF_WIDTH, useLeaf } from '../../theme/useLeaf';
 import { ByzantineArrow } from '../../components/common/ByzantineArrow';
 import { ByzantineKnot } from '../../components/common/ByzantineKnot';
 import { HeadpieceButton, IlluminatedHeader } from '../../components/common/IlluminatedHeader';
@@ -77,7 +77,51 @@ function SearchSvgIcon({ size = 20, color }: { size?: number; color?: string }) 
   );
 }
 
+/**
+ * THE MEASURE THE CONTROL ROWS ARE SET TO.
+ *
+ * On a phone these rows are the page: `paddingHorizontal: spacing.lg` inside a
+ * 402pt window is a 370pt row, which is exactly `leaf.width`. On a 1032pt page
+ * the same rules make a 1000pt row, and that is what flung the day navigator's
+ * two arrows ~900pt apart with 600pt of hairline between them — a control that
+ * had stopped reading as one object. It also left the rows hard against the left
+ * edge while the hero below them was centred, so the page had two alignments.
+ *
+ * So the rows take a measure and centre on it. 620pt is about as wide as a single
+ * line of a date can be set before the eye stops tracking it back, and it matches
+ * the width the leaf itself is judged at.
+ *
+ * ON A PHONE THIS IS THE IDENTITY: `leaf.width` is 370 there, min(370, 620) is
+ * 370, and centring a 370pt box in a 402pt window gives the same 16pt margins
+ * `spacing.lg` already gave. Same pixels, by arithmetic rather than by a branch.
+ */
+const CONTROL_MEASURE = 620;
+
+/**
+ * The two rows are built differently and must be capped differently.
+ *
+ *   actionRow     is full-bleed with `paddingHorizontal`, so its OUTER width is
+ *                 the window. Cap the outer width and its padding still gives the
+ *                 same inner measure.
+ *   dayNavigator  is a bordered pill with `marginHorizontal`, so its OWN width is
+ *                 the window minus those margins. Cap that instead, or the pill
+ *                 plus its margins would no longer fit.
+ *
+ * Both reduce to today's phone values: on a 402pt window the outer is 402 and the
+ * pill is 370, which is what they already are.
+ */
+function useControlRows() {
+  const { width } = useWindowDimensions();
+  const outer = Math.min(width, CONTROL_MEASURE + 2 * spacing.lg);
+  return {
+    bleed: { alignSelf: 'center' as const, width: outer },
+    pill: { alignSelf: 'center' as const, width: outer - 2 * spacing.lg },
+  };
+}
+
 export function TodayScreen({ navigation }: Props) {
+  const controlRows = useControlRows();
+  const leaf = useLeaf();
   const th = useTheme();
   const ownerSurfaces = useOwnerSurfaces();
   const styles = useThemedStyles(makeStyles);
@@ -432,10 +476,29 @@ export function TodayScreen({ navigation }: Props) {
         // from this screen — on iOS 26+ it is a floating capsule that content
         // scrolls under. Reserve it explicitly or the last row is stranded
         // behind the glass. See useTabContentBottomPadding.
-        contentContainerStyle={[styles.content, { paddingBottom: tabBottomPadding }]}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: tabBottomPadding },
+          // A LEAF SITS ON THE DESK, IT IS NOT NAILED TO THE TOP EDGE.
+          //
+          // The composition is ~1000pt tall and a phone's viewport is shorter
+          // than that, so on a phone it simply scrolls and where it starts is the
+          // only sensible answer. A tablet's viewport is TALLER than the content,
+          // and top-aligning it there left 364.5pt of blank page below the
+          // closing ornament with the whole page crowded into its upper half.
+          //
+          // flexGrow lets the content box fill the viewport and justifyContent
+          // then centres the leaf within it. When the day is a long one and the
+          // content outgrows the viewport, flexGrow is already satisfied and this
+          // has no effect — it scrolls exactly as before.
+          //
+          // Gated on the ramp, which is 0 at every phone width, so the phone
+          // never reaches this branch at all.
+          leaf.page > 0 && { flexGrow: 1, justifyContent: 'center' },
+        ]}
       >
         {/* ═══ ACTION PILLS ═══ */}
-        <View style={styles.actionRow}>
+        <View style={[styles.actionRow, controlRows.bleed]}>
           <Pressable
             style={({ pressed }) => [styles.actionPill, pressed && styles.pressed]}
             onPress={openDatePicker}
@@ -468,7 +531,9 @@ export function TodayScreen({ navigation }: Props) {
         </View>
 
         {/* ═══ DAY NAVIGATOR ═══ */}
-        <View style={[styles.dayNavigator, isOnToday && styles.dayNavigatorToday]}>
+        <View
+          style={[styles.dayNavigator, controlRows.pill, isOnToday && styles.dayNavigatorToday]}
+        >
           <Pressable
             style={({ pressed }) => [styles.dayArrowButton, pressed && styles.pressed]}
             onPress={goPreviousDay}

@@ -59,6 +59,15 @@ export type Leaf = {
   halo: number;
   /** True once there is room to set sections side by side. */
   spread: boolean;
+  /**
+   * The phone-to-page ramp itself, 0 on every phone and 1 on a full page.
+   *
+   * Published so a fix that only applies to a page can be written as
+   * `phoneValue + (pageValue - phoneValue) * page` and be PROVABLY inert on a
+   * phone — the same by-construction guarantee that makes k exactly 1, rather
+   * than a Platform check somebody can later move.
+   */
+  page: number;
 };
 
 export function useLeaf(): Leaf {
@@ -97,6 +106,6 @@ export function useLeaf(): Leaf {
     // No `facing` spread: the app is portrait-only on every device (see
     // plugins/withPortraitOnly), so a landscape composition would be code that
     // can never run.
-    return { width, k, kt, ks, halo, spread: wr >= 820 };
+    return { width, k, kt, ks, halo, spread: wr >= 820, page: ramp };
   }, [wr, hr, chrome]);
 }

@@ -210,9 +210,18 @@ export function IlluminatedDay({
   //       already bounded, so larger body type only shortens the line. Inflating
   //       body copy is what makes a tablet layout look amateur.
   const leaf = useLeaf();
-  const { k, kt, halo } = leaf;
+  const { k, kt, ks, halo } = leaf;
   const fig = (base: number) => Math.round(base * k);
   const disp = (base: number) => Math.round(base * kt);
+  //   ks  SPACE — the gaps between blocks.
+  //
+  // This was computed from the start and then used NOWHERE, which is the single
+  // reason the tablet looked wrong in a way no individual element explained: the
+  // figures grew 1.88x while every gap stayed within 2pt of the phone's, so the
+  // page came out crowded at the top and 364.5pt short at the foot. A drawing
+  // that grows inside a rhythm that does not is not a larger composition, it is
+  // the same composition with its air squeezed out.
+  const sp = (base: number) => Math.round(base * ks);
   const big = k > 1;
   // A LEAF HAS A MEASURE. Letting the page fill an iPad meant a line of type
   // running the better part of 700pt — unreadable — while two thirds of the
@@ -237,9 +246,12 @@ export function IlluminatedDay({
   return (
     // Keyed on the date so every entrance animation re-runs when the reader pages
     // to another day — the page is re-written rather than mutated.
-    <View style={styles.page} key={dateISO}>
+    <View
+      style={[styles.page, big && { gap: sp(spacing.xl), paddingBottom: sp(spacing.xl) }]}
+      key={dateISO}
+    >
       {/* ═══ HERO ═══ */}
-      <View style={styles.hero}>
+      <View style={[styles.hero, big && { paddingTop: sp(spacing.xxl), gap: sp(spacing.xs) }]}>
         <Animated.View entering={FadeInDown.duration(DUR)}>
           <Text style={[styles.weekday, big && { fontSize: fig(13), letterSpacing: fig(5) }]}>
             {weekday.toUpperCase()}
@@ -341,9 +353,16 @@ export function IlluminatedDay({
           wrap, and each carries its name, because a drawing alone is not an
           answer and a screen reader gets nothing from it. */}
       {marks.length > 0 ? (
-        <Animated.View style={styles.marks} entering={FadeIn.delay(STEP * 2).duration(DUR)}>
+        <Animated.View
+          style={[styles.marks, big && { paddingTop: sp(spacing.xl), gap: sp(spacing.lg) }]}
+          entering={FadeIn.delay(STEP * 2).duration(DUR)}
+        >
           {marks.map((mark) => (
-            <View key={mark.key} style={styles.mark}>
+            // maxWidth 110 is a fixed box around a drawing that grows with `k`
+            // and a label that grows with `kt` — the shape CLAUDE.md warns about.
+            // It broke "Divine Liturgy" onto two lines beside a one-line
+            // "Fasting", so the row read as ragged rather than as a set.
+            <View key={mark.key} style={[styles.mark, big && { maxWidth: fig(110), gap: sp(4) }]}>
               <LiturgicalMark
                 source={mark.image}
                 size={fig(44)}
@@ -388,7 +407,13 @@ export function IlluminatedDay({
         </Animated.View>
       ) : null}
 
-      <View style={[styles.bands, wide && styles.bandsWide]}>
+      <View
+        style={[
+          styles.bands,
+          wide && styles.bandsWide,
+          big && { gap: sp(spacing.xl), columnGap: sp(spacing.xl) },
+        ]}
+      >
         {/* ═══ READINGS ═══ */}
         <Band title={labels.readings} delay={STEP * 4} style={wide ? styles.bandColumn : undefined}>
           {readings.length ? (
@@ -540,9 +565,13 @@ function Band({
 }) {
   const th = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const { k, kt } = useLeaf();
+  const { k, kt, ks } = useLeaf();
+  const sp = (base: number) => Math.round(base * ks);
   return (
-    <Animated.View style={[styles.band, style]} entering={FadeInDown.delay(delay).duration(DUR)}>
+    <Animated.View
+      style={[styles.band, k > 1 && { gap: sp(spacing.md), paddingTop: sp(spacing.lg) }, style]}
+      entering={FadeInDown.delay(delay).duration(DUR)}
+    >
       <View style={styles.rubric}>
         <RubricMark color={th.accent} size={Math.round(7 * k)} />
         <Text
@@ -640,7 +669,7 @@ const makeStyles = (th: ResolvedTheme) =>
       // this the first row of marks sits inside the halo and reads as clutter.
       paddingTop: spacing.xl,
     },
-    mark: { alignItems: 'center', gap: 4, maxWidth: 110 },
+    mark: { alignItems: 'center', gap: 4, maxWidth: 110 }, // grows inline — see markBox
     markLabel: {
       fontFamily: th.design.fontBody,
       fontSize: 12,

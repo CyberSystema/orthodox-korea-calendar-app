@@ -13,7 +13,10 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 import { radii, spacing } from '../../theme/spacing';
+import { useLeaf } from '../../theme/useLeaf';
 import { useTheme, useThemedStyles } from '../../theme/useTheme';
 import { ByzantineKnot } from './ByzantineKnot';
 import { OrnamentalRule } from './IlluminatedOrnaments';
@@ -37,6 +40,44 @@ import { Text } from './ScaledText';
  * settles as the reader scrolls — but every screen works without it, so a screen
  * that has no scroll offset to give simply gets a static headpiece.
  */
+/**
+ * THE BAND'S OWN HEIGHT, above the safe-area inset — ONE definition.
+ *
+ * The crown behind the headpiece has to finish just under the band, so something
+ * outside this file needs to know where the band ends. Deriving it there a second
+ * time is how the two silently drift apart, so the arithmetic lives here and the
+ * band's styles are BUILT FROM IT rather than agreeing with it by hand:
+ *
+ *   paddingTop  spacing.sm      the gap under the status bar
+ *   row         34              the icon buttons, which set the row's height
+ *   paddingBottom spacing.sm    the gap above the closing rule
+ *   rule        10              the ornament, which hangs 2pt below the edge
+ */
+const HEADPIECE_ROW = 34;
+const HEADPIECE_RULE = 10;
+export const HEADPIECE_BODY = spacing.sm + HEADPIECE_ROW + spacing.sm + HEADPIECE_RULE;
+
+/**
+ * How much bigger the band is drawn on a page than on a phone.
+ *
+ * The headpiece was the one surface that never consumed the leaf, so it SHRANK in
+ * proportion as the device grew: 13.9% of the window on a phone against 6.6% on an
+ * iPad, with a 13pt title and 13pt knots adrift in a 1032pt band. It is display
+ * chrome, so it grows on the DISPLAY scale — enough to hold the page, not so much
+ * that the band starts competing with the day it introduces.
+ *
+ * `kt` is exactly 1 on every phone, so this is the identity there.
+ */
+export function useHeadpieceScale() {
+  return useLeaf().kt;
+}
+
+/** Where the band ends, in points from the top of the window. */
+export function useHeadpieceHeight() {
+  const { top } = useSafeAreaInsets();
+  return top + Math.round(HEADPIECE_BODY * useHeadpieceScale());
+}
+
 export function IlluminatedHeader({
   title,
   topInset,
@@ -55,6 +96,12 @@ export function IlluminatedHeader({
   const th = useTheme();
   const styles = useThemedStyles(createStyles);
   const { width } = useWindowDimensions();
+  // The band is part of the leaf now — see useHeadpieceScale. All of these are
+  // INLINE because they depend on the window, which a module-level StyleSheet
+  // cannot see (it is built at import time).
+  const leaf = useLeaf();
+  const s = leaf.kt;
+  const big = s > 1;
 
   // The sheen. One long, slow pass — at 9 seconds it reads as ambient light
   // rather than as a loading shimmer, which is the difference between "rich"
@@ -96,7 +143,19 @@ export function IlluminatedHeader({
   });
 
   return (
-    <View style={[styles.band, { paddingTop: topInset + spacing.sm }]}>
+    <View
+      style={[
+        styles.band,
+        {
+          paddingTop: topInset + Math.round(spacing.sm * s),
+          // Every term of HEADPIECE_BODY scales, so useHeadpieceHeight is EXACT.
+          // Leaving any one of them at phone size makes the crown overshoot the
+          // band by the difference, which is how the wash came back at 18.5pt
+          // after the first attempt.
+          paddingBottom: Math.round(HEADPIECE_RULE * s),
+        },
+      ]}
+    >
       <LinearGradient
         // fillStrong, NOT primary: in the night palette `primary` is the
         // text-role wine (#E2A8A2) and using it as a fill washed the band pink.
@@ -118,11 +177,14 @@ export function IlluminatedHeader({
         </Animated.View>
       </View>
 
-      <Animated.View style={[styles.row, parallaxStyle]} entering={FadeInDown.duration(520)}>
-        <View style={styles.slot}>{left}</View>
+      <Animated.View
+        style={[styles.row, big && { paddingBottom: Math.round(spacing.sm * s) }, parallaxStyle]}
+        entering={FadeInDown.duration(520)}
+      >
+        <View style={[styles.slot, big && { width: Math.round(36 * s) }]}>{left}</View>
 
         <View style={styles.center}>
-          <ByzantineKnot size={13} color={th.accentBright} />
+          <ByzantineKnot size={Math.round(13 * leaf.k)} color={th.accentBright} />
           <Pressable
             style={styles.brandPress}
             onPress={onBrandPress}
@@ -130,20 +192,29 @@ export function IlluminatedHeader({
             accessibilityRole="header"
             accessibilityLabel={title}
           >
-            <Text style={styles.brand} numberOfLines={1}>
+            <Text
+              style={[
+                styles.brand,
+                big && { fontSize: Math.round(13 * s), letterSpacing: 3.4 * s },
+              ]}
+              numberOfLines={1}
+            >
               {title.toUpperCase()}
             </Text>
           </Pressable>
-          <ByzantineKnot size={13} color={th.accentBright} />
+          <ByzantineKnot size={Math.round(13 * leaf.k)} color={th.accentBright} />
         </View>
 
-        <View style={styles.slot}>{right}</View>
+        <View style={[styles.slot, big && { width: Math.round(36 * s) }]}>{right}</View>
       </Animated.View>
 
       {/* The rule that closes the band. Full-bleed, so it reads as the edge of
           the illuminated panel rather than as a divider inside it. */}
       <Animated.View style={[styles.rule, ornamentStyle]} pointerEvents="none" accessible={false}>
-        <OrnamentalRule width={width} color={th.accentBright} />
+        {/* The identical ornament 800pt lower on the same page is drawn at the
+            FIGURE scale; drawing this one at 1 made the band look like a
+            different app's. */}
+        <OrnamentalRule width={width} color={th.accentBright} scale={leaf.k} />
       </Animated.View>
     </View>
   );
@@ -160,9 +231,17 @@ export function HeadpieceButton({
   children: React.ReactNode;
 }) {
   const styles = useThemedStyles(createStyles);
+  // The button sets the row's height, so it has to grow with the band or
+  // HEADPIECE_BODY stops describing the thing it is supposed to describe.
+  const s = useHeadpieceScale();
+  const size = Math.round(HEADPIECE_ROW * s);
   return (
     <Pressable
-      style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
+      style={({ pressed }) => [
+        styles.iconButton,
+        s > 1 && { width: size, height: size },
+        pressed && styles.pressed,
+      ]}
       onPress={onPress}
       hitSlop={8}
       accessibilityRole="button"
@@ -199,6 +278,7 @@ const createStyles = (th: ReturnType<typeof useTheme>) => ({
     paddingBottom: spacing.sm,
     gap: spacing.sm,
   },
+  // Inline overrides live at the call site; these are the phone's values.
   slot: { width: 36, alignItems: 'center' as const },
   center: {
     flex: 1,

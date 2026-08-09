@@ -43,14 +43,15 @@
     "build:ios:production": "npm run check:lockfile && npm run check:theme-tokens && npm run check:calendar-data && npm run check:scaled-text && npx eas build -p ios --profile production",
     "submit:android": "npx eas submit -p android --latest",
     "submit:ios": "npx eas submit -p ios --latest",
-    "update:production": "npm run typecheck && npm run check:calendar-data && npm run check:scaled-text && node scripts/publish-update.mjs --profile production",
-    "update:preview": "npm run typecheck && npm run check:calendar-data && npm run check:scaled-text && node scripts/publish-update.mjs --profile preview",
+    "update:production": "npm run check:clean-tree && npm run typecheck && npm run check:calendar-data && npm run check:scaled-text && node scripts/publish-update.mjs --profile production",
+    "update:preview": "npm run check:clean-tree && npm run typecheck && npm run check:calendar-data && npm run check:scaled-text && node scripts/publish-update.mjs --profile preview",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "sync:android-icon": "node scripts/sync-android-icon.mjs",
     "sync:tab-icons": "node scripts/generate-tab-icons.mjs",
     "check:tab-icons": "node scripts/generate-tab-icons.mjs --check",
-    "check:android-icon": "node scripts/sync-android-icon.mjs --check"
+    "check:android-icon": "node scripts/sync-android-icon.mjs --check",
+    "check:clean-tree": "node scripts/check-clean-tree.mjs"
   },
   "dependencies": {
     "@react-navigation/bottom-tabs": "^7.18.14",

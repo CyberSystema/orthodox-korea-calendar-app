@@ -1,7 +1,9 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
+import { useLeaf } from '../../theme/useLeaf';
 import { useTheme } from '../../theme/useTheme';
+import { useHeadpieceHeight } from './IlluminatedHeader';
 
 /**
  * ONE GROUND FOR THE WHOLE SCREEN.
@@ -29,7 +31,25 @@ import { useTheme } from '../../theme/useTheme';
  */
 export function IlluminatedGround({ crown = true }: { crown?: boolean } = {}) {
   const th = useTheme();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
+  const { page } = useLeaf();
+  const headpiece = useHeadpieceHeight();
+
+  // WHERE THE WINE MUST FINISH.
+  //
+  // 0.15 was measured against a phone and it is right there: the band ends at
+  // 121.7pt and the ramp at 131.1pt, so 9.4pt of transition shows and reads as a
+  // glow under the band. But it is a fraction of the WINDOW, and the thing it has
+  // to finish under is the band — `topInset + body`, which has nothing to do with
+  // the window's height. On an iPad the band ends at 91.5pt while the ramp still
+  // runs to 206.4pt: 115pt of wine-to-cream smeared across the page, with the
+  // action pills sitting on it at 1.94:1 against the 4.5:1 they need.
+  //
+  // So the stop follows the band, keeping the phone's own 9pt of overhang. The
+  // ramp is what makes this safe rather than merely careful: `page` is exactly 0
+  // at every width up to 440pt — wider than any phone — so on a phone this whole
+  // expression collapses to the literal 0.15 that ships today, bit for bit.
+  const crownStop = 0.15 + ((headpiece + 9) / height - 0.15) * page;
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none" accessible={false}>
@@ -46,13 +66,8 @@ export function IlluminatedGround({ crown = true }: { crown?: boolean } = {}) {
             ? [th.primaryDeep, th.background, th.background, th.backgroundDeep]
             : [th.background, th.background, th.background, th.backgroundDeep]
         }
-        // The wine must finish ABOVE the content, not across it. The headpiece
-        // occupies roughly the top 13% of the window; ending the transition at
-        // 22% left the action pills sitting on a muted #CABAAC rather than the
-        // cream page, which measured 3.20:1 for their gold lettering. Ending at
-        // 0.15 keeps the band dissolving into the page without tinting the first
-        // row of controls.
-        locations={[0, 0.15, 0.72, 1]}
+        // The wine must finish ABOVE the content, not across it — see crownStop.
+        locations={[0, crownStop, 0.72, 1]}
         style={StyleSheet.absoluteFill}
       />
 
