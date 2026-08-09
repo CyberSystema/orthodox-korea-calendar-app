@@ -99,7 +99,7 @@ export function GoldLeafNumeral({
   value,
   box,
   fontSize,
-  base,
+  gilt,
   highlight,
   spark,
   shadow,
@@ -107,8 +107,8 @@ export function GoldLeafNumeral({
   value: string;
   box: { width: number; height: number };
   fontSize: number;
-  /** The gilt itself. */
-  base: string;
+  /** The gilt, top to foot. Gold leaf has a LIGHT DIRECTION — see the note below. */
+  gilt: readonly [string, string, string];
   /** The glow the figure sits in. */
   highlight: string;
   /** The specular core of the travelling gleam — paler than the gilt. */
@@ -130,6 +130,8 @@ export function GoldLeafNumeral({
       y: box.height / 2 - b.y - b.height / 2,
       left: x + b.x,
       width: b.width,
+      top: box.height / 2 - b.height / 2,
+      height: b.height,
     };
   }, [font, value, box.width, box.height]);
 
@@ -170,8 +172,19 @@ export function GoldLeafNumeral({
 
   return (
     <Canvas style={{ width: box.width, height: box.height }}>
-      {/* 1. THE FIGURE — static. */}
-      <SkText x={glyph.x} y={glyph.y} text={value} font={font} color={base}>
+      {/* 1. THE FIGURE — static.
+          
+          FILLED WITH A GRADIENT, NOT A COLOUR. This is the whole difference
+          between gold leaf and brown text. Burnished gilding on vellum is a
+          MATERIAL: it is lighter where it faces the light and deepens to a warm
+          amber in shadow, so a flat fill can only ever read as a coloured
+          letter. The axis runs down the glyph's own measured height, so the
+          light direction is the same at 86pt on a phone and 160pt on a tablet.
+          
+          Judged on a bench that drew five treatments side by side in one build —
+          flat, burnished, burnished+bevel, contoured and candlelit. Flat was the
+          one that looked like text; this one was the one that looked like metal. */}
+      <SkText x={glyph.x} y={glyph.y} text={value} font={font}>
         <Shadow
           dx={0}
           dy={Math.max(1, Math.round(fontSize * 0.035))}
@@ -180,6 +193,12 @@ export function GoldLeafNumeral({
           inner={false}
         />
         <Shadow dx={0} dy={0} blur={18} color={highlight} inner={false} />
+        <LinearGradient
+          start={vec(0, glyph.top)}
+          end={vec(0, glyph.top + glyph.height)}
+          colors={[gilt[0], gilt[1], gilt[2]]}
+          positions={[0, 0.55, 1]}
+        />
       </SkText>
 
       {/* 2. THE GLEAM — the same glyph drawn again, painted with a narrow

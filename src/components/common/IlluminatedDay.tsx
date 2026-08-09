@@ -238,6 +238,13 @@ export function IlluminatedDay({
   // swap roles rather than the effect being dropped, which is what "gold on
   // cream is illegible" actually called for.
   const gilded = isFeast;
+  // GOLD LEAF HAS A LIGHT DIRECTION — three stops down the figure, not one flat
+  // colour. On parchment the gilding is DARKER than the page and catches a
+  // brighter top; on near-black it is a bright figure that deepens as it turns
+  // away, but never so far that it loses the ground.
+  const gilt = th.isDark
+    ? (['#F0DFA8', '#D4AF52', '#9A7B28'] as const)
+    : (['#C9A227', '#8A6B1C', '#5A4412'] as const);
   const giltBase = th.isDark ? th.accent : th.accentText;
   const giltHighlight = th.isDark ? th.accentPale : th.accent;
   const capital = headline?.trim()?.[0] ?? '';
@@ -341,7 +348,7 @@ export function IlluminatedDay({
                 value={String(dayNum)}
                 box={{ width: halo, height: fig(NUMERAL_LINE_HEIGHT) * 1.7 }}
                 fontSize={fig(NUMERAL_SIZE)}
-                base={giltBase}
+                gilt={gilt}
                 highlight={giltHighlight}
                 // The gleam is LIGHT catching metal, so its core is paler than
                 // the gilt itself. On parchment that is a step of ~131 in
