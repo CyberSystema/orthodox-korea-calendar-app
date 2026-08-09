@@ -343,6 +343,11 @@ export function IlluminatedDay({
                 fontSize={fig(NUMERAL_SIZE)}
                 base={giltBase}
                 highlight={giltHighlight}
+                // The gleam is LIGHT catching metal, so its core is paler than
+                // the gilt itself. On parchment that is a step of ~131 in
+                // luminance against the base rather than ~80, which is the
+                // difference between a gleam you see and one you have to look for.
+                spark={th.accentPale}
                 // A cast shadow has to be the colour of the LEAF in shade, not
                 // black: black on parchment reads as dirt. On the night palette
                 // the ground is already near-black, so the shadow there is a

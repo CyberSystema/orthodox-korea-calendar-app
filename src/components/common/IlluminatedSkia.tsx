@@ -15,6 +15,8 @@ import {
   vec,
 } from '@shopify/react-native-skia';
 import { useMemo } from 'react';
+
+import { fadeOut } from '../../theme/fadeOut';
 import { useDerivedValue } from 'react-native-reanimated';
 
 /**
@@ -55,80 +57,139 @@ import { useDerivedValue } from 'react-native-reanimated';
  * it takes no part in layout, because the caller draws this as a centred overlay
  * on top of the real text node.
  */
+/**
+ * THE GILDED NUMERAL — rewritten from scratch.
+ *
+ * Three layers, and each one is a separate idea:
+ *
+ *   1. THE FIGURE   the numeral in gilt, with a soft cast shadow beneath it so
+ *                   it sits ON the leaf rather than in it, and a wide glow so it
+ *                   sits IN light rather than on top of it. Entirely static —
+ *                   nothing here changes between frames.
+ *   2. THE GLEAM    a narrow specular stripe that crosses the figure and then
+ *                   rests. This is the only animated thing.
+ *   3. NOTHING ELSE.
+ *
+ * FOUR THINGS THE PREVIOUS VERSION GOT WRONG, all of which made the gleam read
+ * as the whole numeral pulsing rather than as light crossing metal. They are
+ * written down because each one is invisible in a still frame and each one was
+ * separately convincing:
+ *
+ *   THE AXIS. The gradient ran from (x, 0) to (x + band, canvasHeight) — 29px
+ *   across against 307px down, an axis 84.6 degrees from horizontal. Colour
+ *   therefore varied DOWN the figure, not across it, and sliding the start
+ *   barely rotated it. No band width could have fixed that. Both ends now share
+ *   y, so the axis is horizontal and the band is a vertical stripe that travels.
+ *
+ *   THE MEASURE. The band was a fraction of the CANVAS, which is as wide as the
+ *   halo (232pt on a phone) while the glyph inside it is about 130. A band of
+ *   0.42 x 232 covered three quarters of the actual figure. Everything is now a
+ *   fraction of the GLYPH, measured from the font.
+ *
+ *   THE WRAP. The band overlapped the glyph at the start of the cycle but not at
+ *   the end, so the clock's wrap stepped the brightness. The sweep now finishes
+ *   clear of the figure and the envelope is zero outside it, so the wrap happens
+ *   while nothing is drawn.
+ *
+ *   THE COLOUR. Gradient stops of 'transparent' are transparent BLACK, so the
+ *   ramp carried black and the figure DARKENED as the gleam passed. Stops now
+ *   fade a colour to its own zero-alpha form (see theme/fadeOut).
+ */
 export function GoldLeafNumeral({
   value,
   box,
   fontSize,
   base,
   highlight,
+  spark,
   shadow,
 }: {
   value: string;
   box: { width: number; height: number };
   fontSize: number;
+  /** The gilt itself. */
   base: string;
+  /** The glow the figure sits in. */
   highlight: string;
-  /** The cast shadow that lifts the figure off the leaf. See the note below. */
+  /** The specular core of the travelling gleam — paler than the gilt. */
+  spark: string;
+  /** The shadow it casts on the leaf. */
   shadow: string;
 }) {
   const clock = useClock();
   const font = useFont(require('../../../assets/fonts/EBGaramond-Regular.ttf'), fontSize);
 
-  const placement = useMemo(() => {
+  // Where the glyph actually sits, and how wide it actually is. Everything the
+  // gleam does is expressed against THIS, never against the canvas.
+  const glyph = useMemo(() => {
     if (!font) return null;
     const b = font.measureText(value);
+    const x = box.width / 2 - b.x - b.width / 2;
     return {
-      x: box.width / 2 - b.x - b.width / 2,
+      x,
       y: box.height / 2 - b.y - b.height / 2,
+      left: x + b.x,
+      width: b.width,
     };
   }, [font, value, box.width, box.height]);
 
-  // The highlight travels a little wider than the glyph so it fully enters and
-  // fully leaves rather than popping at the edges.
-  const sweep = useDerivedValue(() => {
-    const period = 5200;
-    const t = (clock.value % period) / period;
-    return vec(-box.width * 0.3 + t * (box.width * 1.6), 0);
-  }, [clock, box.width]);
+  // THE GLEAM'S SHAPE, in fractions of the glyph.
+  //   BAND   a fifth of the figure — narrow enough to read as a stripe
+  //   CROSS  the share of the cycle spent sweeping; the remainder is dark, so
+  //          the highlight returns rather than never stopping
+  //   RAMP   how much of the sweep fades in and out, so it neither snaps on nor
+  //          cuts off
+  const BAND = 0.2;
+  const CROSS = 0.42;
+  const RAMP = 0.16;
+  const PERIOD = 5000;
 
-  const sweepEnd = useDerivedValue(() => {
-    const period = 5200;
-    const t = (clock.value % period) / period;
-    return vec(-box.width * 0.3 + t * (box.width * 1.6) + box.width * 0.42, box.height);
-  }, [clock, box.width, box.height]);
+  const width = glyph?.width ?? 0;
+  const band = BAND * width;
+  // Start one band clear of the left edge, finish one clear of the right.
+  const from = (glyph?.left ?? 0) - band;
+  const span = width + 2 * band;
 
-  if (!font || !placement) return null;
+  const head = useDerivedValue(() => {
+    const u = Math.min(1, (clock.value % PERIOD) / PERIOD / CROSS);
+    return from + u * span;
+  }, [clock, from, span]);
+
+  const gleamStart = useDerivedValue(() => vec(head.value, 0), [head]);
+  const gleamEnd = useDerivedValue(() => vec(head.value + band, 0), [head, band]);
+
+  const gleamOpacity = useDerivedValue(() => {
+    const t = (clock.value % PERIOD) / PERIOD;
+    if (t >= CROSS) return 0;
+    const u = t / CROSS;
+    const e = u < RAMP ? u / RAMP : u > 1 - RAMP ? (1 - u) / RAMP : 1;
+    return e * e * (3 - 2 * e);
+  }, [clock]);
+
+  if (!font || !glyph) return null;
 
   return (
     <Canvas style={{ width: box.width, height: box.height }}>
-      <Group>
-        <SkText x={placement.x} y={placement.y} text={value} font={font} color={base}>
-          {/* TWO shadows, and they do different jobs.
-              
-              The CAST SHADOW is offset and tight: it puts the figure a little
-              above the leaf so the eye reads depth, which is what makes a gilded
-              initial look applied rather than printed. Both terms are derived
-              from the type size rather than fixed, so it holds at the tablet's
-              1.88x figure scale as well as at a phone's.
-              
-              The GLOW is centred and wide: it seats the figure in light instead
-              of letting it sit on the page like a sticker. */}
-          <Shadow
-            dx={0}
-            dy={Math.max(1, Math.round(fontSize * 0.035))}
-            blur={Math.max(3, Math.round(fontSize * 0.085))}
-            color={shadow}
-            inner={false}
-          />
-          <Shadow dx={0} dy={0} blur={18} color={highlight} inner={false} />
-        </SkText>
-        {/* The travelling specular band, clipped to the glyph by drawing the
-            same text again with a moving gradient. */}
-        <SkText x={placement.x} y={placement.y} text={value} font={font}>
+      {/* 1. THE FIGURE — static. */}
+      <SkText x={glyph.x} y={glyph.y} text={value} font={font} color={base}>
+        <Shadow
+          dx={0}
+          dy={Math.max(1, Math.round(fontSize * 0.035))}
+          blur={Math.max(3, Math.round(fontSize * 0.085))}
+          color={shadow}
+          inner={false}
+        />
+        <Shadow dx={0} dy={0} blur={18} color={highlight} inner={false} />
+      </SkText>
+
+      {/* 2. THE GLEAM — the same glyph drawn again, painted with a narrow
+          horizontal gradient, inside a group whose opacity is the envelope. */}
+      <Group opacity={gleamOpacity}>
+        <SkText x={glyph.x} y={glyph.y} text={value} font={font}>
           <LinearGradient
-            start={sweep}
-            end={sweepEnd}
-            colors={['transparent', highlight, 'transparent']}
+            start={gleamStart}
+            end={gleamEnd}
+            colors={[fadeOut(spark), spark, fadeOut(spark)]}
           />
         </SkText>
       </Group>
@@ -214,7 +275,7 @@ export function CandleGlow({
   return (
     <Canvas style={{ width: size, height: size }}>
       <Circle cx={c} cy={c} r={c} opacity={(intense ? 0.3 : 0.16) * strength}>
-        <RadialGradient c={vec(c, c)} r={c} colors={[color, 'transparent']} positions={[0, 1]} />
+        <RadialGradient c={vec(c, c)} r={c} colors={[color, fadeOut(color)]} positions={[0, 1]} />
       </Circle>
     </Canvas>
   );

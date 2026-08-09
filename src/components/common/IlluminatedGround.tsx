@@ -1,6 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
+import { fadeOut } from '../../theme/fadeOut';
 import { useLeaf } from '../../theme/useLeaf';
 import { useTheme } from '../../theme/useTheme';
 import { useHeadpieceHeight } from './IlluminatedHeader';
@@ -75,7 +76,7 @@ export function IlluminatedGround({ crown = true }: { crown?: boolean } = {}) {
           headpiece — depth without a single speck of noise. Sized from the
           window so it stays proportionate on a phone and on an iPad. */}
       <LinearGradient
-        colors={[th.accentGlow, 'transparent']}
+        colors={[th.accentGlow, fadeOut(th.accentGlow)]}
         style={[styles.pool, { height: width * 1.1, borderRadius: width }]}
       />
     </View>

@@ -15,6 +15,7 @@ import Animated, {
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { fadeOut } from '../../theme/fadeOut';
 import { radii, spacing } from '../../theme/spacing';
 import { useLeaf } from '../../theme/useLeaf';
 import { useTheme, useThemedStyles } from '../../theme/useTheme';
@@ -169,7 +170,7 @@ export function IlluminatedHeader({
       <View style={styles.sheenClip} pointerEvents="none" accessible={false}>
         <Animated.View style={[styles.sheen, sheenStyle]}>
           <LinearGradient
-            colors={['transparent', th.accentBright, 'transparent']}
+            colors={[fadeOut(th.accentBright), th.accentBright, fadeOut(th.accentBright)]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={StyleSheet.absoluteFill}
