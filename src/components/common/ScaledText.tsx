@@ -57,17 +57,54 @@ function hasHangul(node: React.ReactNode): boolean {
   return false;
 }
 
+/**
+ * Is this weight asking for the heavier CUT of the face?
+ *
+ * >= 600, not > 400: there is no Medium file, so `typography.weight.medium`
+ * ('500') has to stay on the regular cut rather than jumping to semibold.
+ */
+function wantsStrong(weight: TextStyle['fontWeight']): boolean {
+  const n = typeof weight === 'number' ? weight : Number(weight);
+  return Number.isFinite(n) ? n >= 600 : weight === 'bold';
+}
+
+/**
+ * A DECLARED WEIGHT HAS TO REACH A REAL FACE.
+ *
+ * Spectral-SemiBold's name table calls it its own family — "Spectral SemiBold",
+ * with no typographic-family record tying it back to "Spectral". So asking for
+ * family "Spectral" at weight 600 finds ONE registered face on iOS, the closest-
+ * weight search can only land on 400, and the weight is dropped in silence. On
+ * Android it is worse at 700: nothing is cached for BOLD, so it falls through to
+ * `Typeface.create("Spectral", BOLD)` and comes back as ROBOTO bold — the serif
+ * lost outright.
+ *
+ * This did not bite while body copy was the system sans, which has real weights
+ * at every step. It began to bite the moment both directions set a real family
+ * for body. So the weight is resolved HERE, to the named strong file, and the
+ * numeric weight is then cleared — otherwise the platform would try to embolden
+ * an already-semibold face on top of it.
+ */
 function directionFamily(
   family: string | undefined,
   design: (typeof DIRECTION_DESIGN)[keyof typeof DIRECTION_DESIGN],
   korean: boolean,
+  strong: boolean,
 ): string | undefined {
   if (family === undefined) return undefined;
+  // Nanum Myeongjo is registered as a single face, so Korean has no heavier cut
+  // to reach for. Leaving the weight in place is correct there.
   if (korean) return design.fontKorean;
   // Only the app's own two logical roles are remapped. Anything else (a system
   // font asked for deliberately, an icon face) is left exactly as written.
-  if (family === typography.family.heading) return design.fontHeading;
-  if (family === typography.family.body) return design.fontBody ?? family;
+  if (family === typography.family.heading) {
+    return strong ? (design.fontHeadingStrong ?? design.fontHeading) : design.fontHeading;
+  }
+  if (family === typography.family.body) {
+    return strong
+      ? (design.fontBodyStrong ?? design.fontBody ?? family)
+      : (design.fontBody ?? family);
+  }
   return family;
 }
 
@@ -84,9 +121,18 @@ function scaleTextStyle(
   const flat = StyleSheet.flatten(style) as TextStyle | undefined;
   const fontSize = typeof flat?.fontSize === 'number' ? flat.fontSize : undefined;
   const lineHeight = typeof flat?.lineHeight === 'number' ? flat.lineHeight : undefined;
-  const fontFamily = directionFamily(flat?.fontFamily, design, korean);
+  const strong = !korean && wantsStrong(flat?.fontWeight);
+  const fontFamily = directionFamily(flat?.fontFamily, design, korean, strong);
 
-  const familyPatch = fontFamily && fontFamily !== flat?.fontFamily ? { fontFamily } : null;
+  const familyPatch =
+    fontFamily && fontFamily !== flat?.fontFamily
+      ? // Clearing the numeric weight is part of the substitution: the file IS
+        // the semibold, and asking the platform for 600 on top of it invites a
+        // synthetic emboldening or a fallback to a family that has one.
+        strong
+        ? { fontFamily, fontWeight: 'normal' as const }
+        : { fontFamily }
+      : null;
 
   // No own fontSize means the size is inherited from an enclosing Text that we
   // already scaled — leave the size alone rather than double-applying, but still
