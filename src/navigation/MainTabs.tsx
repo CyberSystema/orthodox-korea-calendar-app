@@ -12,6 +12,7 @@ import {
 } from '../features/announcements/useAnnouncementsStore';
 import { useAppStore } from '../store/useAppStore';
 import { useDayOfMonth } from '../hooks/useDayOfMonth';
+import { useChromeFont } from '../theme/chromeFont';
 import { useTheme, useThemedStyles, type ResolvedTheme } from '../theme/useTheme';
 import { typography } from '../theme/typography';
 import { BRAND_TITLE, USES_NATIVE_HEADER } from './nativeHeader';
@@ -188,6 +189,7 @@ const newsIcon = (): NativeBottomTabIcon =>
 
 export function MainTabs() {
   const th = useTheme();
+  const chromeFont = useChromeFont();
   const { t } = useTranslation();
   // The native tab bar has no `tabBarAllowFontScaling`, so whatever size we pass
   // is scaled AGAIN by the OS. Use the app-only multiplier here or the OS scale
@@ -218,7 +220,7 @@ export function MainTabs() {
         headerTintColor: th.brandText,
         headerShadowVisible: false,
         headerTitleStyle: {
-          fontFamily: typography.family.heading,
+          fontFamily: chromeFont,
           fontSize: typography.size.lg * Math.min(appFontScale, 1.4),
           color: th.brandText,
         },
@@ -238,7 +240,7 @@ export function MainTabs() {
         // Only fontFamily/fontSize/fontWeight/fontStyle/color are honoured here,
         // which is enough to keep the serif voice in the labels.
         tabBarLabelStyle: {
-          fontFamily: typography.family.heading,
+          fontFamily: chromeFont,
           fontSize: typography.size.xxs * Math.min(appFontScale, 1.5),
         },
         tabBarBadgeStyle: { backgroundColor: th.crimson, color: th.surfaceWhite },

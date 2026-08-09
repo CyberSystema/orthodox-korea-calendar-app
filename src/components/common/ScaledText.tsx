@@ -21,10 +21,42 @@ import { typography } from '../../theme/typography';
  * `fontFamily: typography.family.heading` and get Spectral or EB Garamond
  * depending on the direction, with not one stylesheet edited.
  *
- * KOREAN. A serif picked for English has no Hangul, so Korean would fall back to
- * the system face and look unrelated. When the reader is in Korean we hand back
- * the matched Korean serif instead, for both roles.
+ * KOREAN IS CHOSEN BY THE TEXT, NOT BY THE READER'S LANGUAGE.
+ *
+ * A serif picked for English has no Hangul, so Hangul set in it would fall back
+ * to the system face and look unrelated — that much is real, and it is why a
+ * Korean face exists. But the rule used to be "the reader chose Korean, so set
+ * EVERYTHING in the Korean face", and a language setting is not a statement
+ * about any particular string. Plenty of the app is not Korean even in Korean:
+ * the brand name, which is never translated; scripture references; years, tones
+ * and gospel numbers.
+ *
+ * Measured on the iPad, English against Korean, same string in the same box:
+ * "ORTHODOX KOREA" was drawn 547px wide in one and 567px in the other, 9.7% of
+ * its pixels different — the brand reset in a Korean serif for readers who never
+ * asked for that and cannot turn it off.
+ *
+ * So the face follows the CONTENT. A run containing Hangul gets the Korean serif
+ * because it must; everything else keeps the English face, in both languages.
+ * Mixed strings ("2026년 8월") take the Korean face for the whole run, which is
+ * correct — the alternative is a fallback hole where the Hangul should be.
  */
+const HANGUL = /[가-힣ᄀ-ᇿ㄰-㆏ꥠ-꥿ힰ-퟿ﾠ-ￜ]/;
+
+/**
+ * Does this node's OWN text carry Hangul?
+ *
+ * Deliberately does not recurse into elements. A nested `<Text>` is itself a
+ * ScaledText and answers this question for its own content, so descending would
+ * make an outer run adopt the Korean face because of a child that had already
+ * handled itself — which is the "everything becomes Korean" bug in miniature.
+ */
+function hasHangul(node: React.ReactNode): boolean {
+  if (typeof node === 'string') return HANGUL.test(node);
+  if (Array.isArray(node)) return node.some(hasHangul);
+  return false;
+}
+
 function directionFamily(
   family: string | undefined,
   design: (typeof DIRECTION_DESIGN)[keyof typeof DIRECTION_DESIGN],
@@ -107,7 +139,8 @@ function scaleTextStyle(
 export function Text({ style, ref, ...rest }: TextProps & { ref?: React.Ref<RNText> }) {
   const appScale = useAppStore((state) => state.fontScale);
   const design = DIRECTION_DESIGN[useAppStore((state) => state.direction)];
-  const korean = useAppStore((state) => state.language) === 'ko';
+  // From the CONTENT, not the language — see the note above directionFamily.
+  const korean = hasHangul(rest.children);
   const enabled = rest.allowFontScaling !== false;
 
   // RN multiplies the OS scale on top of whatever size we hand it; this bounds
@@ -147,7 +180,11 @@ export function TextInput({
 }: TextInputProps & { ref?: React.Ref<RNTextInput> }) {
   const appScale = useAppStore((state) => state.fontScale);
   const design = DIRECTION_DESIGN[useAppStore((state) => state.direction)];
-  const korean = useAppStore((state) => state.language) === 'ko';
+  // A field's text is its value and its placeholder — one face has to serve
+  // both, so either carrying Hangul selects the Korean serif. (The read-only
+  // TextInput that SelectableText renders on iOS also arrives here, which is how
+  // a selectable Korean reading keeps the right face.)
+  const korean = hasHangul(rest.value) || hasHangul(rest.placeholder);
   const enabled = rest.allowFontScaling !== false;
   const maxFontSizeMultiplier = MAX_TOTAL_FONT_SCALE / appScale;
 

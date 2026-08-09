@@ -9,6 +9,7 @@ import { SettingsScreen } from '../screens/settings/SettingsScreen';
 import { StaffScreen } from '../screens/settings/StaffScreen';
 import { DiagnosticsScreen } from '../screens/settings/DiagnosticsScreen';
 import { useTextScale } from '../hooks/useTextScale';
+import { useChromeFont } from '../theme/chromeFont';
 import { useTheme, useThemedStyles, type ResolvedTheme } from '../theme/useTheme';
 import { typography } from '../theme/typography';
 import { MainTabs } from './MainTabs';
@@ -18,6 +19,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function RootNavigator() {
   const th = useTheme();
+  const chromeFont = useChromeFont();
   const { t } = useTranslation();
   // Native-stack draws its header title natively, outside our ScaledText — size
   // it here so it follows the reader's setting like the rest of the app.
@@ -29,7 +31,7 @@ export function RootNavigator() {
       screenOptions={{
         headerStyle: { backgroundColor: th.primaryDeep },
         headerTitleStyle: {
-          fontFamily: typography.family.heading,
+          fontFamily: chromeFont,
           fontSize: typography.size.lg * Math.min(textScale, 1.4),
           color: th.brandText,
         },
