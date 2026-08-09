@@ -61,12 +61,15 @@ export function GoldLeafNumeral({
   fontSize,
   base,
   highlight,
+  shadow,
 }: {
   value: string;
   box: { width: number; height: number };
   fontSize: number;
   base: string;
   highlight: string;
+  /** The cast shadow that lifts the figure off the leaf. See the note below. */
+  shadow: string;
 }) {
   const clock = useClock();
   const font = useFont(require('../../../assets/fonts/EBGaramond-Regular.ttf'), fontSize);
@@ -100,7 +103,23 @@ export function GoldLeafNumeral({
     <Canvas style={{ width: box.width, height: box.height }}>
       <Group>
         <SkText x={placement.x} y={placement.y} text={value} font={font} color={base}>
-          {/* Soft outer glow so the figure sits in light rather than on top of it. */}
+          {/* TWO shadows, and they do different jobs.
+              
+              The CAST SHADOW is offset and tight: it puts the figure a little
+              above the leaf so the eye reads depth, which is what makes a gilded
+              initial look applied rather than printed. Both terms are derived
+              from the type size rather than fixed, so it holds at the tablet's
+              1.88x figure scale as well as at a phone's.
+              
+              The GLOW is centred and wide: it seats the figure in light instead
+              of letting it sit on the page like a sticker. */}
+          <Shadow
+            dx={0}
+            dy={Math.max(1, Math.round(fontSize * 0.035))}
+            blur={Math.max(3, Math.round(fontSize * 0.085))}
+            color={shadow}
+            inner={false}
+          />
           <Shadow dx={0} dy={0} blur={18} color={highlight} inner={false} />
         </SkText>
         {/* The travelling specular band, clipped to the glyph by drawing the

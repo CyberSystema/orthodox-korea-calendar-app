@@ -334,6 +334,11 @@ export function IlluminatedDay({
                 fontSize={fig(NUMERAL_SIZE)}
                 base={giltBase}
                 highlight={giltHighlight}
+                // A cast shadow has to be the colour of the LEAF in shade, not
+                // black: black on parchment reads as dirt. On the night palette
+                // the ground is already near-black, so the shadow there is a
+                // true darkness and can be stronger without showing a colour.
+                shadow={th.isDark ? 'rgba(0, 0, 0, 0.55)' : 'rgba(74, 54, 20, 0.30)'}
               />
             </View>
           ) : null}
@@ -651,7 +656,21 @@ const makeStyles = (th: ResolvedTheme) =>
     },
     // Transparent, not unmounted: the Text still defines the box the gilded
     // overlay is centred on, so both palettes lay out identically.
-    numeralGilded: { color: 'transparent' },
+    // HIDDEN WITH OPACITY, NOT WITH A TRANSPARENT COLOUR.
+    //
+    // `color: 'transparent'` hid this on iOS and DID NOT on Android, where the
+    // Text kept drawing in the default ink — so a black numeral sat behind the
+    // gold one, slightly offset because RN centres a Text by its line box and
+    // Skia centres the glyph by its measured bounds. That offset copy is what
+    // read as a drop shadow under the date on Android and as nothing at all on
+    // iOS.
+    //
+    // Measured on a Fairphone 5 against an iPhone, same day, same light palette,
+    // four frames each: the darkest pixel inside the glyph was 192-253 (a dark
+    // gold) on iOS and 0-15 (black) on Android. With `opacity: 0` it is 262 —
+    // iOS's own range. Opacity hides the node outright rather than asking the
+    // platform to paint invisible ink.
+    numeralGilded: { opacity: 0 },
     monthYear: {
       fontFamily: th.design.fontHeading,
       fontSize: 17,
