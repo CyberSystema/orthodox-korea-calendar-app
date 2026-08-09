@@ -164,6 +164,7 @@ export function StaffScreen() {
       {th.direction === 'gilded' ? <IlluminatedGround crown={false} /> : null}
       <KeyboardSafeView style={styles.flex} keyboardVerticalOffset={insets.top}>
         <ScrollView
+          showsVerticalScrollIndicator={false}
           style={styles.container}
           contentContainerStyle={[
             styles.content,

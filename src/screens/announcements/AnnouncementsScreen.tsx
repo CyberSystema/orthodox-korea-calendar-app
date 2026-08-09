@@ -224,6 +224,7 @@ export function AnnouncementsScreen({ navigation }: Props) {
       )}
 
       <FlatList
+        showsVerticalScrollIndicator={false}
         data={announcements}
         keyExtractor={(item) => String(item.id)}
         renderItem={renderItem}

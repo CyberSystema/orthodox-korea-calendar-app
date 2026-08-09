@@ -280,13 +280,14 @@ export function AnnouncementLogViewer({
         </View>
         <Text style={styles.subtle}>{configuredBaseUrl}</Text>
 
-        {/* Filter chips with counts */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.chipsScroll}
-          contentContainerStyle={styles.chipsRow}
-        >
+        {/* Filter chips with counts.
+            
+            A WRAPPING ROW, not a horizontal scroller. Nothing in this app scrolls
+            sideways: a sideways scroller hides its own overflow — there is no
+            edge to tell you a chip is off-screen — and it competes with the back
+            gesture. Six short chips wrap onto two lines and are all visible at
+            once, which is strictly better than five visible and one hidden. */}
+        <View style={styles.chipsRow}>
           {FILTERS.map((f) => {
             const active = f.key === filter;
             const n = countFor(f.key);
@@ -303,7 +304,7 @@ export function AnnouncementLogViewer({
               </Pressable>
             );
           })}
-        </ScrollView>
+        </View>
 
         {/* Body */}
         {loading ? (
@@ -402,8 +403,13 @@ const styles = StyleSheet.create({
   headerBtnText: { color: C.blue, fontSize: 13, fontWeight: '600' },
   subtle: { color: C.faint, fontSize: 11, paddingHorizontal: 14, paddingTop: 6 },
 
-  chipsScroll: { flexGrow: 0, paddingVertical: 10 },
-  chipsRow: { paddingHorizontal: 14, gap: 8 },
+  chipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    gap: 8,
+  },
   chip: {
     paddingHorizontal: 12,
     paddingVertical: 6,

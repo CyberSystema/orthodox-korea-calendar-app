@@ -170,6 +170,7 @@ export function EventDetailScreen({ route }: Props) {
 
   return (
     <ScrollView
+      showsVerticalScrollIndicator={false}
       style={styles.container}
       contentContainerStyle={[
         styles.content,

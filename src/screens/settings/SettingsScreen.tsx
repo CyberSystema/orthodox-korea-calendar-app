@@ -154,6 +154,7 @@ export function SettingsScreen({ navigation }: Props) {
           screen container, which fills the window. */}
       {th.direction === 'gilded' ? <IlluminatedGround crown={false} /> : null}
       <ScrollView
+        showsVerticalScrollIndicator={false}
         style={styles.container}
         contentContainerStyle={[
           styles.content,

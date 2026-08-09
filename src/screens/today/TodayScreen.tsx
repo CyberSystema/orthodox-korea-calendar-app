@@ -469,6 +469,7 @@ export function TodayScreen({ navigation }: Props) {
       )}
 
       <Animated.ScrollView
+        showsVerticalScrollIndicator={false}
         style={styles.scrollArea}
         onScroll={onScroll}
         scrollEventThrottle={16}
@@ -640,6 +641,7 @@ export function TodayScreen({ navigation }: Props) {
             />
 
             <ScrollView
+              showsVerticalScrollIndicator={false}
               style={styles.searchList}
               contentContainerStyle={styles.searchListContent}
               keyboardShouldPersistTaps="handled"

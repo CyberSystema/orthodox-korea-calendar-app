@@ -589,6 +589,7 @@ export function MonthScreen({ navigation, route }: Props) {
       )}
 
       <ScrollView
+        showsVerticalScrollIndicator={false}
         style={styles.scrollArea}
         // See TodayScreen: the native toolbar does not take layout space, so
         // this screen reserves it itself. See useTabContentBottomPadding.
@@ -810,6 +811,7 @@ export function MonthScreen({ navigation, route }: Props) {
       >
         <KeyboardSafeView style={styles.editorBackdrop} keyboardVerticalOffset={insets.top}>
           <ScrollView
+            showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.editorScrollContent}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
@@ -1083,6 +1085,7 @@ export function MonthScreen({ navigation, route }: Props) {
             />
 
             <ScrollView
+              showsVerticalScrollIndicator={false}
               style={styles.searchList}
               contentContainerStyle={styles.searchListContent}
               keyboardShouldPersistTaps="handled"
