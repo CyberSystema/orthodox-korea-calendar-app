@@ -99,7 +99,7 @@ export function GoldLeafNumeral({
   value,
   box,
   fontSize,
-  gilt,
+  base,
   highlight,
   spark,
   shadow,
@@ -107,8 +107,8 @@ export function GoldLeafNumeral({
   value: string;
   box: { width: number; height: number };
   fontSize: number;
-  /** The gilt, top to foot. Gold leaf has a LIGHT DIRECTION — see the note below. */
-  gilt: readonly [string, string, string];
+  /** The gilt itself. */
+  base: string;
   /** The glow the figure sits in. */
   highlight: string;
   /** The specular core of the travelling gleam — paler than the gilt. */
@@ -130,37 +130,64 @@ export function GoldLeafNumeral({
       y: box.height / 2 - b.y - b.height / 2,
       left: x + b.x,
       width: b.width,
-      top: box.height / 2 - b.height / 2,
       height: b.height,
     };
   }, [font, value, box.width, box.height]);
 
-  // THE GLEAM'S SHAPE, in fractions of the glyph.
-  //   BAND   a fifth of the figure — narrow enough to read as a stripe
-  //   CROSS  the share of the cycle spent sweeping; the remainder is dark, so
-  //          the highlight returns rather than never stopping
-  //   RAMP   how much of the sweep fades in and out, so it neither snaps on nor
-  //          cuts off
-  const BAND = 0.2;
-  const CROSS = 0.42;
-  const RAMP = 0.16;
-  const PERIOD = 5000;
+  // ─── THE GLEAM ───────────────────────────────────────────────────────────
+  //
+  // Light moving across metal is not a stripe with a hard job. It is TWO things
+  // at once, and the earlier version only had one of them, which is why it read
+  // as a wipe rather than as a reflection:
+  //
+  //   THE SHEEN   broad and faint. The whole surface brightens a little as the
+  //               light comes round — this is what tells the eye the figure is
+  //               curved rather than flat.
+  //   THE CORE    narrow and bright, riding just AHEAD of the sheen's centre.
+  //               This is the actual specular: the point where the surface is
+  //               square to the light.
+  //   THE BLOOM   the glow the figure already sits in, breathing up slightly as
+  //               the core passes and settling after. Real gilding lights the
+  //               vellum around it; a highlight that leaves the ground untouched
+  //               reads as a filter over the letter rather than as light on it.
+  //
+  // AND IT IS RAKED. A perfectly vertical band travelling sideways is a wipe. A
+  // real light source is off to one side, so the band is tilted and crosses the
+  // figure at an angle — the same 18 degrees the rest of the leaf is lit from.
+  //
+  // THE TRAVEL IS EASED, not linear. Smoothstep at both ends means the gleam
+  // gathers, sweeps through the body of the figure, and settles rather than
+  // arriving and leaving at a constant speed. Metal catching light does not move
+  // at a constant speed; a scanner does.
+  const TILT = (18 * Math.PI) / 180;
+  const UX = Math.sin(TILT);
+  const UY = Math.cos(TILT);
 
-  const width = glyph?.width ?? 0;
-  const band = BAND * width;
-  // Start one band clear of the left edge, finish one clear of the right.
-  const from = (glyph?.left ?? 0) - band;
-  const span = width + 2 * band;
+  const SHEEN = 0.62; // broad, in glyph widths
+  const CORE = 0.16; // narrow
+  const LEAD = 0.13; // how far ahead of the sheen the core rides
+  const CROSS = 0.46; // share of the cycle spent sweeping; the rest is rest
+  const RAMP = 0.22; // fade in and out, so it never snaps on or cuts off
+  const PERIOD = 6200;
 
-  const head = useDerivedValue(() => {
-    const u = Math.min(1, (clock.value % PERIOD) / PERIOD / CROSS);
-    return from + u * span;
-  }, [clock, from, span]);
+  const w = glyph?.width ?? 0;
+  const h = glyph?.height ?? 0;
+  const cx = box.width / 2;
+  const cy = box.height / 2;
+  // Reach: far enough that both bands start and finish clear of the figure.
+  const reach = (w + h) * 0.9;
 
-  const gleamStart = useDerivedValue(() => vec(head.value, 0), [head]);
-  const gleamEnd = useDerivedValue(() => vec(head.value + band, 0), [head, band]);
+  /** Eased position of the sweep, -0.5 .. 0.5 along the raked axis. */
+  const travel = useDerivedValue(() => {
+    const t = (clock.value % PERIOD) / PERIOD;
+    if (t >= CROSS) return 99; // parked far off the figure during the rest
+    const u = t / CROSS;
+    const e = u * u * (3 - 2 * u); // smoothstep: gather, sweep, settle
+    return e - 0.5;
+  }, [clock]);
 
-  const gleamOpacity = useDerivedValue(() => {
+  /** Opacity envelope — zero at both ends, so the clock's wrap is never seen. */
+  const envelope = useDerivedValue(() => {
     const t = (clock.value % PERIOD) / PERIOD;
     if (t >= CROSS) return 0;
     const u = t / CROSS;
@@ -168,23 +195,49 @@ export function GoldLeafNumeral({
     return e * e * (3 - 2 * e);
   }, [clock]);
 
+  const sheenA = useDerivedValue(
+    () =>
+      vec(
+        cx + (travel.value - SHEEN / 2) * reach * UX,
+        cy + (travel.value - SHEEN / 2) * reach * UY,
+      ),
+    [travel, reach, cx, cy],
+  );
+  const sheenB = useDerivedValue(
+    () =>
+      vec(
+        cx + (travel.value + SHEEN / 2) * reach * UX,
+        cy + (travel.value + SHEEN / 2) * reach * UY,
+      ),
+    [travel, reach, cx, cy],
+  );
+  const coreA = useDerivedValue(
+    () =>
+      vec(
+        cx + (travel.value + LEAD - CORE / 2) * reach * UX,
+        cy + (travel.value + LEAD - CORE / 2) * reach * UY,
+      ),
+    [travel, reach, cx, cy],
+  );
+  const coreB = useDerivedValue(
+    () =>
+      vec(
+        cx + (travel.value + LEAD + CORE / 2) * reach * UX,
+        cy + (travel.value + LEAD + CORE / 2) * reach * UY,
+      ),
+    [travel, reach, cx, cy],
+  );
+
+  /** The bloom lags the core a little, so the ground keeps the light a moment. */
+  const bloom = useDerivedValue(() => envelope.value * 0.55, [envelope]);
+  const sheenOpacity = useDerivedValue(() => envelope.value * 0.5, [envelope]);
+
   if (!font || !glyph) return null;
 
   return (
     <Canvas style={{ width: box.width, height: box.height }}>
-      {/* 1. THE FIGURE — static.
-          
-          FILLED WITH A GRADIENT, NOT A COLOUR. This is the whole difference
-          between gold leaf and brown text. Burnished gilding on vellum is a
-          MATERIAL: it is lighter where it faces the light and deepens to a warm
-          amber in shadow, so a flat fill can only ever read as a coloured
-          letter. The axis runs down the glyph's own measured height, so the
-          light direction is the same at 86pt on a phone and 160pt on a tablet.
-          
-          Judged on a bench that drew five treatments side by side in one build —
-          flat, burnished, burnished+bevel, contoured and candlelit. Flat was the
-          one that looked like text; this one was the one that looked like metal. */}
-      <SkText x={glyph.x} y={glyph.y} text={value} font={font}>
+      {/* 1. THE FIGURE — static. */}
+      <SkText x={glyph.x} y={glyph.y} text={value} font={font} color={base}>
         <Shadow
           dx={0}
           dy={Math.max(1, Math.round(fontSize * 0.035))}
@@ -193,21 +246,33 @@ export function GoldLeafNumeral({
           inner={false}
         />
         <Shadow dx={0} dy={0} blur={18} color={highlight} inner={false} />
-        <LinearGradient
-          start={vec(0, glyph.top)}
-          end={vec(0, glyph.top + glyph.height)}
-          colors={[gilt[0], gilt[1], gilt[2]]}
-          positions={[0, 0.55, 1]}
-        />
       </SkText>
 
-      {/* 2. THE GLEAM — the same glyph drawn again, painted with a narrow
-          horizontal gradient, inside a group whose opacity is the envelope. */}
-      <Group opacity={gleamOpacity}>
+      {/* 2. THE BLOOM — the figure's own glow, breathing up as the core passes.
+          Drawn UNDER the speculars so it lights the ground, not the letter. */}
+      <Group opacity={bloom}>
+        <SkText x={glyph.x} y={glyph.y} text={value} font={font} color={highlight}>
+          <Shadow dx={0} dy={0} blur={26} color={highlight} inner={false} />
+        </SkText>
+      </Group>
+
+      {/* 3. THE SHEEN — broad and faint: the surface turning toward the light. */}
+      <Group opacity={sheenOpacity}>
         <SkText x={glyph.x} y={glyph.y} text={value} font={font}>
           <LinearGradient
-            start={gleamStart}
-            end={gleamEnd}
+            start={sheenA}
+            end={sheenB}
+            colors={[fadeOut(highlight), highlight, fadeOut(highlight)]}
+          />
+        </SkText>
+      </Group>
+
+      {/* 4. THE CORE — narrow and bright, riding ahead of the sheen. */}
+      <Group opacity={envelope}>
+        <SkText x={glyph.x} y={glyph.y} text={value} font={font}>
+          <LinearGradient
+            start={coreA}
+            end={coreB}
             colors={[fadeOut(spark), spark, fadeOut(spark)]}
           />
         </SkText>

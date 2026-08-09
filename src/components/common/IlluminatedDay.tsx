@@ -16,6 +16,7 @@ import Animated, {
 import type { LiturgicalDay, LiturgicalEvent } from '../../features/calendar/types';
 import { localized } from '../../features/calendar/types';
 import type { SupportedLanguage } from '../../types/language';
+import { getDayEmphasis } from '../../features/calendar/dayEmphasis';
 import { spacing } from '../../theme/spacing';
 import { useTheme, useThemedStyles, type ResolvedTheme } from '../../theme/useTheme';
 import { MAX_LEAF_WIDTH, useLeaf } from '../../theme/useLeaf';
@@ -99,7 +100,7 @@ export function IlluminatedDay({
   const styles = useThemedStyles(makeStyles);
   const { width } = useWindowDimensions();
 
-  const { dayNum, weekday, monthYear, isSunday } = useMemo(() => {
+  const { dayNum, weekday, monthYear, isSunday, dayOfWeek } = useMemo(() => {
     const d = new Date(`${dateISO}T00:00:00`);
     const locale = language === 'ko' ? 'ko' : 'en';
     return {
@@ -107,6 +108,7 @@ export function IlluminatedDay({
       weekday: d.toLocaleDateString(locale, { weekday: 'long' }),
       monthYear: d.toLocaleDateString(locale, { month: 'long', year: 'numeric' }),
       isSunday: d.getDay() === 0,
+      dayOfWeek: d.getDay(),
     };
   }, [dateISO, language]);
 
@@ -177,7 +179,35 @@ export function IlluminatedDay({
       label: labels[m.key],
     }));
   }, [liturgicalDay, labels]);
-  const heroColor = isFeast || isSunday ? th.feastAccent : th.textPrimary;
+  // THE NUMERAL SPEAKS THE APP'S OWN COLOUR CODE.
+  //
+  // Sunday-red / Saturday-blue is already the single source of truth for the
+  // month grid and the Elegant panel (see dayEmphasis.ts). The gilded numeral
+  // used to ignore it and be gold on every day, which meant the app's most
+  // prominent date was the ONE place the code did not apply. Now it obeys it —
+  // so a Sunday, a feast and a national day read the same here as they do in the
+  // grid a tab away.
+  //
+  //   crimson  Sundays, high-rank commemorations, national days
+  //   blue     every other Saturday
+  //   none     ordinary weekdays — the plain ink of the page
+  const emphasis = getDayEmphasis({
+    dayOfWeek,
+    hasHighRank: isFeast,
+    hasCelebration: observances.length > 0,
+  });
+  const heroColor =
+    emphasis === 'crimson' ? th.danger : emphasis === 'blue' ? th.blue : th.textPrimary;
+
+  // AND THE LIGHT IS THE DISTINCTION. The glow and its travelling gleam belong
+  // to the days the colour code marks; an ordinary weekday is plain ink, unlit.
+  // That way the effect MEANS something instead of decorating every date, and
+  // the day a reader most wants to spot is the one that catches the light.
+  const lit = emphasis !== 'none';
+  // The glow takes the day's own colour and the gleam is its pale core, so a
+  // crimson feast glows crimson and a blue Saturday glows blue.
+  const litGlow = emphasis === 'crimson' ? '#E08A8A' : '#9CC2F2';
+  const litSpark = emphasis === 'crimson' ? '#FFE0E0' : '#E4F0FF';
 
   // The mandorla turns only on a great feast — a whole degree of ceremony the
   // app previously expressed as a coloured dot. One slow rotation, never fast
@@ -237,16 +267,27 @@ export function IlluminatedDay({
   // DARKER than the paper and catches a lighter highlight — so the two colours
   // swap roles rather than the effect being dropped, which is what "gold on
   // cream is illegible" actually called for.
-  const gilded = isFeast;
-  // GOLD LEAF HAS A LIGHT DIRECTION — three stops down the figure, not one flat
-  // colour. On parchment the gilding is DARKER than the page and catches a
-  // brighter top; on near-black it is a bright figure that deepens as it turns
-  // away, but never so far that it loses the ground.
-  const gilt = th.isDark
-    ? (['#F0DFA8', '#D4AF52', '#9A7B28'] as const)
-    : (['#C9A227', '#8A6B1C', '#5A4412'] as const);
-  const giltBase = th.isDark ? th.accent : th.accentText;
-  const giltHighlight = th.isDark ? th.accentPale : th.accent;
+  const gilded = lit;
+  // THE RESTING COLOUR OF THE GILT.
+  //
+  // It was `accentText` — #6D581C — and that is a TEXT token: chosen for a
+  // contrast ratio, at 59% saturation, which is why it read olive rather than
+  // gold. The complaint "a bit dark before the glowing effect and after" is
+  // really about SATURATION and HUE, and the fix is mostly free.
+  //
+  // #846000 is fully saturated at hue 44 — the same family as the accent gold
+  // (#D4AF52, hue 43) that draws the rays and rules around it, so the numeral
+  // now belongs to its own halo. Measured against the two grounds it actually
+  // sits on:
+  //
+  //            page #EDE5D4   halo centre #E4D6B3  (the worst ground on screen)
+  //   before        5.47              4.76
+  //   after         4.59              3.99
+  //
+  // That is a deliberate trade and it stays on the safe side of it: the numeral
+  // is 86pt on a phone and ~160pt on a tablet, unambiguously LARGE text, where
+  // AA asks 3.0:1 — so 3.99 keeps a third more headroom than the standard wants,
+  // on the worst ground, while looking like gold instead of olive.
   const capital = headline?.trim()?.[0] ?? '';
   // THE VERSAL IS A RUN OF ONE CHARACTER, so the content-based face rule would
   // decide for that character ALONE — and a Korean title may open with a digit.
@@ -348,18 +389,26 @@ export function IlluminatedDay({
                 value={String(dayNum)}
                 box={{ width: halo, height: fig(NUMERAL_LINE_HEIGHT) * 1.7 }}
                 fontSize={fig(NUMERAL_SIZE)}
-                gilt={gilt}
-                highlight={giltHighlight}
+                base={heroColor}
+                highlight={litGlow}
                 // The gleam is LIGHT catching metal, so its core is paler than
                 // the gilt itself. On parchment that is a step of ~131 in
                 // luminance against the base rather than ~80, which is the
                 // difference between a gleam you see and one you have to look for.
-                spark={th.accentPale}
+                spark={litSpark}
                 // A cast shadow has to be the colour of the LEAF in shade, not
                 // black: black on parchment reads as dirt. On the night palette
                 // the ground is already near-black, so the shadow there is a
                 // true darkness and can be stronger without showing a colour.
-                shadow={th.isDark ? 'rgba(0, 0, 0, 0.55)' : 'rgba(74, 54, 20, 0.30)'}
+                // The cast shadow is the day's own colour in shade, not a gold
+                // one — a crimson figure casting a brown shadow reads as a decal.
+                shadow={
+                  th.isDark
+                    ? 'rgba(0, 0, 0, 0.55)'
+                    : emphasis === 'crimson'
+                      ? 'rgba(96, 26, 26, 0.28)'
+                      : 'rgba(28, 54, 96, 0.26)'
+                }
               />
             </View>
           ) : null}
