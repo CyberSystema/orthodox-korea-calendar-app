@@ -13,9 +13,26 @@ import { Text, TextInput } from './ScaledText';
  * matins lines) and nowhere else. Notably NOT on:
  *   - the liturgical flag badges (LiturgicalFlagsRow), which are status icons
  *     rather than text to research;
- *   - the date header and section headings, which are chrome;
+ *   - section headings, which are chrome;
  *   - parish events, whose card is a Pressable that opens the event — a text
  *     selection gesture there would fight the tap.
+ *
+ * A SECOND MECHANISM EXISTS, and the choice between them is not stylistic. Some
+ * of the day's content carries a STYLED SUB-RANGE — the illuminated capital that
+ * opens the principal commemoration is a nested Text at 38pt in the day's own
+ * colour. This component cannot render that on iOS: its whole reason for
+ * existing there is a read-only TextInput, and a TextInput has no rich text, so
+ * it would either drop the capital or fall back to a plain Text and buy nothing.
+ *
+ * Those elements pass plain `selectable` instead. On iOS that is Copy-only and
+ * copies the entire node — which for a saint's name is what a reader wants
+ * anyway, since they are copying it to look it up rather than extracting a
+ * fragment. On Android `selectable` is the full experience regardless. So:
+ *
+ *   SelectableText   multi-line body content with no styled runs inside it, where
+ *                    selecting a PHRASE matters (readings, commemorations, meta)
+ *   selectable       short single entries that carry their own styling
+ *                    (the headline, the mark captions, the weekday and month)
  *
  * TWO IMPLEMENTATIONS, because `<Text selectable>` is not cross-platform.
  *

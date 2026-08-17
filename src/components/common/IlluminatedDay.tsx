@@ -310,7 +310,10 @@ export function IlluminatedDay({
       {/* ═══ HERO ═══ */}
       <View style={[styles.hero, big && { paddingTop: sp(spacing.xxl), gap: sp(spacing.xs) }]}>
         <Animated.View entering={FadeInDown.duration(DUR)}>
-          <Text style={[styles.weekday, big && { fontSize: fig(13), letterSpacing: fig(5) }]}>
+          <Text
+            selectable
+            style={[styles.weekday, big && { fontSize: fig(13), letterSpacing: fig(5) }]}
+          >
             {weekday.toUpperCase()}
           </Text>
         </Animated.View>
@@ -415,7 +418,10 @@ export function IlluminatedDay({
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(STEP * 2).duration(DUR)}>
-          <Text style={[styles.monthYear, big && { fontSize: fig(17), letterSpacing: fig(1) }]}>
+          <Text
+            selectable
+            style={[styles.monthYear, big && { fontSize: fig(17), letterSpacing: fig(1) }]}
+          >
             {monthYear}
           </Text>
         </Animated.View>
@@ -445,6 +451,7 @@ export function IlluminatedDay({
                 label={mark.label}
               />
               <Text
+                selectable
                 style={[styles.markLabel, big && { fontSize: disp(12), letterSpacing: disp(0.8) }]}
                 numberOfLines={2}
               >
@@ -464,11 +471,23 @@ export function IlluminatedDay({
           scale, and it stays correct in Korean, where the initial is a whole
           syllable block rather than a broken letter.
 
-          Plain Text, not SelectableText: this is a heading, and headings are
-          deliberately outside the selection surface (see SelectableText). */}
+          SELECTABLE, BUT NOT VIA SelectableText — and the difference is forced
+          by the drop cap. SelectableText renders a read-only TextInput on iOS,
+          which is what buys real selection handles there, but a TextInput cannot
+          carry a styled sub-range: handing it this headline would either lose
+          the illuminated capital or fall back to a plain Text and gain nothing.
+          
+          `selectable` is the right trade for THIS element. On iOS it gives
+          long-press -> Copy, which copies the whole node — and for a saint's
+          name that is exactly what a reader wants anyway, since they are copying
+          it to look it up, not extracting a fragment of it. On Android it gives
+          the full word-selection experience. The capital survives on both. */}
       {headline ? (
         <Animated.View entering={FadeInDown.delay(STEP * 3).duration(DUR)}>
-          <Text style={[styles.headline, big && { fontSize: disp(24), lineHeight: disp(32) }]}>
+          <Text
+            selectable
+            style={[styles.headline, big && { fontSize: disp(24), lineHeight: disp(32) }]}
+          >
             <Text
               style={[
                 styles.versal,
