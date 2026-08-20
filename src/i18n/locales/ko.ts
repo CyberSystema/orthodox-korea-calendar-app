@@ -56,8 +56,8 @@ const ko: Translations = {
     fast: '금식',
     cheese: '유제품 허용',
     fish: '생선 허용',
-    pres: '선성체 성찬예배',
-    basil: '성 바실 전례',
+    pres: '미리 축성된 성찬예배',
+    basil: '성 대 바실리오스 성찬예배',
     dl: '성찬예배',
   },
   today: {
