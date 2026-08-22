@@ -2,7 +2,7 @@
   "expo": {
     "name": "OK Calendar",
     "slug": "orthodox-korea-calendar-app",
-    "version": "1.3",
+    "version": "202608.1",
     "scheme": "okncalendar",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -13,7 +13,9 @@
       "bundleIdentifier": "com.cybersystema.okncalendar",
       "appleTeamId": "4S3VW22A8G",
       "googleServicesFile": "./GoogleService-Info.plist",
-      "associatedDomains": ["applinks:orthodox-korea-calendar.pages.dev"],
+      "associatedDomains": [
+        "applinks:orthodox-korea-calendar.pages.dev"
+      ],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -34,10 +36,15 @@
               "pathPrefix": "/"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ],
-      "permissions": ["POST_NOTIFICATIONS"],
+      "permissions": [
+        "POST_NOTIFICATIONS"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#5C1414",
         "backgroundImage": "./assets/android-icon-background.png",
@@ -63,7 +70,7 @@
       [
         "expo-splash-screen",
         {
-          "//": "Both platforms launch into a BARE solid #3A0A0A (= colors.primaryDeep, the animated ByzantineSplashScreen's opening colour) so the native launch screen blends invisibly into the animation \u2014 no logo appears before it. iOS: NO top-level image \u2014 ./plugins/withSolidLaunchScreen (listed first, runs last via withMod LIFO) replaces expo-splash-screen's storyboard with a solid-colour UILaunchScreen built from backgroundColor. Android: an image IS still required \u2014 withAndroidSplashStyles ALWAYS writes windowSplashScreenAnimatedIcon=@drawable/splashscreen_logo into the Android 12 splash theme, so omitting it means the drawable is never generated and the release build fails at processReleaseResources (resource splashscreen_logo not found). We therefore point it at a FULLY TRANSPARENT png: the drawable exists (build succeeds) but renders nothing, so Android shows only the solid background \u2014 matching iOS. Do not swap this back to a logo. This android block does not affect the iOS config.",
+          "//": "Both platforms launch into a BARE solid #3A0A0A (= colors.primaryDeep, the animated ByzantineSplashScreen's opening colour) so the native launch screen blends invisibly into the animation — no logo appears before it. iOS: NO top-level image — ./plugins/withSolidLaunchScreen (listed first, runs last via withMod LIFO) replaces expo-splash-screen's storyboard with a solid-colour UILaunchScreen built from backgroundColor. Android: an image IS still required — withAndroidSplashStyles ALWAYS writes windowSplashScreenAnimatedIcon=@drawable/splashscreen_logo into the Android 12 splash theme, so omitting it means the drawable is never generated and the release build fails at processReleaseResources (resource splashscreen_logo not found). We therefore point it at a FULLY TRANSPARENT png: the drawable exists (build succeeds) but renders nothing, so Android shows only the solid background — matching iOS. Do not swap this back to a logo. This android block does not affect the iOS config.",
           "backgroundColor": "#3A0A0A",
           "android": {
             "backgroundColor": "#3A0A0A",
