@@ -3,27 +3,24 @@ const { execFileSync } = require('node:child_process');
 const base = require('./app.json');
 
 /**
- * Build numbers, assigned automatically and independently of the version.
+ * Build numbers are NOT computed here, and that is the point.
  *
- * `version` ("1.3") is a human decision and stays in app.json. The build number
- * and the Android version code are bookkeeping — they only have to increase —
- * and having to remember to bump them by hand is how a build gets rejected at
- * submission, or how two sideloads end up claiming to be the same one.
+ * `version` ("1.3", soon YYYYMM.x) is a human decision and stays in app.json,
+ * written by scripts/bump-version.mjs when a store build is cut. The per-build
+ * number is written straight into the native projects by
+ * scripts/stamp-build-number.mjs before every local build, and by EAS remotely
+ * for store builds (appVersionSource "remote" + autoIncrement).
  *
- *   EAS builds    eas.json sets appVersionSource "remote" with autoIncrement, so
- *                 EAS keeps the counter server-side and raises it per build. That
- *                 is the only scheme that survives a rebuild of the same commit,
- *                 which the App Store rejects if the build number repeats.
+ * THIS FILE MUST BE DETERMINISTIC. runtimeVersion uses the fingerprint policy,
+ * and the resolved Expo config is one of the fingerprint's inputs — so anything
+ * here that varies between two identical runs makes the fingerprint vary too, and
+ * a runtime that changes on its own is a runtime no update can ever match.
  *
- *   LOCAL builds  seconds since 2020, from scripts/buildNumber.js — see the note
- *                 there for why this replaced `git rev-list --count HEAD`, which
- *                 only moved when you committed.
- *
- * This path only runs when a PREBUILD happens. A plain `expo run:*` against an
- * existing ios/ or android/ never reads this file, which is why every local build
- * script also runs scripts/stamp-build-number.mjs first.
+ * That is not hypothetical: an earlier version of this file derived the build
+ * number from Date.now(), and two consecutive `expo-updates fingerprint:generate`
+ * runs seconds apart produced different hashes, with `expoConfig` as the single
+ * differing source. Do not put a clock, a random value or a git call in here.
  */
-const { buildNumber } = require('./scripts/buildNumber.js');
 
 /**
  * Firebase config files are gitignored, and EAS only uploads what git tracks — so
@@ -57,18 +54,8 @@ function firebase(expo) {
 }
 
 module.exports = () => {
-  const expo = { ...base.expo, ...firebase(base.expo) };
-
-  // On EAS, remote versioning owns these; touching them here would fight it.
-  if (process.env.EAS_BUILD) return { expo };
-
-  const n = buildNumber();
-
-  return {
-    expo: {
-      ...expo,
-      ios: { ...expo.ios, buildNumber: String(n) },
-      android: { ...expo.android, versionCode: n },
-    },
-  };
+  // One shape, always. No branch on EAS_BUILD and no computed numbers: EAS owns
+  // its own build numbers remotely, stamp-build-number.mjs owns the local ones,
+  // and this file only has to resolve the same way every time it is read.
+  return { expo: { ...base.expo, ...firebase(base.expo) } };
 };
