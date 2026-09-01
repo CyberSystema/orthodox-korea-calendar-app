@@ -1,4 +1,9 @@
-import { LogLevel, OneSignal, type NotificationClickEvent } from 'react-native-onesignal';
+import {
+  LogLevel,
+  OneSignal,
+  type NotificationClickEvent,
+  type NotificationWillDisplayEvent,
+} from 'react-native-onesignal';
 
 import { secureStorage } from '../storage/secureStorage';
 import type { SupportedLanguage } from '../../types/language';
@@ -140,12 +145,25 @@ export function initOneSignal(): void {
     }
   });
 
-  OneSignal.Notifications.addEventListener('foregroundWillDisplay', () => {
-    // Deliberately NOT calling preventDefault(): the banner must still display.
-    // This only triggers the app's own resync so the new event/announcement is
-    // already there when the user taps through.
-    foregroundHandler?.();
-  });
+  OneSignal.Notifications.addEventListener(
+    'foregroundWillDisplay',
+    (event: NotificationWillDisplayEvent) => {
+      // display() IS REQUIRED. Registering this listener is not passive: the SDK's
+      // addEventListener('foregroundWillDisplay') calls through to the native
+      // `addNotificationForegroundLifecycleListener`, which puts the SDK into
+      // lifecycle mode — the notification is HELD pending an explicit decision from
+      // JS. A handler that only does side work and returns drops it silently.
+      //
+      // Verified on device, same sender (the OneSignal dashboard) and same phone:
+      //   app foregrounded -> notification never appeared
+      //   app backgrounded -> notification appeared normally
+      // An earlier version of this comment asserted the opposite ("do NOT call
+      // preventDefault, the banner still displays"). That was wrong, and it cost a
+      // long debugging session in which the backend was blamed twice.
+      foregroundHandler?.();
+      event.notification.display();
+    },
+  );
 
   for (const key of RETIRED_PUSH_KEYS) {
     void secureStorage.deleteItem(key).catch(() => {});
