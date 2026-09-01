@@ -45,6 +45,7 @@ import { useCalendarDataVersion } from '../../features/calendar/useCalendarDataV
 import { getDayEmphasis, type DayEmphasis } from '../../features/calendar/dayEmphasis';
 import {
   localized,
+  type EventNotificationTarget,
   type EventRecurrence,
   type LiturgicalEvent,
 } from '../../features/calendar/types';
@@ -229,6 +230,10 @@ export function MonthScreen({ navigation, route }: Props) {
   const [detailsKo, setDetailsKo] = useState('');
   const [formRecurrence, setFormRecurrence] = useState<EventRecurrence>('none');
   const [formNotify, setFormNotify] = useState(true);
+  // Which language audience the broadcast goes to. 'all' sends ONE message carrying
+  // both languages — OneSignal delivers each subscriber only their own — while
+  // 'english'/'korean' filter the audience so the other language is not reached.
+  const [formNotifyTarget, setFormNotifyTarget] = useState<EventNotificationTarget>('all');
 
   const weekHeaders = t('month.weekdays', { returnObjects: true });
   const weekLabels = Array.isArray(weekHeaders) ? weekHeaders : fallbackWeekHeaders;
@@ -432,6 +437,7 @@ export function MonthScreen({ navigation, route }: Props) {
     setDetailsKo('');
     setFormRecurrence('none');
     setFormNotify(true);
+    setFormNotifyTarget('all');
     setEditorVisible(true);
   };
 
@@ -449,6 +455,7 @@ export function MonthScreen({ navigation, route }: Props) {
     setDetailsKo(event.details.ko);
     setFormRecurrence(event.recurrence || 'none');
     setFormNotify(Boolean(event.notify));
+    setFormNotifyTarget(event.notificationTarget ?? 'all');
     setEditorVisible(true);
   };
 
@@ -469,6 +476,28 @@ export function MonthScreen({ navigation, route }: Props) {
       return;
     }
 
+    // A broadcast must be readable by everyone it reaches. The event itself may be
+    // saved with one language (the other is cross-filled below for display), but a
+    // notification aimed at an audience has to have real text in THEIR language —
+    // otherwise Korean subscribers get English prose in a Korean-only announcement.
+    if (formNotify) {
+      const needsEn = formNotifyTarget === 'all' || formNotifyTarget === 'english';
+      const needsKo = formNotifyTarget === 'all' || formNotifyTarget === 'korean';
+      if ((needsEn && !titleEn.trim()) || (needsKo && !titleKo.trim())) {
+        Alert.alert(
+          t('month.notifyTitleRequiredTitle'),
+          t(
+            formNotifyTarget === 'all'
+              ? 'month.notifyTitleRequiredBoth'
+              : formNotifyTarget === 'english'
+                ? 'month.notifyTitleRequiredEnglish'
+                : 'month.notifyTitleRequiredKorean',
+          ),
+        );
+        return;
+      }
+    }
+
     const payload = {
       id: editingId ?? undefined,
       originalYear: editingOriginalYear,
@@ -487,7 +516,7 @@ export function MonthScreen({ navigation, route }: Props) {
       },
       recurrence: formRecurrence,
       notify: formNotify,
-      notificationTarget: formNotify ? ('all' as const) : undefined,
+      notificationTarget: formNotify ? formNotifyTarget : undefined,
     };
 
     try {
@@ -1031,6 +1060,37 @@ export function MonthScreen({ navigation, route }: Props) {
                   {t(editingId ? 'month.sendNotificationOnEdit' : 'month.sendNotification')}
                 </Text>
               </Pressable>
+
+              {/* Only meaningful once notifying, so it stays out of the way until then. */}
+              {formNotify ? (
+                <>
+                  <Text style={styles.formLabel}>{t('month.notifyAudience.title')}</Text>
+                  <View style={styles.optionRow}>
+                    {(['all', 'english', 'korean'] as EventNotificationTarget[]).map((audience) => (
+                      <Pressable
+                        key={audience}
+                        style={[
+                          styles.optionPill,
+                          formNotifyTarget === audience && styles.optionPillActive,
+                        ]}
+                        onPress={() => setFormNotifyTarget(audience)}
+                      >
+                        <Text
+                          style={[
+                            styles.optionPillText,
+                            formNotifyTarget === audience && styles.optionPillTextActive,
+                          ]}
+                        >
+                          {t(`month.notifyAudience.${audience}`)}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                  {formNotifyTarget === 'all' ? (
+                    <Text style={styles.formHint}>{t('month.notifyAudience.hint')}</Text>
+                  ) : null}
+                </>
+              ) : null}
 
               <View style={styles.editorActions}>
                 <Pressable
@@ -1622,6 +1682,13 @@ const makeStyles = (th: ResolvedTheme) =>
       color: th.textSecondary,
       paddingHorizontal: spacing.md,
       paddingTop: spacing.sm,
+    },
+    formHint: {
+      fontFamily: typography.family.body,
+      fontSize: typography.size.xs,
+      color: th.textFaint,
+      paddingHorizontal: spacing.md,
+      paddingTop: spacing.xs,
     },
     optionRow: {
       flexDirection: 'row',

@@ -135,10 +135,27 @@ function toEventInput(draft: EventDraft): CreateOrUpdateEventInput {
   };
 }
 
-async function sendEventNotification(event: LiturgicalEvent): Promise<void> {
+/**
+ * Map the staff-facing audience choice onto the backend's notify target.
+ *
+ * 'all' sends ONE message carrying both languages, which OneSignal delivers to each
+ * subscriber in their own language only. 'english'/'korean' additionally FILTER the
+ * audience by OneSignal's built-in `language` property, so the other side is not
+ * reached at all.
+ */
+function toNotifyTarget(target?: EventNotificationTarget): 'all' | 'en' | 'ko' {
+  if (target === 'english') return 'en';
+  if (target === 'korean') return 'ko';
+  return 'all';
+}
+
+async function sendEventNotification(
+  event: LiturgicalEvent,
+  target?: EventNotificationTarget,
+): Promise<void> {
   try {
     await backendClient.adminNotify({
-      target: 'all',
+      target: toNotifyTarget(target),
       title_en: event.title.en,
       title_ko: event.title.ko,
       body_en: event.details.en || event.title.en,
@@ -196,7 +213,7 @@ export async function createRemoteEvent(draft: EventDraft): Promise<LiturgicalEv
   try {
     const createdEvent = toLiturgicalEvent(await backendClient.createEvent(toEventInput(draft)));
     if (draft.notify) {
-      await sendEventNotification(createdEvent);
+      await sendEventNotification(createdEvent, draft.notificationTarget);
     }
 
     return createdEvent;
@@ -217,7 +234,7 @@ export async function updateRemoteEvent(draft: EventDraft): Promise<LiturgicalEv
       await backendClient.updateEvent(draft.id, toEventInput(draft)),
     );
     if (draft.notify) {
-      await sendEventNotification(updatedEvent);
+      await sendEventNotification(updatedEvent, draft.notificationTarget);
     }
 
     return updatedEvent;

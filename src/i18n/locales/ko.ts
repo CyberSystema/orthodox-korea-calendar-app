@@ -116,6 +116,17 @@ const ko: Translations = {
     eventSaveError: '이벤트 저장 실패',
     sendNotification: '알림 보내기',
     sendNotificationOnEdit: '이 변경 사항에 대한 알림 보내기',
+    notifyAudience: {
+      title: '받는 대상',
+      all: '모두',
+      english: '영어만',
+      korean: '한국어만',
+      hint: '각 구독자는 자신의 언어로 받습니다.',
+    },
+    notifyTitleRequiredTitle: '두 제목 모두 필요',
+    notifyTitleRequiredBoth: '모두에게 알리려면 영어와 한국어 제목이 모두 필요합니다.',
+    notifyTitleRequiredEnglish: '영어 구독자에게 알리려면 영어 제목이 필요합니다.',
+    notifyTitleRequiredKorean: '한국어 구독자에게 알리려면 한국어 제목이 필요합니다.',
     recurrence: {
       title: '반복',
       none: '없음',

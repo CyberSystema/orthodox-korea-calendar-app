@@ -110,6 +110,17 @@ const en = {
     eventSaveError: 'Failed to save event',
     sendNotification: 'Send notification',
     sendNotificationOnEdit: 'Send a notification about this change',
+    notifyAudience: {
+      title: 'Who receives it',
+      all: 'Both',
+      english: 'English only',
+      korean: 'Korean only',
+      hint: 'Each subscriber receives it in their own language.',
+    },
+    notifyTitleRequiredTitle: 'Both titles required',
+    notifyTitleRequiredBoth: 'Notifying both audiences needs an English and a Korean title.',
+    notifyTitleRequiredEnglish: 'Notifying English subscribers needs an English title.',
+    notifyTitleRequiredKorean: 'Notifying Korean subscribers needs a Korean title.',
     recurrence: {
       title: 'Recurrence',
       none: 'None',
