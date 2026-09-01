@@ -438,6 +438,56 @@ export function SecretMenuScreen({ navigation }: Props) {
         }),
     );
 
+  /**
+   * The plain "Send Test Push" buttons carry NO data, so tapping one can only ever
+   * open Today — they cannot exercise the deep link at all. Only a real event notify
+   * carries { eventId, date }, which is the payload the cold-start tap path consumes.
+   *
+   * That path is the highest-risk piece of the OneSignal migration (a notification
+   * click racing React Navigation's getInitialURL, under an injected SceneDelegate
+   * OneSignal has never documented support for), so it needs a repeatable way to fire
+   * a genuine deep-link push without hand-creating an event each time.
+   */
+  const handleDeepLinkTestPush = () =>
+    confirmBroadcast(
+      'ALL (deep link)',
+      () =>
+        void runAction('Send Deep-Link Test Push', async () => {
+          // Reuse a real event when one exists — creating one every run would litter
+          // the calendar. Fall back to creating a test event only when there is none.
+          let target = useEventsStore.getState().customEvents[0];
+          if (!target) {
+            const today = dayjs().format('YYYY-MM-DD');
+            const created = await backendClient.createEvent({
+              title_en: '[Test] Deep Link Target',
+              title_ko: '[테스트] 딥링크 대상',
+              description_en: 'Created by the console to test notification tap-through.',
+              description_ko: '알림 탭 연결을 테스트하기 위해 콘솔에서 생성했습니다.',
+              date: today,
+              type: 'other',
+              color: '#B8942E',
+              all_day: true,
+            });
+            target = { id: created.id, dateISO: created.date } as typeof target;
+            log(`  created target event ${created.id.slice(0, 8)}…`, 'info');
+          }
+
+          log(`  eventId=${target.id}`, 'data');
+          log(`  date=${target.dateISO}`, 'data');
+          log('  force-quit the app, then tap the notification from the lock screen', 'info');
+
+          const res = await backendClient.adminNotify({
+            target: 'all',
+            title_en: '[Deep link] Tap to open the event',
+            title_ko: '[딥링크] 일정을 열려면 탭하세요',
+            body_en: 'This push carries an eventId — tapping it must open Event detail.',
+            body_ko: '이 알림에는 eventId가 있습니다. 탭하면 일정 화면이 열려야 합니다.',
+            data: { eventId: target.id, date: target.dateISO },
+          });
+          return describeNotifyResult(res);
+        }),
+    );
+
   const handlePushDiagnostic = () =>
     runAction('Push Subscription Diagnostic', async () => {
       // Still guarded: a simulator/emulator never gets an APNs/FCM token, so a null
@@ -1682,6 +1732,11 @@ export function SecretMenuScreen({ navigation }: Props) {
             disabled={busy}
           />
           <ActionButton label="Send Test Push → All" onPress={handleNotifyAll} disabled={busy} />
+          <ActionButton
+            label="Send Deep-Link Test Push (opens Event detail)"
+            onPress={handleDeepLinkTestPush}
+            disabled={busy}
+          />
           <ActionButton
             label="Send Test Push → English"
             onPress={handleNotifyEnglish}
