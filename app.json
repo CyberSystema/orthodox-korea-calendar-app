@@ -2,7 +2,7 @@
   "expo": {
     "name": "OK Calendar",
     "slug": "orthodox-korea-calendar-app",
-    "version": "202608.1",
+    "version": "202609.1",
     "scheme": "okncalendar",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -12,7 +12,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.cybersystema.okncalendar",
       "appleTeamId": "4S3VW22A8G",
-      "associatedDomains": ["applinks:orthodox-korea-calendar.pages.dev"],
+      "associatedDomains": [
+        "applinks:orthodox-korea-calendar.pages.dev"
+      ],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -32,10 +34,15 @@
               "pathPrefix": "/"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ],
-      "permissions": ["POST_NOTIFICATIONS"],
+      "permissions": [
+        "POST_NOTIFICATIONS"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#5C1414",
         "backgroundImage": "./assets/android-icon-background.png",
@@ -56,7 +63,9 @@
           "disableNSE": true,
           "disableLocation": true,
           "iPhoneDeploymentTarget": "16.4",
-          "smallIcons": ["./assets/notification-icon.png"],
+          "smallIcons": [
+            "./assets/notification-icon.png"
+          ],
           "smallIconAccentColor": "#B8942E"
         }
       ],
