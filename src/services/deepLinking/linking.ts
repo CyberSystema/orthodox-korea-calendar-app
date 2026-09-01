@@ -40,6 +40,18 @@ export const linking: LinkingOptions<RootStackParamList> = {
     };
   },
   config: {
+    // REQUIRED for a deep link to be escapable. React Navigation builds the
+    // navigation state for an incoming URL with getStateFromPath, which reads THIS
+    // config and never consults the navigator's own initialRouteName prop — so
+    // without this line a link straight to EventDetail produces a stack containing
+    // only EventDetail, with nothing beneath it: no back button, no way out of the
+    // screen short of force-quitting. With it, MainTabs is placed underneath first.
+    //
+    // Found by the first genuine deep-link test. It predates the OneSignal work —
+    // the old expo-notifications path built its state the same way — it had simply
+    // never been exercised, because a notification without an eventId opens Today
+    // and neither the dashboard composer nor the console's plain test pushes carry one.
+    initialRouteName: 'MainTabs',
     screens: {
       MainTabs: {
         screens: {
