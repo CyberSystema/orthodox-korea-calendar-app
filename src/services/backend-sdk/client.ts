@@ -328,11 +328,34 @@ export class OrthodoxCalendarApiClient {
 
   // Devices no longer register with this backend — the OneSignal SDK owns the
   // subscription. Broadcasting is the only push surface left here.
+  /**
+   * TRANSITIONAL: falls back to the pre-OneSignal route on 404.
+   *
+   * The rollout ships this binary BEFORE flipping the production Worker, so for the
+   * adoption window a new build talks to a Worker that has no /notifications route.
+   * Without this, a staff member creating an event with notify on a new build would
+   * have the event saved but the announcement silently dropped — sendEventNotification
+   * only console.warns on failure, so nothing would surface at all.
+   *
+   * The new Worker serves BOTH paths (/subscriptions/notify is kept as an alias), so
+   * this is safe in both directions and goes quiet the moment production is flipped.
+   * Remove it together with that alias, one release after the cutover.
+   */
   async notify(input: NotifyInput): Promise<NotifyResponse> {
-    return this.request<NotifyResponse>('POST', '/notifications', {
-      body: input,
-      auth: true,
-    });
+    try {
+      return await this.request<NotifyResponse>('POST', '/notifications', {
+        body: input,
+        auth: true,
+      });
+    } catch (error) {
+      if (error instanceof BackendApiError && error.status === 404) {
+        return this.request<NotifyResponse>('POST', '/subscriptions/notify', {
+          body: input,
+          auth: true,
+        });
+      }
+      throw error;
+    }
   }
 
   // Backward-compatible alias for admin-centric naming.

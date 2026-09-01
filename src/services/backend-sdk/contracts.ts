@@ -233,6 +233,12 @@ export interface NotifyInput {
 
 export interface NotifyResponse {
   target: 'all' | 'en' | 'ko';
+  /**
+   * TRANSITIONAL: the pre-OneSignal Worker returned these instead of the fields
+   * below. A new binary can meet an old Worker during the rollout window.
+   */
+  sent?: number;
+  fcmEnabled?: boolean;
   /** OneSignal's `recipients`. 0 means the audience was empty — NOT a failure. */
   recipients: number;
   notificationId: string | null;
