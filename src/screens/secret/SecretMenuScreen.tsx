@@ -364,10 +364,18 @@ export function SecretMenuScreen({ navigation }: Props) {
   const describeNotifyResult = (res: {
     recipients: number | null;
     notificationId: string | null;
-  }): string =>
-    res.recipients === null
+    message?: string;
+  }): string => {
+    // The backend explains itself when nothing was sent — "Duplicate broadcast
+    // suppressed" (identical text + target inside the 30s window), "No subscriptions
+    // matched this audience", "Push provider not configured". Only handleNotifyAll
+    // used to print it, so the per-language buttons reported a bare "recipients=0"
+    // for a deliberate, correct suppression and read as a failure.
+    if (res.message) return res.message;
+    return res.recipients === null
       ? `queued, id=${res.notificationId ?? '—'} (count: see OneSignal → Delivery)`
       : `recipients=${res.recipients}`;
+  };
 
   // Real pushes go to real user devices. Require an explicit confirmation that
   // names the live environment before any broadcast leaves the console.
@@ -397,7 +405,6 @@ export function SecretMenuScreen({ navigation }: Props) {
           log(`  provider=onesignal enabled=${res.providerEnabled}`, 'data');
           log(`  notificationId=${res.notificationId ?? '—'}`, 'data');
           for (const e of res.errors) log(`  ⚠︎ ${e}`, 'err');
-          if (res.message) log(`  message: ${res.message}`, 'data');
           return describeNotifyResult(res);
         }),
     );
