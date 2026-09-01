@@ -218,23 +218,6 @@ export interface HardDeleteAnnouncementResponse {
   purged: true;
 }
 
-export interface RegisterSubscriptionInput {
-  token: string;
-  platform: 'ios' | 'android' | 'web';
-  language?: 'en' | 'ko' | 'all';
-  environment?: 'sandbox' | 'production';
-}
-
-export interface RegisterSubscriptionResponse {
-  id: string;
-  created?: true;
-  updated?: true;
-}
-
-export interface DeleteSubscriptionResponse {
-  deleted: true;
-}
-
 export interface LogoutResponse {
   message: string;
 }
@@ -249,13 +232,13 @@ export interface NotifyInput {
 }
 
 export interface NotifyResponse {
-  sent: number;
-  failed: number;
-  total: number;
   target: 'all' | 'en' | 'ko';
-  fcmEnabled: boolean;
-  fcmMode: 'v1' | 'legacy' | 'disabled';
-  apnsEnabled: boolean;
+  /** OneSignal's `recipients`. 0 means the audience was empty — NOT a failure. */
+  recipients: number;
+  notificationId: string | null;
+  /** False when the Worker has no OneSignal credentials configured. */
+  providerEnabled: boolean;
+  errors: string[];
   message?: string;
 }
 
@@ -266,16 +249,11 @@ export interface RateLimitedDetails {
   retryAfter?: number;
 }
 
-export interface FirebaseClientConfig {
-  apiKey: string;
-  authDomain: string;
-  projectId: string;
-  storageBucket: string;
-  messagingSenderId: string;
+export interface OneSignalClientConfig {
+  /** PUBLIC OneSignal App ID. */
   appId: string;
-  vapidPublicKey: string;
 }
 
 export interface ClientConfigResponse {
-  firebase: FirebaseClientConfig;
+  oneSignal: OneSignalClientConfig;
 }

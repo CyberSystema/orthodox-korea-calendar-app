@@ -1,7 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import dayjs from 'dayjs';
 import * as Device from 'expo-device';
-import * as Notifications from 'expo-notifications';
 import { useCallback, useRef, useState } from 'react';
 import {
   Alert,
@@ -30,9 +29,11 @@ import {
 } from '../../services/api/backendClient';
 import { logoutAdminThroughCloudflare } from '../../services/api/adminAuth';
 import {
-  registerCurrentPushSubscription,
-  unregisterCurrentPushSubscription,
-} from '../../services/api/subscriptions';
+  ONESIGNAL_APP_ID,
+  getOneSignalDiagnostics,
+  optInToPush,
+  optOutOfPush,
+} from '../../services/notifications/oneSignal';
 import {
   getCalendarDataVersion,
   getLastCalendarSyncAt,
@@ -382,12 +383,11 @@ export function SecretMenuScreen({ navigation }: Props) {
             body_en: 'Test push from system console.',
             body_ko: '시스템 콘솔 테스트 푸시.',
           });
-          log(
-            `  fcm=${res.fcmEnabled}/${res.fcmMode}, apns=${res.apnsEnabled}, total=${res.total}`,
-            'data',
-          );
+          log(`  provider=onesignal enabled=${res.providerEnabled}`, 'data');
+          log(`  notificationId=${res.notificationId ?? '—'}`, 'data');
+          for (const e of res.errors) log(`  ⚠︎ ${e}`, 'err');
           if (res.message) log(`  message: ${res.message}`, 'data');
-          return `sent=${res.sent}, failed=${res.failed}, total=${res.total}`;
+          return `recipients=${res.recipients}`;
         }),
     );
 
@@ -403,11 +403,9 @@ export function SecretMenuScreen({ navigation }: Props) {
             body_en: 'English-only test notification.',
             body_ko: '',
           });
-          log(
-            `  fcm=${res.fcmEnabled}/${res.fcmMode}, apns=${res.apnsEnabled}, total=${res.total}`,
-            'data',
-          );
-          return `sent=${res.sent}, failed=${res.failed}, target=en`;
+          log(`  provider=onesignal enabled=${res.providerEnabled}`, 'data');
+          for (const e of res.errors) log(`  ⚠︎ ${e}`, 'err');
+          return `recipients=${res.recipients}, target=en`;
         }),
     );
 
@@ -423,35 +421,48 @@ export function SecretMenuScreen({ navigation }: Props) {
             body_en: '',
             body_ko: '한국어 전용 테스트 알림.',
           });
-          log(
-            `  fcm=${res.fcmEnabled}/${res.fcmMode}, apns=${res.apnsEnabled}, total=${res.total}`,
-            'data',
-          );
-          return `sent=${res.sent}, failed=${res.failed}, target=ko`;
+          log(`  provider=onesignal enabled=${res.providerEnabled}`, 'data');
+          for (const e of res.errors) log(`  ⚠︎ ${e}`, 'err');
+          return `recipients=${res.recipients}, target=ko`;
         }),
     );
 
   const handlePushDiagnostic = () =>
     runAction('Push Subscription Diagnostic', async () => {
+      // Still guarded: a simulator/emulator never gets an APNs/FCM token, so a null
+      // subscription id there is expected rather than a fault.
       if (!Device.isDevice) return 'Not a physical device — push unavailable';
 
-      const perms = await Notifications.getPermissionsAsync();
-      log(`  permissions: ${perms.status}`, 'data');
-      if (perms.status !== 'granted') return `Push permission not granted (${perms.status})`;
+      const d = await getOneSignalDiagnostics();
+      log(`  app id: ${d.appId || '(none configured)'}`, d.appId ? 'data' : 'err');
+      log(`  permission: ${d.permission}`, 'data');
+      log(`  can request: ${d.canRequest}`, 'data');
+      log(`  opted in: ${d.optedIn}`, 'data');
+      log(`  subscription id: ${d.subscriptionId ?? '(none)'}`, 'data');
+      log(`  push token: ${d.pushToken ? `${d.pushToken.length} chars` : '(none)'}`, 'data');
+      log(`  onesignal id: ${d.onesignalId ?? '(none)'}`, 'data');
 
-      const tokenObj = await Notifications.getDevicePushTokenAsync();
-      const rawToken = typeof tokenObj.data === 'string' ? tokenObj.data : '';
-      log(`  device token type: ${tokenObj.type}`, 'data');
-      log(`  device token (${rawToken.length} chars): ${rawToken.slice(0, 24)}…`, 'data');
+      if (!d.permission) return 'Notification permission not granted';
+      if (!d.subscriptionId) return 'No OneSignal subscription yet — try Opt In';
+      return `subscribed (${d.subscriptionId.slice(0, 8)}…)`;
+    });
 
-      const storedToken = await secureStorage.getItem('app.pushSubscriptionToken');
-      const storedEnv = await secureStorage.getItem('app.pushSubscriptionEnvironment');
-      log(`  stored token match: ${storedToken === rawToken}`, 'data');
-      log(`  stored env: ${storedEnv ?? 'none'}`, 'data');
-
-      log('  force re-registering with backend…', 'info');
-      const ok = await registerCurrentPushSubscription({ force: true });
-      return `re-registration ${ok ? 'succeeded' : 'failed'}`;
+  // A mismatch between the app's App ID and the Worker's is otherwise COMPLETELY
+  // silent: the send succeeds, OneSignal reports recipients: 0, and no device ever
+  // hears anything. Worth one button.
+  const handleCompareAppId = () =>
+    runAction('Compare App ID with Backend', async () => {
+      const config = await backendClient.clientConfig();
+      const backendAppId = config.oneSignal?.appId ?? '';
+      log(`  app:     ${ONESIGNAL_APP_ID || '(none)'}`, 'data');
+      log(`  backend: ${backendAppId || '(none)'}`, 'data');
+      if (!ONESIGNAL_APP_ID || !backendAppId) {
+        return 'MISSING — one side has no OneSignal App ID configured';
+      }
+      if (ONESIGNAL_APP_ID !== backendAppId) {
+        return 'MISMATCH — this app and the backend target different OneSignal apps';
+      }
+      return 'match';
     });
 
   const handleNotifyCustom = () => {
@@ -466,7 +477,7 @@ export function SecretMenuScreen({ navigation }: Props) {
             body_en: bodyEn?.trim() || '',
             body_ko: bodyEn?.trim() || '',
           });
-          return `sent=${res.sent}, failed=${res.failed}`;
+          return `recipients=${res.recipients}`;
         });
       });
     });
@@ -769,29 +780,13 @@ export function SecretMenuScreen({ navigation }: Props) {
     log(`  App Version: ${getAppVersionLabel()}`, 'data');
     log(`  Backend URL: ${configuredBaseUrl}`, 'data');
     log(`  __DEV__: ${__DEV__}`, 'data');
-    log(`  Push Environment: ${__DEV__ ? 'sandbox' : 'production'}`, 'data');
+    log(`  OneSignal App ID: ${ONESIGNAL_APP_ID || '(none configured)'}`, 'data');
     log(`  Platform: ${Platform.OS}`, 'data');
     log(
       `  React Native: ${Platform.constants?.reactNativeVersion ? `${Platform.constants.reactNativeVersion.major}.${Platform.constants.reactNativeVersion.minor}.${Platform.constants.reactNativeVersion.patch}` : 'unknown'}`,
       'data',
     );
   };
-
-  const handleNotifPermStatus = () =>
-    runAction('Notification Permission Details', async () => {
-      const perms = await Notifications.getPermissionsAsync();
-      log(`  Status: ${perms.status}`, 'data');
-      log(`  Can Ask Again: ${perms.canAskAgain}`, 'data');
-      log(`  Granted: ${perms.granted}`, 'data');
-      if (perms.ios) {
-        log(`  iOS Alert: ${perms.ios.allowsAlert ?? 'n/a'}`, 'data');
-        log(`  iOS Badge: ${perms.ios.allowsBadge ?? 'n/a'}`, 'data');
-        log(`  iOS Sound: ${perms.ios.allowsSound ?? 'n/a'}`, 'data');
-        log(`  iOS Critical Alerts: ${perms.ios.allowsCriticalAlerts ?? 'n/a'}`, 'data');
-        log(`  iOS Lockscreen: ${perms.ios.allowsDisplayInNotificationCenter ?? 'n/a'}`, 'data');
-      }
-      return `status=${perms.status}, granted=${perms.granted}`;
-    });
 
   const handleListAllSecureKeys = () =>
     runAction('List All Known Secure Keys', async () => {
@@ -800,9 +795,6 @@ export function SecretMenuScreen({ navigation }: Props) {
         'events.sync.cursor',
         'app.adminToken',
         'app.language',
-        'app.pushSubscriptionToken',
-        'app.pushSubscriptionEnvironment',
-        'app.pushSubscriptionLanguage',
         'auth.staffModeEnabled',
       ];
       let found = 0;
@@ -817,33 +809,6 @@ export function SecretMenuScreen({ navigation }: Props) {
       }
       return `${found}/${knownKeys.length} keys have values`;
     });
-
-  const handleScheduledNotifList = () =>
-    runAction('List Scheduled Notifications', async () => {
-      const scheduled = await Notifications.getAllScheduledNotificationsAsync();
-      if (scheduled.length === 0) return 'No scheduled notifications';
-      for (const notif of scheduled) {
-        const title = notif.content.title ?? '(no title)';
-        log(`  • [${notif.identifier.slice(0, 8)}] ${title}`, 'data');
-      }
-      return `${scheduled.length} scheduled notification(s)`;
-    });
-
-  const handleCancelAllScheduled = () => {
-    Alert.alert('Cancel All Scheduled', 'Cancel all pending local notifications?', [
-      { text: 'Keep', style: 'cancel' },
-      {
-        text: 'Cancel All',
-        style: 'destructive',
-        onPress: () => {
-          void runAction('Cancel All Scheduled Notifications', async () => {
-            await Notifications.cancelAllScheduledNotificationsAsync();
-            return 'all scheduled notifications cancelled';
-          });
-        },
-      },
-    ]);
-  };
 
   // ═══════════════════════════════════════════════════════════════
   //  8.  EVENT MANAGEMENT (Create / Update / Clone)
@@ -981,41 +946,45 @@ export function SecretMenuScreen({ navigation }: Props) {
   // ═══════════════════════════════════════════════════════════════
   //  9.  SUBSCRIPTION & NETWORK
   // ═══════════════════════════════════════════════════════════════
-  const handleShowFullPushToken = () =>
-    runAction('Full Push Token', async () => {
+  const handleShowSubscriptionId = () =>
+    runAction('OneSignal Subscription ID + Token', async () => {
       if (!Device.isDevice) return 'Not a physical device';
-      const perms = await Notifications.getPermissionsAsync();
-      if (perms.status !== 'granted') return `Permission: ${perms.status}`;
 
-      const tokenObj = await Notifications.getDevicePushTokenAsync();
-      const raw = typeof tokenObj.data === 'string' ? tokenObj.data : JSON.stringify(tokenObj.data);
-      log(`  Type: ${tokenObj.type}`, 'data');
-      log(`  Full Token (${raw.length} chars):`, 'data');
-      log(`  ${raw}`, 'data');
-      Clipboard.setString(raw);
-      log('  📋 Token copied to clipboard', 'info');
-      return `${tokenObj.type} token, ${raw.length} chars`;
+      const d = await getOneSignalDiagnostics();
+      if (!d.subscriptionId) return 'No OneSignal subscription on this device yet';
+
+      log(`  Subscription ID: ${d.subscriptionId}`, 'data');
+      log(`  OneSignal ID:    ${d.onesignalId ?? '(none)'}`, 'data');
+      if (d.pushToken) {
+        log(`  Push token (${d.pushToken.length} chars):`, 'data');
+        log(`  ${d.pushToken}`, 'data');
+      }
+      // The SUBSCRIPTION ID is the value you search on in OneSignal → Audience,
+      // so that is what goes to the clipboard rather than the raw device token.
+      Clipboard.setString(d.subscriptionId);
+      log('  📋 Subscription ID copied to clipboard', 'info');
+      return `subscription ${d.subscriptionId.slice(0, 8)}…`;
     });
 
-  const handleForceReregister = () =>
-    runAction('Force Re-register Push Token', async () => {
-      const ok = await registerCurrentPushSubscription({ force: true });
-      return ok ? 'Registration succeeded' : 'Registration failed (check permissions/device)';
+  const handleOptInPush = () =>
+    runAction('Opt In to Push', async () => {
+      const optedIn = await optInToPush();
+      return optedIn ? 'Opted in' : 'Opt-in did not take (check permission)';
     });
 
-  const handleUnregisterPush = () => {
+  const handleOptOutPush = () => {
     Alert.alert(
-      'Unregister Push',
-      'Remove push subscription from backend? You will stop receiving push notifications.',
+      'Opt Out of Push',
+      'Stop receiving push notifications on this device? This is device-local and you can opt back in from here.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Unregister',
+          text: 'Opt Out',
           style: 'destructive',
           onPress: () => {
-            void runAction('Unregister Push Subscription', async () => {
-              await unregisterCurrentPushSubscription();
-              return 'Push subscription removed from backend';
+            void runAction('Opt Out of Push', async () => {
+              await optOutOfPush();
+              return 'Opted out on this device';
             });
           },
         },
@@ -1296,13 +1265,16 @@ export function SecretMenuScreen({ navigation }: Props) {
                 termLog('Not a physical device', 'err');
                 break;
               }
-              const perms = await Notifications.getPermissionsAsync();
-              termLog(`Permission: ${perms.status}`, 'data');
-              if (perms.status === 'granted') {
-                const tokenObj = await Notifications.getDevicePushTokenAsync();
-                const raw = typeof tokenObj.data === 'string' ? tokenObj.data : '';
-                termLog(`Token type: ${tokenObj.type}`, 'data');
-                termLog(`Token: ${raw.slice(0, 32)}… (${raw.length} chars)`, 'data');
+              const d = await getOneSignalDiagnostics();
+              termLog(`App ID: ${d.appId || '(none configured)'}`, d.appId ? 'data' : 'err');
+              termLog(`Permission: ${d.permission}`, 'data');
+              termLog(`Opted in: ${d.optedIn}`, 'data');
+              termLog(`Subscription: ${d.subscriptionId ?? '(none)'}`, 'data');
+              if (d.pushToken) {
+                termLog(
+                  `Token: ${d.pushToken.slice(0, 32)}… (${d.pushToken.length} chars)`,
+                  'data',
+                );
               }
             } else if (sub === 'test') {
               const target = args[1] ?? 'all';
@@ -1314,7 +1286,7 @@ export function SecretMenuScreen({ navigation }: Props) {
                 termLog('Cancelled.', 'info');
                 break;
               }
-              const res = await termFetch('/subscriptions/notify', {
+              const res = await termFetch('/notifications', {
                 method: 'POST',
                 body: JSON.stringify({
                   target,
@@ -1326,7 +1298,13 @@ export function SecretMenuScreen({ navigation }: Props) {
               });
               const json = (await res.json()) as {
                 ok: boolean;
-                data?: { sent: number; failed: number; total: number };
+                data?: {
+                  recipients: number;
+                  notificationId: string | null;
+                  providerEnabled: boolean;
+                  errors: string[];
+                  message?: string;
+                };
                 error?: { message?: string };
               };
               if (!res.ok || !json.ok || !json.data) {
@@ -1334,9 +1312,11 @@ export function SecretMenuScreen({ navigation }: Props) {
                 break;
               }
               const d = json.data;
+              for (const e of d.errors) termLog(`  ⚠︎ ${e}`, 'err');
+              if (d.message) termLog(`  ${d.message}`, 'data');
               termLog(
-                `sent=${d.sent}, failed=${d.failed}, total=${d.total}`,
-                d.failed === 0 ? 'ok' : 'err',
+                `recipients=${d.recipients}, id=${d.notificationId ?? '—'}, provider=${d.providerEnabled}`,
+                d.errors.length === 0 ? 'ok' : 'err',
               );
             } else {
               termLog(`Unknown: push ${sub}. Use: status, test`, 'err');
@@ -1609,7 +1589,7 @@ export function SecretMenuScreen({ navigation }: Props) {
           />
           <ActionButton label="Admin Session Info" onPress={handleAdminMe} disabled={busy} />
           <ActionButton
-            label="Client Config (Firebase)"
+            label="Client Config (OneSignal)"
             onPress={handleClientConfig}
             disabled={busy}
           />
@@ -1682,6 +1662,11 @@ export function SecretMenuScreen({ navigation }: Props) {
           <ActionButton
             label="Push Subscription Diagnostic"
             onPress={handlePushDiagnostic}
+            disabled={busy}
+          />
+          <ActionButton
+            label="Compare App ID with Backend"
+            onPress={handleCompareAppId}
             disabled={busy}
           />
           <ActionButton label="Send Test Push → All" onPress={handleNotifyAll} disabled={busy} />
@@ -1786,25 +1771,9 @@ export function SecretMenuScreen({ navigation }: Props) {
           <ActionButton label="Show Device Info" onPress={handleDeviceInfo} disabled={busy} />
           <ActionButton label="Show App Info" onPress={handleAppInfo} disabled={busy} />
           <ActionButton
-            label="Notification Permission Details"
-            onPress={handleNotifPermStatus}
-            disabled={busy}
-          />
-          <ActionButton
             label="List All Secure Storage Keys"
             onPress={handleListAllSecureKeys}
             disabled={busy}
-          />
-          <ActionButton
-            label="List Scheduled Notifications"
-            onPress={handleScheduledNotifList}
-            disabled={busy}
-          />
-          <ActionButton
-            label="Cancel All Scheduled Notifications"
-            onPress={handleCancelAllScheduled}
-            disabled={busy}
-            danger
           />
         </Section>
 
@@ -1837,18 +1806,14 @@ export function SecretMenuScreen({ navigation }: Props) {
         {/* ═══ SUBSCRIPTION & NETWORK ═══ */}
         <Section title="📡 Subscription & Network">
           <ActionButton
-            label="Show Full Push Token"
-            onPress={handleShowFullPushToken}
+            label="Show OneSignal Subscription ID"
+            onPress={handleShowSubscriptionId}
             disabled={busy}
           />
+          <ActionButton label="Opt In to Push" onPress={handleOptInPush} disabled={busy} />
           <ActionButton
-            label="Force Re-register Push Token"
-            onPress={handleForceReregister}
-            disabled={busy}
-          />
-          <ActionButton
-            label="Unregister Push (stop notifications)"
-            onPress={handleUnregisterPush}
+            label="Opt Out of Push (this device)"
+            onPress={handleOptOutPush}
             disabled={busy}
             danger
           />

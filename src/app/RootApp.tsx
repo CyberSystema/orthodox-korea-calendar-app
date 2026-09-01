@@ -1,6 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
-import * as Notifications from 'expo-notifications';
 import { NavigationContainer } from '@react-navigation/native';
 import { Animated, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -14,12 +13,12 @@ import { syncCalendarDataFromGithub } from '../features/calendar/webCalendarSour
 import { RootNavigator } from '../navigation/RootNavigator';
 import { useEventsStore } from '../features/events/useEventsStore';
 import { useAnnouncementsStore } from '../features/announcements/useAnnouncementsStore';
-import { registerCurrentPushSubscription } from '../services/api/subscriptions';
 import { linking } from '../services/deepLinking/linking';
 import {
-  initializeNotifications,
-  runLaunchNotificationPermissionFlow,
-} from '../services/notifications/notifications';
+  requestOneSignalPermission,
+  setForegroundNotificationHandler,
+  syncOneSignalLanguage,
+} from '../services/notifications/oneSignal';
 import { useOtaForegroundUpdates } from '../services/updates/otaUpdates';
 import { useAppStore } from '../store/useAppStore';
 import { initNetworkMonitor, useNetworkStore } from '../store/useNetworkStore';
@@ -64,9 +63,6 @@ export function RootApp() {
     let cancelled = false;
 
     const bootstrap = async () => {
-      await initializeNotifications().catch((err) =>
-        console.warn('[Notifications] init failed:', err),
-      );
       await hydratePreferences().catch((err) =>
         console.warn('[App] preference hydration failed:', err),
       );
@@ -78,19 +74,12 @@ export function RootApp() {
         .hydrate()
         .catch((err) => console.warn('[App] announcements hydration failed:', err));
 
-      try {
-        // Shows the system permission dialog; the user's answer is final and we do
-        // not follow up with an "open Settings" prompt.
-        const flowResult = await runLaunchNotificationPermissionFlow();
-
-        if (flowResult.status === 'granted') {
-          await registerCurrentPushSubscription().catch((err) =>
-            console.warn('[Push] registration after permission grant failed:', err),
-          );
-        }
-      } catch (err) {
-        console.warn('[Notifications] permission request failed:', err);
-      }
+      // Shows the system permission dialog; the user's answer is final and we do not
+      // follow up with an "open Settings" prompt. No registration call follows —
+      // OneSignal creates and owns the subscription itself.
+      await requestOneSignalPermission().catch((err) =>
+        console.warn('[Push] permission request failed:', err),
+      );
 
       // Background refresh only when cached data is stale (checked inside).
       // Use InteractionManager + setTimeout to avoid contention with UI.
@@ -113,29 +102,18 @@ export function RootApp() {
       return;
     }
 
-    // force=true: always hit the backend on every launch so the subscription is
-    // guaranteed active even if the backend lost it between launches. Also re-runs
-    // when the user changes language, so push content is localized to their choice.
-    void registerCurrentPushSubscription({ force: true }).catch((err) =>
-      console.warn('[Push] subscription registration failed:', err),
-    );
+    // Runs on every launch, not only when the language changes: OneSignal seeds its
+    // `language` property from the DEVICE language, so a fresh install on a phone set
+    // to another locale would match neither the 'en' nor the 'ko' audience until this
+    // asserts the user's actual in-app choice.
+    syncOneSignalLanguage(language);
   }, [isHydrated, language]);
-
-  useEffect(() => {
-    // Re-register whenever the OS rotates the push token
-    const subscription = Notifications.addPushTokenListener(() => {
-      void registerCurrentPushSubscription().catch((err) =>
-        console.warn('[Push] token rotation re-registration failed:', err),
-      );
-    });
-    return () => subscription.remove();
-  }, []);
 
   useEffect(() => {
     // When a push arrives while the app is foregrounded (e.g. an admin just created
     // an event), force a resync so the new event appears in the list/grid promptly
     // instead of waiting for the next periodic sync.
-    const received = Notifications.addNotificationReceivedListener(() => {
+    setForegroundNotificationHandler(() => {
       void useEventsStore
         .getState()
         .syncYearEvents(new Date().getFullYear(), { force: true })
@@ -147,7 +125,7 @@ export function RootApp() {
         .refresh({ force: true })
         .catch((err) => console.warn('[Push] announcements refresh failed:', err));
     });
-    return () => received.remove();
+    return () => setForegroundNotificationHandler(null);
   }, []);
 
   useEffect(() => {
@@ -174,9 +152,6 @@ export function RootApp() {
         .then(setCloudflareAdminAuthenticated)
         .catch((err) => console.warn('[App] staff session re-verify on reconnect failed:', err));
     }
-    void registerCurrentPushSubscription({ force: true }).catch((err) =>
-      console.warn('[Push] reconnect re-registration failed:', err),
-    );
     void useAnnouncementsStore
       .getState()
       .refresh({ force: true })

@@ -143,11 +143,13 @@ For local/manual builds you manage these yourself (Xcode build number, Gradle
   needed. **[this app]** scripts exist:
   `npm run build:ios:production`, `build:android:production`,
   `submit:ios`, `submit:android` (the preview profiles point at the staging API).
-- **Secrets/files:** `GoogleService-Info.plist` and `google-services.json` are
-  gitignored — upload them to EAS as **file env secrets** (`eas secret:create
---type file`) or commit references resolved at build, or they'll be missing in
-  cloud builds. The transparent splash/UIScene plugins regenerate native code on
-  every EAS build, so the no‑flash splash is reproducible with zero manual steps.
+- **Secrets/files:** none are needed for push any more. Push runs on OneSignal, whose
+  Android SDK builds its own Firebase app from config fetched at runtime, so neither
+  `GoogleService-Info.plist` nor `google-services.json` exists in this repo and no EAS
+  file secret has to be uploaded. The only push value in `eas.json` is the PUBLIC
+  `EXPO_PUBLIC_ONESIGNAL_APP_ID`. The transparent splash/UIScene plugins regenerate
+  native code on every EAS build, so the no-flash splash is reproducible with zero
+  manual steps.
 
 ### 4.2 Local builds (no EAS)
 
@@ -271,11 +273,14 @@ For local/manual builds you manage these yourself (Xcode build number, Gradle
 
 ---
 
-## 7. Push notifications & Firebase (specific to this app)
+## 7. Push notifications & OneSignal (specific to this app)
 
-- **Android (FCM):** `google-services.json` is wired in; ensure the Firebase
-  project's **Cloud Messaging** is enabled and your Cloudflare backend has the FCM
-  **service account / v1 credentials** to send.
+All remote push goes through OneSignal. Credentials live in the **OneSignal dashboard**,
+not in this repo and not on EAS.
+
+- **Android (FCM):** upload a Firebase **service-account JSON** to OneSignal → Settings →
+  Google Android (FCM). The app itself needs no `google-services.json` and no Google
+  Services Gradle plugin — OneSignal creates its own named `FirebaseApp` at runtime.
 - **iOS (APNs):** upload the **APNs key** to EAS (or the Apple portal) and configure
   the backend to send via APNs (sandbox for dev builds, production for
   store/TestFlight builds — the app already picks the env by build type).
@@ -454,10 +459,11 @@ Frequent causes:
 - [ ] iOS: APNs key uploaded; Push Notifications capability enabled; signing via
       EAS or Xcode (team `4S3VW22A8G`).
 - [ ] Android: upload keystore created & backed up; Play App Signing enabled.
-- [ ] `GoogleService-Info.plist` + `google-services.json` provided to the build
-      (EAS file secrets for cloud builds).
-- [ ] Cloudflare backend has APNs + FCM credentials; a real push verified on a
-      TestFlight/internal build.
+- [ ] OneSignal app created; APNs `.p8` + FCM service-account JSON uploaded there.
+- [ ] `EXPO_PUBLIC_ONESIGNAL_APP_ID` set in both `eas.json` profiles (a UUID —
+      `scripts/publish-update.mjs` rejects a placeholder).
+- [ ] Cloudflare Worker has `ONESIGNAL_API_KEY` set as a secret and `ONESIGNAL_APP_ID`
+      as a var; a real push verified on a TestFlight/internal build.
 - [ ] Privacy policy URL live; Apple App Privacy + Google Data Safety filled.
 - [ ] Content/age ratings completed on both stores.
 - [ ] `apple-app-site-association` + `assetlinks.json` hosted on the pages.dev

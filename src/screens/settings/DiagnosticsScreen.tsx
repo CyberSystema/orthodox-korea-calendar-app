@@ -1,6 +1,5 @@
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
-import * as Notifications from 'expo-notifications';
 import { useCallback, useEffect, useState } from 'react';
 import {
   Platform,
@@ -27,6 +26,10 @@ import {
 } from '../../features/announcements/useAnnouncementsStore';
 import { useEventsStore } from '../../features/events/useEventsStore';
 import { configuredBaseUrl, isApiConfigured } from '../../services/api/backendClient';
+import {
+  getOneSignalDiagnostics,
+  type OneSignalDiagnostics,
+} from '../../services/notifications/oneSignal';
 import { useAppStore } from '../../store/useAppStore';
 import { useNetworkStore } from '../../store/useNetworkStore';
 import { effectiveFontScale } from '../../theme/fontScale';
@@ -53,6 +56,12 @@ import { typography } from '../../theme/typography';
  * so it is safe to open at any time. Pull the refresh button to re-read the
  * values that are not reactive (permissions, calendar cache).
  */
+/** Identifiers are long and only their prefix is useful for eyeballing a match. */
+function abbreviate(value: string | null | undefined): string {
+  if (!value) return '—';
+  return value.length <= 12 ? value : `${value.slice(0, 8)}… (${value.length})`;
+}
+
 function formatTime(ms: number | null | undefined): string {
   if (!ms) return '—';
   const d = new Date(ms);
@@ -129,15 +138,18 @@ export function DiagnosticsScreen() {
 
   // Not reactive — re-read on mount and on demand.
   const [tick, setTick] = useState(0);
-  const [permission, setPermission] = useState('…');
+  const [push, setPush] = useState<OneSignalDiagnostics | null>(null);
   const refresh = useCallback(() => setTick((n) => n + 1), []);
 
   useEffect(() => {
     let alive = true;
-    void Notifications.getPermissionsAsync().then((p) => {
-      if (!alive) return;
-      setPermission(`${p.status}${p.canAskAgain ? '' : ' (cannot ask again)'}`);
-    });
+    void getOneSignalDiagnostics()
+      .then((d) => {
+        if (alive) setPush(d);
+      })
+      .catch(() => {
+        if (alive) setPush(null);
+      });
     return () => {
       alive = false;
     };
@@ -221,7 +233,6 @@ export function DiagnosticsScreen() {
         <Section title={'Backend'}>
           <Row label="apiConfigured" value={String(isApiConfigured)} />
           <Row label="baseUrl" value={configuredBaseUrl || '—'} />
-          <Row label="apnsEnv" value={process.env.EXPO_PUBLIC_APNS_ENV ?? '—'} />
           <Row label="online" value={String(isOnline)} />
         </Section>
 
@@ -250,8 +261,16 @@ export function DiagnosticsScreen() {
           <Row label="lastSeenId" value={String(lastSeenId)} />
         </Section>
 
-        <Section title={'Notifications'}>
-          <Row label="permission" value={permission} />
+        {/* The full subscription id and token belong in the owner console, not here —
+            this section answers "is this device reachable at all?". */}
+        <Section title={'Push (OneSignal)'}>
+          <Row label="appId" value={abbreviate(push?.appId)} />
+          <Row label="permission" value={push ? String(push.permission) : '…'} />
+          <Row label="canRequest" value={push ? String(push.canRequest) : '…'} />
+          <Row label="optedIn" value={push ? String(push.optedIn) : '…'} />
+          <Row label="subscriptionId" value={abbreviate(push?.subscriptionId)} />
+          <Row label="pushToken" value={push?.pushToken ? `${push.pushToken.length} chars` : '—'} />
+          <Row label="onesignalId" value={abbreviate(push?.onesignalId)} />
         </Section>
 
         <Section title={'Device'}>

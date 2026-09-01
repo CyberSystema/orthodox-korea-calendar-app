@@ -12,10 +12,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.cybersystema.okncalendar",
       "appleTeamId": "4S3VW22A8G",
-      "googleServicesFile": "./GoogleService-Info.plist",
-      "associatedDomains": [
-        "applinks:orthodox-korea-calendar.pages.dev"
-      ],
+      "associatedDomains": ["applinks:orthodox-korea-calendar.pages.dev"],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -24,7 +21,6 @@
       "versionCode": 11,
       "package": "com.cybersystema.okncalendar",
       "backgroundColor": "#3A0A0A",
-      "googleServicesFile": "./google-services.json",
       "intentFilters": [
         {
           "action": "VIEW",
@@ -36,15 +32,10 @@
               "pathPrefix": "/"
             }
           ],
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ]
+          "category": ["BROWSABLE", "DEFAULT"]
         }
       ],
-      "permissions": [
-        "POST_NOTIFICATIONS"
-      ],
+      "permissions": ["POST_NOTIFICATIONS"],
       "adaptiveIcon": {
         "backgroundColor": "#5C1414",
         "backgroundImage": "./assets/android-icon-background.png",
@@ -58,6 +49,17 @@
     },
     "plugins": [
       "./plugins/withSolidLaunchScreen",
+      [
+        "onesignal-expo-plugin",
+        {
+          "mode": "production",
+          "disableNSE": true,
+          "disableLocation": true,
+          "iPhoneDeploymentTarget": "16.4",
+          "smallIcons": ["./assets/notification-icon.png"],
+          "smallIconAccentColor": "#B8942E"
+        }
+      ],
       "./plugins/withPortraitOnly",
       "./plugins/withIosSceneLifecycle",
       "./plugins/withMinIosDeploymentTarget",
@@ -77,14 +79,6 @@
             "image": "./assets/android-icon-empty.png",
             "imageWidth": 200
           }
-        }
-      ],
-      [
-        "expo-notifications",
-        {
-          "defaultChannel": "calendar-reminders",
-          "mode": "production",
-          "enableBackgroundRemoteNotifications": true
         }
       ],
       [

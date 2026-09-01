@@ -6,7 +6,6 @@ import type {
   ClientConfigResponse,
   CreateOrUpdateEventInput,
   DeleteEventResponse,
-  DeleteSubscriptionResponse,
   HealthResponse,
   AdminAnnouncementLogResponse,
   DeleteAnnouncementResponse,
@@ -26,8 +25,6 @@ import type {
   NotifyInput,
   NotifyResponse,
   RateLimitedDetails,
-  RegisterSubscriptionResponse,
-  RegisterSubscriptionInput,
   SyncParams,
   SyncResponse,
   ApiEvent,
@@ -327,25 +324,12 @@ export class OrthodoxCalendarApiClient {
     return pages;
   }
 
-  // ─── Subscriptions / Notifications ─────────────────────────────────────────
+  // ─── Notifications ─────────────────────────────────────────────────────────
 
-  async registerSubscription(
-    input: RegisterSubscriptionInput,
-  ): Promise<RegisterSubscriptionResponse> {
-    return this.request<RegisterSubscriptionResponse>('POST', '/subscriptions', {
-      body: input,
-    });
-  }
-
-  async deleteSubscription(token: string): Promise<DeleteSubscriptionResponse> {
-    return this.request<DeleteSubscriptionResponse>(
-      'DELETE',
-      `/subscriptions/${encodeURIComponent(token)}`,
-    );
-  }
-
+  // Devices no longer register with this backend — the OneSignal SDK owns the
+  // subscription. Broadcasting is the only push surface left here.
   async notify(input: NotifyInput): Promise<NotifyResponse> {
-    return this.request<NotifyResponse>('POST', '/subscriptions/notify', {
+    return this.request<NotifyResponse>('POST', '/notifications', {
       body: input,
       auth: true,
     });

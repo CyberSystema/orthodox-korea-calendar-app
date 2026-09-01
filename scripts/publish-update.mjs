@@ -67,6 +67,27 @@ if (!apiUrl) {
   );
 }
 
+// A missing App ID is otherwise COMPLETELY silent: OneSignal.initialize('') is a
+// no-op, so push simply stops for everyone on this channel with nothing logged
+// anywhere. Cheap to check here, expensive to notice in the field.
+const oneSignalAppId = publicEnv.EXPO_PUBLIC_ONESIGNAL_APP_ID;
+// A OneSignal App ID is a UUID. Checking the SHAPE rather than mere presence is what
+// catches the eas.json placeholder — note the value cannot simply be left empty there,
+// because EAS rejects an empty env value and every `eas` command then fails.
+if (
+  !oneSignalAppId ||
+  !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(oneSignalAppId)
+) {
+  fail(
+    `Profile "${profileName}" has no valid EXPO_PUBLIC_ONESIGNAL_APP_ID in eas.json ` +
+      `(found ${JSON.stringify(oneSignalAppId)}).\n` +
+      `  It must be the OneSignal App ID, a UUID from Settings -> Keys & IDs.\n` +
+      `  Publishing with a missing or placeholder value ships a bundle that initializes\n` +
+      `  OneSignal with a bad App ID — push silently stops for every user on the\n` +
+      `  "${channel}" channel, with nothing logged anywhere.`,
+  );
+}
+
 // The owner console must never be reachable in anything published to a channel.
 if (publicEnv.EXPO_PUBLIC_ENABLE_SECRET_MENU !== 'false') {
   fail(
