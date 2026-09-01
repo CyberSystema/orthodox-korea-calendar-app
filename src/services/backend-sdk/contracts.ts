@@ -240,7 +240,8 @@ export interface NotifyResponse {
   sent?: number;
   fcmEnabled?: boolean;
   /** OneSignal's `recipients`. 0 means the audience was empty — NOT a failure. */
-  recipients: number;
+  /** Null when the provider reported no count (normal for OneSignal). */
+  recipients: number | null;
   notificationId: string | null;
   /** False when the Worker has no OneSignal credentials configured. */
   providerEnabled: boolean;

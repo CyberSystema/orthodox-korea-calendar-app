@@ -358,6 +358,17 @@ export function SecretMenuScreen({ navigation }: Props) {
   //  4.  NOTIFICATIONS / SUBSCRIPTIONS
   // ═══════════════════════════════════════════════════════════════
 
+  // OneSignal's create-message API returns no recipient count, so `recipients` is
+  // null for a normal send. Reporting that as "0" (as this console first did) reads
+  // as "reached nobody" while the dashboard shows the message delivered.
+  const describeNotifyResult = (res: {
+    recipients: number | null;
+    notificationId: string | null;
+  }): string =>
+    res.recipients === null
+      ? `queued, id=${res.notificationId ?? '—'} (count: see OneSignal → Delivery)`
+      : `recipients=${res.recipients}`;
+
   // Real pushes go to real user devices. Require an explicit confirmation that
   // names the live environment before any broadcast leaves the console.
   const confirmBroadcast = (targetLabel: string, run: () => void) => {
@@ -387,7 +398,7 @@ export function SecretMenuScreen({ navigation }: Props) {
           log(`  notificationId=${res.notificationId ?? '—'}`, 'data');
           for (const e of res.errors) log(`  ⚠︎ ${e}`, 'err');
           if (res.message) log(`  message: ${res.message}`, 'data');
-          return `recipients=${res.recipients}`;
+          return describeNotifyResult(res);
         }),
     );
 
@@ -405,7 +416,7 @@ export function SecretMenuScreen({ navigation }: Props) {
           });
           log(`  provider=onesignal enabled=${res.providerEnabled}`, 'data');
           for (const e of res.errors) log(`  ⚠︎ ${e}`, 'err');
-          return `recipients=${res.recipients}, target=en`;
+          return `${describeNotifyResult(res)}, target=en`;
         }),
     );
 
@@ -423,7 +434,7 @@ export function SecretMenuScreen({ navigation }: Props) {
           });
           log(`  provider=onesignal enabled=${res.providerEnabled}`, 'data');
           for (const e of res.errors) log(`  ⚠︎ ${e}`, 'err');
-          return `recipients=${res.recipients}, target=ko`;
+          return `${describeNotifyResult(res)}, target=ko`;
         }),
     );
 
@@ -477,7 +488,7 @@ export function SecretMenuScreen({ navigation }: Props) {
             body_en: bodyEn?.trim() || '',
             body_ko: bodyEn?.trim() || '',
           });
-          return `recipients=${res.recipients}`;
+          return describeNotifyResult(res);
         });
       });
     });
@@ -1299,7 +1310,7 @@ export function SecretMenuScreen({ navigation }: Props) {
               const json = (await res.json()) as {
                 ok: boolean;
                 data?: {
-                  recipients: number;
+                  recipients: number | null;
                   notificationId: string | null;
                   providerEnabled: boolean;
                   errors: string[];
@@ -1315,7 +1326,8 @@ export function SecretMenuScreen({ navigation }: Props) {
               for (const e of d.errors) termLog(`  ⚠︎ ${e}`, 'err');
               if (d.message) termLog(`  ${d.message}`, 'data');
               termLog(
-                `recipients=${d.recipients}, id=${d.notificationId ?? '—'}, provider=${d.providerEnabled}`,
+                `${d.recipients === null ? 'queued' : `recipients=${d.recipients}`}, ` +
+                  `id=${d.notificationId ?? '—'}, provider=${d.providerEnabled}`,
                 d.errors.length === 0 ? 'ok' : 'err',
               );
             } else {
