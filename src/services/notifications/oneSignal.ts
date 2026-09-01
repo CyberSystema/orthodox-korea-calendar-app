@@ -10,8 +10,7 @@ import { getNotificationUrl, normalizeIncomingUrl } from '../deepLinking/notific
 // otherwise silently have no push whenever `.env.local` wasn't updated, and
 // `OneSignal.initialize('')` is a no-op that reports nothing.
 //
-// TODO(onesignal): paste the App ID from OneSignal → Settings → Keys & IDs.
-const FALLBACK_ONESIGNAL_APP_ID = '';
+const FALLBACK_ONESIGNAL_APP_ID = 'b2d652ad-048c-4c4b-b945-fb613406e19d';
 
 export const ONESIGNAL_APP_ID =
   process.env.EXPO_PUBLIC_ONESIGNAL_APP_ID?.trim() || FALLBACK_ONESIGNAL_APP_ID;
